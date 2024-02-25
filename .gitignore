@@ -9,3 +9,7 @@
 *.pdf
 *logs*
 *_old*
+
+*.cpp~
+*.h~
+*.xml~

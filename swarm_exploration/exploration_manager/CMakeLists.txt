@@ -83,6 +83,20 @@ target_link_libraries(fame_node
   -ldw
   )
 
+# MVANT node
+add_executable(mvant_node
+  src/mvant_node.cpp
+  src/mvant_exploration_fsm.cpp
+  src/mvant_exploration_manager.cpp
+  src/role_assigner.cpp
+  src/collaboration_assigner.cpp
+)
+
+target_link_libraries(mvant_node 
+  ${catkin_LIBRARIES}
+  -ldw
+  )
+
 # Tests
 catkin_add_gtest(test_collaboration_cost
     test/collaboration_test.cpp
