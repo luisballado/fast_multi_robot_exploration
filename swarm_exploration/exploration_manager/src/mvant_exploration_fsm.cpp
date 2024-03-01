@@ -131,11 +131,11 @@ void MvantExplorationFSM::FSMCallback(const ros::TimerEvent& e) {
     case INIT: {
       // Wait for odometry ready
       if (!fd_->have_odom_) {
-        ROS_WARN_THROTTLE(1.0, "no odom");
+        ROS_WARN_THROTTLE(1.0, "no datos odometria");
         return;
       }
       if ((ros::Time::now() - fd_->fsm_init_time_).toSec() < 2.0) {
-        ROS_WARN_THROTTLE(1.0, "wait for init");
+        ROS_WARN_THROTTLE(1.0, "esperar para inicializar");
         return;
       }
       // Go to wait trigger when odom is ok
@@ -145,13 +145,13 @@ void MvantExplorationFSM::FSMCallback(const ros::TimerEvent& e) {
 
     case WAIT_TRIGGER: {
       // Do nothing but wait for trigger
-      ROS_WARN_THROTTLE(1.0, "wait for trigger.");
+      ROS_WARN_THROTTLE(1.0, "esperando lanzador.");
       break;
     }
 
     case FINISH: {
       sendStopMsg(1);
-      ROS_INFO_THROTTLE(1.0, "finish exploration.");
+      ROS_INFO_THROTTLE(1.0, "exploracion terminada.");
       break;
     }
 
@@ -161,7 +161,7 @@ void MvantExplorationFSM::FSMCallback(const ros::TimerEvent& e) {
       // Check: if we don't have any frontier, then stop
       if (expl_manager_->updateFrontierStruct(fd_->odom_pos_, fd_->odom_yaw_, fd_->odom_vel_) <=
           1) {
-        ROS_WARN_THROTTLE(1., "No frontiers for agent %d", getId());
+        ROS_WARN_THROTTLE(1., "No fronteras para agente %d", getId());
         sendStopMsg(1);
         break;
       }
