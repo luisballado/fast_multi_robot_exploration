@@ -19,6 +19,11 @@ bool rcv_cmd = false;
 void rcvPosCmdCallBack(const quadrotor_msgs::PositionCommand cmd) {
   rcv_cmd = true;
   _cmd = cmd;
+
+  //comandos vant
+  //std::cout << "poscmd2odom" << std::endl;
+  //std::cout << cmd << std::endl;
+  
 }
 
 void pubOdom() {

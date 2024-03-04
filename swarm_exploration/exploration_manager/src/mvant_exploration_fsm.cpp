@@ -47,8 +47,8 @@ void MvantExplorationFSM::init(ros::NodeHandle& nh) {
   state_ = EXPL_STATE::INIT;
 
   fd_->have_odom_ = false;
-  fd_->state_str_ = { "INIT", "WAIT_TRIGGER", "PLAN_TRAJ", "PUB_TRAJ", "EXEC_TRAJ", "FINISH",
-    "IDLE" };
+  fd_->state_str_ = { "INIT", "WAIT_TRIGGER", "PLAN_TRAJ", "PUB_TRAJ",
+		      "EXEC_TRAJ", "FINISH","IDLE" };
   fd_->static_state_ = true;
   fd_->trigger_ = false;
   fd_->avoid_collision_ = false;
