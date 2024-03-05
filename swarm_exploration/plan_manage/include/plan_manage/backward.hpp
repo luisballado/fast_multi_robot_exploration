@@ -1,5 +1,6 @@
 /*
- * backward.hpp
+ * backward.hpp 
+ * Backward is a beautiful stack trace pretty printer for C++.
  * Copyright 2013 Google Inc. All Rights Reserved.
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
