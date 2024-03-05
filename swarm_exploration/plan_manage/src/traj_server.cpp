@@ -122,6 +122,7 @@ void displayTrajWithColor(
   path_pub.publish(path_msg);
 }
 
+//Dibuja el campo de visión de la cámara 
 void drawFOV(const vector<Eigen::Vector3d>& list1, const vector<Eigen::Vector3d>& list2) {
   visualization_msgs::Marker mk;
   mk.header.frame_id = "world";
@@ -134,8 +135,11 @@ void drawFOV(const vector<Eigen::Vector3d>& list1, const vector<Eigen::Vector3d>
   mk.pose.orientation.z = 0.0;
   mk.pose.orientation.w = 1.0;
 
-  // auto color = PlanningVisualization::getColor((drone_id_ - 1) / double(drone_num_));
-  Eigen::Vector4d color(0, 0, 0, 1);
+  //FOV with colors
+  auto color = PlanningVisualization::getColor((drone_id_ - 1) / double(drone_num_));
+
+  //FOV black
+  //Eigen::Vector4d color(0, 0, 0, 1);
 
   mk.color.r = color(0);
   mk.color.g = color(1);
@@ -294,7 +298,7 @@ void bsplineCallback(const bspline::BsplineConstPtr& msg) {
 
   // Record the start time of flight
   if (start_time.isZero()) {
-    ROS_WARN("start flight");
+    ROS_WARN("start flight - comenzando -");
     start_time = ros::Time::now();
   }
 }
@@ -566,6 +570,8 @@ int main(int argc, char** argv) {
   nh.param("traj_server/drone_num", drone_num_, 1);
 
   ROS_WARN("[Traj server]: init...");
+  ROS_WARN("[SERVIDOR DE TRAJECTORIAS]: inicializado...");
+  
   ros::Duration(1.0).sleep();
 
   // Control parameter
@@ -616,6 +622,7 @@ int main(int argc, char** argv) {
   T_loop = Eigen::Vector3d(0, 0, 0);
 
   ROS_WARN("[Traj server]: ready.");
+  ROS_WARN("[Servidor de Trajectorias]: inicializado.");
   ros::spin();
 
   return 0;
