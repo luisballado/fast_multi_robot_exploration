@@ -47,8 +47,12 @@ void MvantExplorationFSM::init(ros::NodeHandle& nh) {
   state_ = EXPL_STATE::INIT;
 
   fd_->have_odom_ = false;
-  fd_->state_str_ = { "INIT", "WAIT_TRIGGER", "PLAN_TRAJ", "PUB_TRAJ",
-		      "EXEC_TRAJ", "FINISH","IDLE" };
+
+  /* Estados VANT */
+  fd_->state_str_ = {
+		     "INIT", "WAIT_TRIGGER", "PLAN_TRAJ",
+		     "PUB_TRAJ", "EXEC_TRAJ", "FINISH","IDLE"
+  };
   fd_->static_state_ = true;
   fd_->trigger_ = false;
   fd_->avoid_collision_ = false;
@@ -122,12 +126,16 @@ void MvantExplorationFSM::sendEmergencyMsg(bool emergency) {
   msg.data = emergency;
   emergency_handler_pub_.publish(msg);
 }
-
+  
+  /*FINIT STATE CALLBACK*/
 void MvantExplorationFSM::FSMCallback(const ros::TimerEvent& e) {
   ROS_INFO_STREAM_THROTTLE(
       1.0, "[FSM]: Drone " << getId() << " state: " << fd_->state_str_[int(state_)]);
 
   switch (state_) {
+
+    // Estado inicial,
+    // espera a tener valores de odometria
     case INIT: {
       // Wait for odometry ready
       if (!fd_->have_odom_) {
@@ -143,18 +151,21 @@ void MvantExplorationFSM::FSMCallback(const ros::TimerEvent& e) {
       break;
     }
 
+    //Esperando el lanzador
     case WAIT_TRIGGER: {
       // Do nothing but wait for trigger
       ROS_WARN_THROTTLE(1.0, "esperando lanzador.");
       break;
     }
 
+    //Estado final
     case FINISH: {
       sendStopMsg(1);
       ROS_INFO_THROTTLE(1.0, "exploracion terminada.");
       break;
     }
 
+    //Estado Inactivo
     case IDLE: {
       double check_interval = (ros::Time::now() - fd_->last_check_frontier_time_).toSec();
 
@@ -627,6 +638,9 @@ void MvantExplorationFSM::heartbitCallback(const ros::TimerEvent& e) {
 
 void MvantExplorationFSM::triggerCallback(const geometry_msgs::PoseStampedConstPtr& msg) {
 
+  cout << "ALGUN CALLBACK AQUI" << endl;
+  cout << "ALGUN CALLBACK AQUI" << endl;
+  cout << "ALGUN CALLBACK AQUI" << endl;
   // // Debug traj planner
   // Eigen::Vector3d pos;
   // pos << msg->pose.position.x, msg->pose.position.y, 1;
@@ -642,7 +656,8 @@ void MvantExplorationFSM::triggerCallback(const geometry_msgs::PoseStampedConstP
   fd_->trigger_ = true;
   cout << "Triggered!" << endl;
   fd_->start_pos_ = fd_->odom_pos_;
-  // ROS_WARN_STREAM("Start expl pos: " << fd_->start_pos_.transpose());
+
+  ROS_WARN_STREAM("Start expl pos: " << fd_->start_pos_.transpose());
 
   if (expl_manager_->updateFrontierStruct(fd_->odom_pos_, fd_->odom_yaw_, fd_->odom_vel_) != 0) {
     transitState(PLAN_TRAJ, "triggerCallback");
