@@ -1,0 +1,40 @@
+--------------------------------------------------------------------------------
+Node [/pcl_render_node_1]
+Publications: 
+ * /pcl_render_node/depth_1 [sensor_msgs/Image]
+ * /pcl_render_node/sensor_pose_1 [geometry_msgs/PoseStamped]
+ * /rosout [rosgraph_msgs/Log]
+
+Subscriptions: 
+ * /map_generator/global_cloud [sensor_msgs/PointCloud2]
+ * /state_ukf/odom_1 [nav_msgs/Odometry]
+
+Services: 
+ * /pcl_render_node_1/get_loggers
+ * /pcl_render_node_1/set_logger_level
+
+
+contacting node http://a69f0e453c43:35557/ ...
+Pid: 9439
+Connections:
+ * topic: /rosout
+    * to: /rosout
+    * direction: outbound (44747 - 172.17.0.3:45628) [11]
+    * transport: TCPROS
+ * topic: /pcl_render_node/depth_1
+    * to: /exploration_node_1
+    * direction: outbound (44747 - 172.17.0.3:45626) [15]
+    * transport: TCPROS
+ * topic: /pcl_render_node/sensor_pose_1
+    * to: /exploration_node_1
+    * direction: outbound (44747 - 172.17.0.3:45640) [10]
+    * transport: TCPROS
+ * topic: /map_generator/global_cloud
+    * to: /map_pub (http://a69f0e453c43:36757/)
+    * direction: inbound (39470 - a69f0e453c43:43743) [13]
+    * transport: TCPROS
+ * topic: /state_ukf/odom_1
+    * to: /poscmd_2_odom_1 (http://a69f0e453c43:45259/)
+    * direction: inbound (46314 - a69f0e453c43:51859) [16]
+    * transport: TCPROS
+

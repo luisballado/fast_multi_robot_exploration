@@ -1,0 +1,62 @@
+--------------------------------------------------------------------------------
+Node [/traj_server_1]
+Publications: 
+ * /planning/pos_cmd_1 [quadrotor_msgs/PositionCommand]
+ * /planning/position_cmd_vis_1 [visualization_msgs/Marker]
+ * /planning/travel_path_1 [nav_msgs/Path]
+ * /planning/travel_traj_1 [visualization_msgs/Marker]
+ * /rosout [rosgraph_msgs/Log]
+
+Subscriptions: 
+ * /loop_fusion/pg_T_vio [unknown type]
+ * /planning/bspline_1 [bspline/Bspline]
+ * /planning/new_1 [std_msgs/Empty]
+ * /planning/replan_1 [std_msgs/Empty]
+ * /state_ukf/odom_1 [nav_msgs/Odometry]
+ * /trigger_emergency_1 [std_msgs/Bool]
+
+Services: 
+ * /traj_server_1/get_loggers
+ * /traj_server_1/set_logger_level
+
+
+contacting node http://a69f0e453c43:46603/ ...
+Pid: 9421
+Connections:
+ * topic: /rosout
+    * to: /rosout
+    * direction: outbound (34169 - 172.17.0.3:34982) [10]
+    * transport: TCPROS
+ * topic: /planning/position_cmd_vis_1
+    * to: /rvizvisualisation
+    * direction: outbound (34169 - 172.17.0.3:34988) [11]
+    * transport: TCPROS
+ * topic: /planning/pos_cmd_1
+    * to: /poscmd_2_odom_1
+    * direction: outbound (34169 - 172.17.0.3:34992) [17]
+    * transport: TCPROS
+ * topic: /planning/travel_traj_1
+    * to: /rvizvisualisation
+    * direction: outbound (34169 - 172.17.0.3:34990) [16]
+    * transport: TCPROS
+ * topic: /planning/bspline_1
+    * to: /exploration_node_1 (http://a69f0e453c43:35779/)
+    * direction: inbound (56512 - a69f0e453c43:33167) [22]
+    * transport: TCPROS
+ * topic: /planning/replan_1
+    * to: /exploration_node_1 (http://a69f0e453c43:35779/)
+    * direction: inbound (56480 - a69f0e453c43:33167) [20]
+    * transport: TCPROS
+ * topic: /planning/new_1
+    * to: /exploration_node_1 (http://a69f0e453c43:35779/)
+    * direction: inbound (56496 - a69f0e453c43:33167) [21]
+    * transport: TCPROS
+ * topic: /state_ukf/odom_1
+    * to: /poscmd_2_odom_1 (http://a69f0e453c43:45259/)
+    * direction: inbound (46310 - a69f0e453c43:51859) [15]
+    * transport: TCPROS
+ * topic: /trigger_emergency_1
+    * to: /exploration_node_1 (http://a69f0e453c43:35779/)
+    * direction: inbound (56522 - a69f0e453c43:33167) [23]
+    * transport: TCPROS
+

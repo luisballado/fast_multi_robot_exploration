@@ -1,7 +1,7 @@
 <launch>
   <!-- size of map, change the size in x, y, z according to your application -->
-  <arg name="map_size_x" default="70.0"/>
-  <arg name="map_size_y" default="70.0"/>
+  <arg name="map_size_x" default="35.0"/>
+  <arg name="map_size_y" default="35.0"/>
   <arg name="map_size_z" default=" 3.5"/>
   
   <!-- Global odom prefix -->
@@ -9,8 +9,8 @@
   <arg name="drone_num"   default="4" />
   
   <!-- Planner Type -->
-  <!--fame-racer-mvant-->
-  <arg name="planner_type"    default="mvant"/>
+  <!-- tipos: fame-racer-mvant -->
+  <arg name="planner_type" default="mvant"/>
   
   <!-- Renderer (Vulkan) -->
   <arg name="vulkan_renderer" default="false"/>
@@ -28,7 +28,7 @@
   <arg name="communication_range" default="100000.0"/>
   
   <!-- Map generation -->
-  <node pkg ="map_generator" name ="map_pub" type ="map_pub" output = "screen" args="$(find map_generator)/resource/$(arg model).pcd" unless="$(arg vulkan_renderer)"> 
+  <node pkg="map_generator" name="map_pub" type="map_pub" output="screen" args="$(find map_generator)/resource/$(arg model).pcd" unless="$(arg vulkan_renderer)"> 
   </node>
 
 <include file="$(find exploration_manager)/launch/single_drone_exploration.xml" if="$(eval arg('drone_num') >= 1)">

@@ -1,0 +1,29 @@
+--------------------------------------------------------------------------------
+Node [/map_pub]
+Publications: 
+ * /map_generator/global_cloud [sensor_msgs/PointCloud2]
+ * /rosout [rosgraph_msgs/Log]
+
+Subscriptions: None
+
+Services: 
+ * /map_pub/get_loggers
+ * /map_pub/set_logger_level
+
+
+contacting node http://a69f0e453c43:36757/ ...
+Pid: 9417
+Connections:
+ * topic: /rosout
+    * to: /rosout
+    * direction: outbound (43743 - 172.17.0.3:39466) [10]
+    * transport: TCPROS
+ * topic: /map_generator/global_cloud
+    * to: /rvizvisualisation
+    * direction: outbound (43743 - 172.17.0.3:39458) [13]
+    * transport: TCPROS
+ * topic: /map_generator/global_cloud
+    * to: /pcl_render_node_1
+    * direction: outbound (43743 - 172.17.0.3:39470) [11]
+    * transport: TCPROS
+

@@ -1,0 +1,21 @@
+--------------------------------------------------------------------------------
+Node [/acvrp_solver_1]
+Publications: 
+ * /rosout [rosgraph_msgs/Log]
+
+Subscriptions: None
+
+Services: 
+ * /acvrp_solver_1/get_loggers
+ * /acvrp_solver_1/set_logger_level
+ * /solve_acvrp_1
+
+
+contacting node http://a69f0e453c43:38931/ ...
+Pid: 9420
+Connections:
+ * topic: /rosout
+    * to: /rosout
+    * direction: outbound (56663 - 172.17.0.3:49510) [11]
+    * transport: TCPROS
+

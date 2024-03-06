@@ -1,0 +1,154 @@
+--------------------------------------------------------------------------------
+Node [/rvizvisualisation]
+Publications: 
+ * /clicked_point [geometry_msgs/PointStamped]
+ * /initialpose [geometry_msgs/PoseWithCovarianceStamped]
+ * /move_base_simple/goal [geometry_msgs/PoseStamped]
+ * /rosout [rosgraph_msgs/Log]
+
+Subscriptions: 
+ * /map_generator/global_cloud [sensor_msgs/PointCloud2]
+ * /odom_visualization_1/robot [visualization_msgs/Marker]
+ * /odom_visualization_1/robot_array [unknown type]
+ * /odom_visualization_10/robot [unknown type]
+ * /odom_visualization_10/robot_array [unknown type]
+ * /odom_visualization_2/robot [unknown type]
+ * /odom_visualization_2/robot_array [unknown type]
+ * /odom_visualization_3/robot [unknown type]
+ * /odom_visualization_3/robot_array [unknown type]
+ * /odom_visualization_4/robot [unknown type]
+ * /odom_visualization_4/robot_array [unknown type]
+ * /odom_visualization_5/robot [unknown type]
+ * /odom_visualization_5/robot_array [unknown type]
+ * /odom_visualization_6/robot [unknown type]
+ * /odom_visualization_6/robot_array [unknown type]
+ * /odom_visualization_7/robot [unknown type]
+ * /odom_visualization_7/robot_array [unknown type]
+ * /odom_visualization_8/robot [unknown type]
+ * /odom_visualization_8/robot_array [unknown type]
+ * /odom_visualization_9/robot [unknown type]
+ * /odom_visualization_9/robot_array [unknown type]
+ * /planning/position_cmd_vis_1 [visualization_msgs/Marker]
+ * /planning/position_cmd_vis_10 [unknown type]
+ * /planning/position_cmd_vis_10_array [unknown type]
+ * /planning/position_cmd_vis_1_array [unknown type]
+ * /planning/position_cmd_vis_2 [unknown type]
+ * /planning/position_cmd_vis_2_array [unknown type]
+ * /planning/position_cmd_vis_3 [unknown type]
+ * /planning/position_cmd_vis_3_array [unknown type]
+ * /planning/position_cmd_vis_4 [unknown type]
+ * /planning/position_cmd_vis_4_array [unknown type]
+ * /planning/position_cmd_vis_5 [unknown type]
+ * /planning/position_cmd_vis_5_array [unknown type]
+ * /planning/position_cmd_vis_6 [unknown type]
+ * /planning/position_cmd_vis_6_array [unknown type]
+ * /planning/position_cmd_vis_7 [unknown type]
+ * /planning/position_cmd_vis_7_array [unknown type]
+ * /planning/position_cmd_vis_8 [unknown type]
+ * /planning/position_cmd_vis_8_array [unknown type]
+ * /planning/position_cmd_vis_9 [unknown type]
+ * /planning/position_cmd_vis_9_array [unknown type]
+ * /planning/travel_traj_1 [visualization_msgs/Marker]
+ * /planning/travel_traj_10 [unknown type]
+ * /planning/travel_traj_10_array [unknown type]
+ * /planning/travel_traj_1_array [unknown type]
+ * /planning/travel_traj_2 [unknown type]
+ * /planning/travel_traj_2_array [unknown type]
+ * /planning/travel_traj_3 [unknown type]
+ * /planning/travel_traj_3_array [unknown type]
+ * /planning/travel_traj_4 [unknown type]
+ * /planning/travel_traj_4_array [unknown type]
+ * /planning/travel_traj_5 [unknown type]
+ * /planning/travel_traj_5_array [unknown type]
+ * /planning/travel_traj_6 [unknown type]
+ * /planning/travel_traj_6_array [unknown type]
+ * /planning/travel_traj_7 [unknown type]
+ * /planning/travel_traj_7_array [unknown type]
+ * /planning/travel_traj_8 [unknown type]
+ * /planning/travel_traj_8_array [unknown type]
+ * /planning/travel_traj_9 [unknown type]
+ * /planning/travel_traj_9_array [unknown type]
+ * /planning_vis/labeled_frontier_1 [visualization_msgs/Marker]
+ * /planning_vis/labeled_frontier_1_array [unknown type]
+ * /planning_vis/trajectory_1 [visualization_msgs/Marker]
+ * /planning_vis/trajectory_10 [unknown type]
+ * /planning_vis/trajectory_10_array [unknown type]
+ * /planning_vis/trajectory_1_array [unknown type]
+ * /planning_vis/trajectory_2 [unknown type]
+ * /planning_vis/trajectory_2_array [unknown type]
+ * /planning_vis/trajectory_3 [unknown type]
+ * /planning_vis/trajectory_3_array [unknown type]
+ * /planning_vis/trajectory_4 [unknown type]
+ * /planning_vis/trajectory_4_array [unknown type]
+ * /planning_vis/trajectory_5 [unknown type]
+ * /planning_vis/trajectory_5_array [unknown type]
+ * /planning_vis/trajectory_6 [unknown type]
+ * /planning_vis/trajectory_6_array [unknown type]
+ * /planning_vis/trajectory_7 [unknown type]
+ * /planning_vis/trajectory_7_array [unknown type]
+ * /planning_vis/trajectory_8 [unknown type]
+ * /planning_vis/trajectory_8_array [unknown type]
+ * /planning_vis/trajectory_9 [unknown type]
+ * /planning_vis/trajectory_9_array [unknown type]
+ * /sdf_map/occupancy_all_1 [sensor_msgs/PointCloud2]
+ * /sdf_map/unknown_1 [sensor_msgs/PointCloud2]
+ * /tf [tf2_msgs/TFMessage]
+ * /tf_static [unknown type]
+
+Services: 
+ * /rvizvisualisation/get_loggers
+ * /rvizvisualisation/load_config
+ * /rvizvisualisation/load_config_discarding_changes
+ * /rvizvisualisation/reload_shaders
+ * /rvizvisualisation/save_config
+ * /rvizvisualisation/set_logger_level
+
+
+contacting node http://a69f0e453c43:34113/ ...
+Pid: 9357
+Connections:
+ * topic: /rosout
+    * to: /rosout
+    * direction: outbound (46209 - 172.17.0.3:35114) [25]
+    * transport: TCPROS
+ * topic: /move_base_simple/goal
+    * to: /exploration_node_1
+    * direction: outbound (46209 - 172.17.0.3:33856) [34]
+    * transport: TCPROS
+ * topic: /tf
+    * to: /odom_visualization_1 (http://a69f0e453c43:42825/)
+    * direction: inbound (57238 - a69f0e453c43:58207) [38]
+    * transport: TCPROS
+ * topic: /planning_vis/labeled_frontier_1
+    * to: /exploration_node_1 (http://a69f0e453c43:35779/)
+    * direction: inbound (56464 - a69f0e453c43:33167) [26]
+    * transport: TCPROS
+ * topic: /planning_vis/trajectory_1
+    * to: /exploration_node_1 (http://a69f0e453c43:35779/)
+    * direction: inbound (56460 - a69f0e453c43:33167) [32]
+    * transport: TCPROS
+ * topic: /planning/travel_traj_1
+    * to: /traj_server_1 (http://a69f0e453c43:46603/)
+    * direction: inbound (34990 - a69f0e453c43:34169) [35]
+    * transport: TCPROS
+ * topic: /planning/position_cmd_vis_1
+    * to: /traj_server_1 (http://a69f0e453c43:46603/)
+    * direction: inbound (34988 - a69f0e453c43:34169) [28]
+    * transport: TCPROS
+ * topic: /sdf_map/occupancy_all_1
+    * to: /exploration_node_1 (http://a69f0e453c43:35779/)
+    * direction: inbound (56454 - a69f0e453c43:33167) [36]
+    * transport: TCPROS
+ * topic: /sdf_map/unknown_1
+    * to: /exploration_node_1 (http://a69f0e453c43:35779/)
+    * direction: inbound (56458 - a69f0e453c43:33167) [37]
+    * transport: TCPROS
+ * topic: /map_generator/global_cloud
+    * to: /map_pub (http://a69f0e453c43:36757/)
+    * direction: inbound (39458 - a69f0e453c43:43743) [30]
+    * transport: TCPROS
+ * topic: /odom_visualization_1/robot
+    * to: /odom_visualization_1 (http://a69f0e453c43:42825/)
+    * direction: inbound (57222 - a69f0e453c43:58207) [31]
+    * transport: TCPROS
+

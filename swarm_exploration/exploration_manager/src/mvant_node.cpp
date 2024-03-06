@@ -11,8 +11,11 @@ backward::SignalHandling sh;
 using namespace fast_planner;
 
 int main(int argc, char** argv) {
+  //ros::init(..) has to be called before calling other ROS functions
   ros::init(argc, argv, "mvant_node");
-  ros::NodeHandle nh("~");
+
+  //private node handle
+  ros::NodeHandle nh("~"); //The node handle is the access point for communications with the ROS system (topics,services,parameters)
   
   MvantExplorationFSM expl_mvant;
   expl_mvant.init(nh);
