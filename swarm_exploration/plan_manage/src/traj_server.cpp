@@ -293,7 +293,7 @@ void bsplineCallback(const bspline::BsplineConstPtr& msg) {
   traj_.push_back(yaw_traj.getDerivative());
   traj_.push_back(traj_[2].getDerivative());
   traj_duration_ = traj_[0].getTimeSum();
-
+  
   receive_traj_ = true;
 
   // Record the start time of flight
@@ -301,6 +301,7 @@ void bsplineCallback(const bspline::BsplineConstPtr& msg) {
     ROS_WARN("start flight - comenzando -");
     start_time = ros::Time::now();
   }
+  
 }
 
 void triggerCallback(const std_msgs::BoolConstPtr& msg) {

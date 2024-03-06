@@ -88,6 +88,11 @@ void pubOdom() {
   }
 
   _odom_pub.publish(odom);
+  //std::cout << "poscmd_2_odom" << std::endl;
+  //std::cout << odom.pose.pose.position.x << std::endl;
+  //std::cout << odom.pose.pose.position.y << std::endl;
+  //std::cout << odom.pose.pose.position.z << std::endl;
+  //std::cout << "=============" << std::endl;
 }
 
 int main(int argc, char** argv) {

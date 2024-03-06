@@ -66,6 +66,8 @@ void MvantExplorationFSM::init(ros::NodeHandle& nh) {
   frontier_timer_ = nh.createTimer(ros::Duration(0.1), &MvantExplorationFSM::frontierCallback, this);
   heartbit_timer_ = nh.createTimer(ros::Duration(1.0), &MvantExplorationFSM::heartbitCallback, this);
 
+  //Se puede invocar desde terminal
+  //rostopic pub /move_base_simple/goal geometry_msgs/PoseStamped '{header: {stamp: now, frame_id: "map"}, pose: {position: {x: 1.0, y: 0.0, z: 0.0}, orientation: {w: 1.0}}}'
   trigger_sub_ =
       nh.subscribe("/move_base_simple/goal", 1, &MvantExplorationFSM::triggerCallback, this);
   odom_sub_ = nh.subscribe("/odom_world", 1, &MvantExplorationFSM::odometryCallback, this);
@@ -633,14 +635,14 @@ void MvantExplorationFSM::frontierCallback(const ros::TimerEvent& e) {
 }
 
 void MvantExplorationFSM::heartbitCallback(const ros::TimerEvent& e) {
+  //ROS_ERROR("HEART-BIT-BIT");
   heartbit_pub_.publish(std_msgs::Empty());
 }
 
 void MvantExplorationFSM::triggerCallback(const geometry_msgs::PoseStampedConstPtr& msg) {
 
-  cout << "ALGUN CALLBACK AQUI" << endl;
-  cout << "ALGUN CALLBACK AQUI" << endl;
-  cout << "ALGUN CALLBACK AQUI" << endl;
+  //ROS_WARN("CALLBACK CLICK");
+    
   // // Debug traj planner
   // Eigen::Vector3d pos;
   // pos << msg->pose.position.x, msg->pose.position.y, 1;
@@ -652,6 +654,7 @@ void MvantExplorationFSM::triggerCallback(const geometry_msgs::PoseStampedConstP
   // transitState(PLAN_TRAJ, "triggerCallback");
   // return;
 
+  //Solo se hace cuando el estado es WAIT_TRIGGER
   if (state_ != WAIT_TRIGGER) return;
   fd_->trigger_ = true;
   cout << "Triggered!" << endl;

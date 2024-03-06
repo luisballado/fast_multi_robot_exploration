@@ -22,7 +22,7 @@
       <remap from="~command" to="/planning/pos_cmd_$(arg drone_id)"/>
       <remap from="~odometry" to="$(arg odometry_topic)"/>
   </node>
-                                                                                                                                                                                                                                                                                                    
+  
   <node pkg="odom_visualization" name="odom_visualization_$(arg drone_id)" type="odom_visualization" output="screen">
       <remap from="~odom" to="$(arg odometry_topic)"/>
       <param name="drone_id" value="$(arg drone_id)"/>    

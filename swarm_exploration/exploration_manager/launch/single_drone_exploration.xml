@@ -1,47 +1,47 @@
 <launch>
-    <arg name="planner_type" default="fuel"/>
-    <arg name="model" default="forest_rumburk_large"/>
-    <arg name="log_folder" default="$(find exploration_manager)/exp_logs"/> 
+  <arg name="planner_type" default="fuel"/>
+  <arg name="model" default="forest_rumburk_large"/>
+  <arg name="log_folder" default="$(find exploration_manager)/exp_logs"/> 
   
-    <arg name="box_min_x" default="-7"/>
-    <arg name="box_min_y" default="-15"/>
-    <arg name="box_min_z" default="0"/> 
-    <arg name="box_max_x" default="7"/>
-    <arg name="box_max_y" default="15"/>
-    <arg name="box_max_z" default="1.7"/>
-
-    <arg name="drone_id" default="1"/>
-    <arg name="drone_num" default="1"/> <!-- to determine salesman number, etc -->
-    <arg name="init_x" default="0"/>
-    <arg name="init_y" default="0"/>
-    <arg name="init_z" default="0"/> 
-    <arg name="map_size_x" default="22"/>
-    <arg name="map_size_y" default="22"/>
-    <arg name="map_size_z" default="3.5"/>
-    <arg name="odom_prefix" default="odom"/>
-    <arg name="simulation" default="false"/>
-    <arg name="vulkan_renderer" default="false"/>
-    <arg name="odometry_topic" default="$(arg odom_prefix)_$(arg drone_id)"/>
-    <!-- <arg name="odometry_topic" default="/pcl_render_node/odom_$(arg drone_id)"/> -->
-    <arg name="sensor_pose_topic" default="/pcl_render_node/sensor_pose_$(arg drone_id)"/> 
-    <arg name="depth_topic" default="/pcl_render_node/depth_$(arg drone_id)"/> 
-    <arg name="cx" default="324.0879821777344"/>
-    <arg name="cy" default="239.10362243652344"/>
-    <arg name="fx" default="385.69793701171875"/>
-    <arg name="fy" default="385.69793701171875"/>
-
-    <!-- Ablation study (FAME only) TODO -->
-    <arg name="role_assigner_fixed" default="false"/>
-    <arg name="role_assigner_fix_role" default="0"/> <!-- 0: EXPL, 1: GC -->
-    <arg name="active_collaboration" default="true"/>
-
-    <!-- Ablation study (all) -->
-    <arg name="communication_range" default="100000.0"/>
-
-
+  <arg name="box_min_x" default="-7"/>
+  <arg name="box_min_y" default="-15"/>
+  <arg name="box_min_z" default="0"/> 
+  <arg name="box_max_x" default="7"/>
+  <arg name="box_max_y" default="15"/>
+  <arg name="box_max_z" default="1.7"/>
+  
+  <arg name="drone_id" default="1"/>
+  <arg name="drone_num" default="1"/> <!-- to determine salesman number, etc -->
+  <arg name="init_x" default="0"/>
+  <arg name="init_y" default="0"/>
+  <arg name="init_z" default="0"/> 
+  <arg name="map_size_x" default="22"/>
+  <arg name="map_size_y" default="22"/>
+  <arg name="map_size_z" default="3.5"/>
+  <arg name="odom_prefix" default="odom"/>
+  <arg name="simulation" default="false"/>
+  <arg name="vulkan_renderer" default="false"/>
+  <arg name="odometry_topic" default="$(arg odom_prefix)_$(arg drone_id)"/>
+  <!-- <arg name="odometry_topic" default="/pcl_render_node/odom_$(arg drone_id)"/> -->
+  <arg name="sensor_pose_topic" default="/pcl_render_node/sensor_pose_$(arg drone_id)"/> 
+  <arg name="depth_topic" default="/pcl_render_node/depth_$(arg drone_id)"/> 
+  <arg name="cx" default="324.0879821777344"/>
+  <arg name="cy" default="239.10362243652344"/>
+  <arg name="fx" default="385.69793701171875"/>
+  <arg name="fy" default="385.69793701171875"/>
+  
+  <!-- Ablation study (FAME only) TODO -->
+  <arg name="role_assigner_fixed" default="false"/>
+  <arg name="role_assigner_fix_role" default="0"/> <!-- 0: EXPL, 1: GC -->
+  <arg name="active_collaboration" default="true"/>
+  
+  <!-- Ablation study (all) -->
+  <arg name="communication_range" default="100000.0"/>
+  
+  
   <!-- main algorithm params -->
   <include file="$(find exploration_manager)/launch/single_drone_planner_$(arg planner_type).xml">
-
+    
     <arg name="drone_id" value="$(arg drone_id)"/>
     <arg name="drone_num" value="$(arg drone_num)"/>
     <arg name="model" value="$(arg model)"/>
@@ -49,14 +49,14 @@
     <arg name="map_size_x" value="$(arg map_size_x)"/>
     <arg name="map_size_y" value="$(arg map_size_y)"/>
     <arg name="map_size_z" value="$(arg map_size_z)"/>
-  
+    
     <arg name="box_min_x" value="$(arg box_min_x)"/>
     <arg name="box_min_y" value="$(arg box_min_y)"/>
     <arg name="box_min_z" value="$(arg box_min_z)"/> 
     <arg name="box_max_x" value="$(arg box_max_x)"/>
     <arg name="box_max_y" value="$(arg box_max_y)"/>
     <arg name="box_max_z" value="$(arg box_max_z)"/>
-
+    
     <arg name="odometry_topic" default="$(arg odometry_topic)"/>
     <arg name="sensor_pose_topic" value="$(arg sensor_pose_topic)"/> 
     
@@ -82,7 +82,7 @@
     <!-- <arg name="max_vel" value="1.0" />
     <arg name="max_acc" value="0.8" /> -->
     <arg name="simulation" value="$(arg simulation)" />
-
+    
     <!-- Ablation study (FAME only) -->
     <arg name="role_assigner_fixed" default="$(arg role_assigner_fixed)" if="$(eval arg('planner_type') == 'fame')" />
     <arg name="role_assigner_fix_role" default="$(arg role_assigner_fix_role)" if="$(eval arg('planner_type') == 'fame')" />
@@ -91,11 +91,11 @@
     <!-- Ablation study (all) -->
     <arg name="communication_range" default="$(arg communication_range)"/>
   </include>
-
+  
   <!-- trajectory server -->
   <node pkg="plan_manage" name="traj_server_$(arg drone_id)" type="traj_server" output="screen">
     <remap from="/odom_world" to="$(arg odom_prefix)_$(arg drone_id)"/>
-
+    
     <remap from="/planning/bspline" to="/planning/bspline_$(arg drone_id)" />
     <remap from="/planning/replan" to="/planning/replan_$(arg drone_id)" />
     <remap from="/planning/new" to="/planning/new_$(arg drone_id)" />
