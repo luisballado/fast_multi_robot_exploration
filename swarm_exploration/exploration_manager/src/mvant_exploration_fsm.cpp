@@ -57,7 +57,7 @@ void MvantExplorationFSM::init(ros::NodeHandle& nh) {
   fd_->trigger_ = false;
   fd_->avoid_collision_ = false;
   fd_->go_back_ = false;
-
+  
   num_fail_ = 0;
 
   /* Ros sub, pub and timer */
@@ -133,11 +133,11 @@ void MvantExplorationFSM::FSMCallback(const ros::TimerEvent& e) {
     case INIT: {
       // Wait for odometry ready
       if (!fd_->have_odom_) {
-        ROS_WARN_THROTTLE(1.0, "no datos odometria");
+        ROS_WARN_THROTTLE(1.0, "-- no datos odometria --");
         return;
       }
       if ((ros::Time::now() - fd_->fsm_init_time_).toSec() < 2.0) {
-        ROS_WARN_THROTTLE(1.0, "esperar para inicializar");
+        ROS_WARN_THROTTLE(1.0, "-- esperar para inicializar --");
         return;
       }
       // Go to wait trigger when odom is ok
@@ -148,14 +148,14 @@ void MvantExplorationFSM::FSMCallback(const ros::TimerEvent& e) {
     //Esperando el lanzador
     case WAIT_TRIGGER: {
       // Do nothing but wait for trigger
-      ROS_WARN_THROTTLE(1.0, "esperando lanzador.");
+      ROS_WARN_THROTTLE(1.0, "-- esperando lanzador --");
       break;
     }
 
     //Estado final
     case FINISH: {
       sendStopMsg(1);
-      ROS_INFO_THROTTLE(1.0, "exploracion terminada.");
+      ROS_INFO_THROTTLE(1.0, "-- exploracion terminada --");
       break;
     }
 
@@ -165,7 +165,7 @@ void MvantExplorationFSM::FSMCallback(const ros::TimerEvent& e) {
 
       // Check: if we don't have any frontier, then stop
       if (expl_manager_->updateFrontierStruct(fd_->odom_pos_, fd_->odom_yaw_, fd_->odom_vel_) <= 1) {
-        ROS_WARN_THROTTLE(1., "No fronteras para agente %d", getId());
+        ROS_WARN_THROTTLE(1., "-- No fronteras para agente %d", getId());
         sendStopMsg(1);
         break;
       }
@@ -221,15 +221,16 @@ void MvantExplorationFSM::FSMCallback(const ros::TimerEvent& e) {
 
       } else if (res == FAIL) {  // Keep trying to replan
         fd_->static_state_ = true;
-        ROS_WARN_THROTTLE(1., "Plan fail (drone %d)", getId());
+        ROS_WARN_THROTTLE(1., "-- Plan fail (drone %d) --",
+			  getId());
         // Check if we need to send a message
-        if (num_fail_ > 10) {
+	if (num_fail_ > 10) {
           sendEmergencyMsg(true);
           num_fail_ = 0;
         } else {
           ++num_fail_;
         }
-
+	
       } else if (res == NO_GRID) {
         fd_->static_state_ = true;
         fd_->last_check_frontier_time_ = ros::Time::now();
@@ -632,19 +633,23 @@ void MvantExplorationFSM::heartbitCallback(const ros::TimerEvent& e) {
 
 void MvantExplorationFSM::triggerCallback(const geometry_msgs::PoseStampedConstPtr& msg) {
 
-  //ROS_WARN("CALLBACK CLICK");
+  //----------------------------------------------
+  
+  ROS_WARN("CALLBACK CLICK");
     
   // // Debug traj planner
-  // Eigen::Vector3d pos;
-  // pos << msg->pose.position.x, msg->pose.position.y, 1;
-  // expl_manager_->ed_->next_pos_ = pos;
+  Eigen::Vector3d pos;
+  pos << msg->pose.position.x, msg->pose.position.y, 1;
+  expl_manager_->ed_->next_pos_ = pos;
 
-  // Eigen::Vector3d dir = pos - fd_->odom_pos_;
-  // expl_manager_->ed_->next_yaw_ = atan2(dir[1], dir[0]);
-  // fd_->go_back_ = true;
-  // transitState(PLAN_TRAJ, "triggerCallback");
-  // return;
+  Eigen::Vector3d dir = pos - fd_->odom_pos_;
+  expl_manager_->ed_->next_yaw_ = atan2(dir[1], dir[0]);
+  fd_->go_back_ = true;
+  transitState(PLAN_TRAJ, "triggerCallback");
+  return;
 
+  //----------------------------------------------
+  
   //Solo se hace cuando el estado es WAIT_TRIGGER
   if (state_ != WAIT_TRIGGER) return;
   fd_->trigger_ = true;

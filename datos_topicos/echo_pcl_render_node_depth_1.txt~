@@ -1,0 +1,12 @@
+header: 
+  seq: 13991
+  stamp: 
+    secs: 1709845478
+    nsecs: 752290229
+  frame_id: "world"
+height: 480
+width: 640
+encoding: "32FC1"
+is_bigendian: 0
+step: 2560
+data: [...]
