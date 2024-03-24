@@ -1,0 +1,162 @@
+--------------------------------------------------------------------------------
+Node [/exploration_node_1]
+Publications: 
+ * /heartbit_1 [std_msgs/Empty]
+ * /multi_map_manager/chunk_data [plan_env_msgs/ChunkData]
+ * /multi_map_manager/chunk_stamps [plan_env_msgs/ChunkStamps]
+ * /multi_map_manager/marker_1 [visualization_msgs/Marker]
+ * /planning/bspline_1 [bspline/Bspline]
+ * /planning/new_1 [std_msgs/Empty]
+ * /planning/replan_1 [std_msgs/Empty]
+ * /planning/swarm_traj [bspline/Bspline]
+ * /planning_vis/current_goal_1 [visualization_msgs/Marker]
+ * /planning_vis/frontier_1 [visualization_msgs/Marker]
+ * /planning_vis/infront_frontiers_1 [visualization_msgs/Marker]
+ * /planning_vis/labeled_frontier_1 [visualization_msgs/Marker]
+ * /planning_vis/prediction [visualization_msgs/Marker]
+ * /planning_vis/role_1 [visualization_msgs/Marker]
+ * /planning_vis/topo_path [visualization_msgs/Marker]
+ * /planning_vis/trails_tour_1 [visualization_msgs/Marker]
+ * /planning_vis/trajectory_1 [visualization_msgs/Marker]
+ * /planning_vis/viewpoints_1 [visualization_msgs/Marker]
+ * /planning_vis/visib_constraint [visualization_msgs/Marker]
+ * /planning_vis/yaw [visualization_msgs/Marker]
+ * /rosout [rosgraph_msgs/Log]
+ * /sdf_map/depth_cloud_1 [sensor_msgs/PointCloud2]
+ * /sdf_map/esdf [sensor_msgs/PointCloud2]
+ * /sdf_map/free_1 [sensor_msgs/PointCloud2]
+ * /sdf_map/occupancy_all_1 [sensor_msgs/PointCloud2]
+ * /sdf_map/occupancy_local_1 [sensor_msgs/PointCloud2]
+ * /sdf_map/occupancy_local_inflate_1 [sensor_msgs/PointCloud2]
+ * /sdf_map/unknown_1 [sensor_msgs/PointCloud2]
+ * /sdf_map/update_range_1 [visualization_msgs/Marker]
+ * /stop_1 [std_msgs/Int32]
+ * /swarm_expl/drone_state [exploration_manager/DroneState]
+ * /swarm_expl/grid_tour [exploration_manager/GridTour]
+ * /swarm_expl/hgrid [exploration_manager/HGrid]
+ * /swarm_expl/pair_opt [exploration_manager/PairOpt]
+ * /swarm_expl/pair_opt_res [exploration_manager/PairOptResponse]
+ * /trigger_emergency_1 [std_msgs/Bool]
+
+Subscriptions: 
+ * /move_base_simple/goal [geometry_msgs/PoseStamped]
+ * /multi_map_manager/chunk_data [plan_env_msgs/ChunkData]
+ * /multi_map_manager/chunk_stamps [plan_env_msgs/ChunkStamps]
+ * /pcl_render_node/cloud_1 [unknown type]
+ * /pcl_render_node/depth_1 [sensor_msgs/Image]
+ * /pcl_render_node/sensor_pose_1 [geometry_msgs/PoseStamped]
+ * /planning/swarm_traj [bspline/Bspline]
+ * /state_ukf/odom_1 [nav_msgs/Odometry]
+ * /swarm_expl/drone_state [exploration_manager/DroneState]
+ * /swarm_expl/pair_opt [exploration_manager/PairOpt]
+ * /swarm_expl/pair_opt_res [exploration_manager/PairOptResponse]
+
+Services: 
+ * /exploration_node_1/get_loggers
+ * /exploration_node_1/set_logger_level
+
+
+contacting node http://a69f0e453c43:35779/ ...
+Pid: 9418
+Connections:
+ * topic: /rosout
+    * to: /rosout
+    * direction: outbound (33167 - 172.17.0.3:56450) [11]
+    * transport: TCPROS
+ * topic: /sdf_map/occupancy_all_1
+    * to: /rvizvisualisation
+    * direction: outbound (33167 - 172.17.0.3:56454) [10]
+    * transport: TCPROS
+ * topic: /sdf_map/unknown_1
+    * to: /rvizvisualisation
+    * direction: outbound (33167 - 172.17.0.3:56458) [16]
+    * transport: TCPROS
+ * topic: /multi_map_manager/chunk_stamps
+    * to: /exploration_node_1
+    * direction: outbound
+    * transport: INTRAPROCESS
+ * topic: /multi_map_manager/chunk_data
+    * to: /exploration_node_1
+    * direction: outbound
+    * transport: INTRAPROCESS
+ * topic: /planning_vis/trajectory_1
+    * to: /rvizvisualisation
+    * direction: outbound (33167 - 172.17.0.3:56460) [19]
+    * transport: TCPROS
+ * topic: /planning_vis/labeled_frontier_1
+    * to: /rvizvisualisation
+    * direction: outbound (33167 - 172.17.0.3:56464) [17]
+    * transport: TCPROS
+ * topic: /planning/replan_1
+    * to: /traj_server_1
+    * direction: outbound (33167 - 172.17.0.3:56480) [20]
+    * transport: TCPROS
+ * topic: /planning/new_1
+    * to: /traj_server_1
+    * direction: outbound (33167 - 172.17.0.3:56496) [26]
+    * transport: TCPROS
+ * topic: /planning/bspline_1
+    * to: /traj_server_1
+    * direction: outbound (33167 - 172.17.0.3:56512) [27]
+    * transport: TCPROS
+ * topic: /trigger_emergency_1
+    * to: /traj_server_1
+    * direction: outbound (33167 - 172.17.0.3:56522) [28]
+    * transport: TCPROS
+ * topic: /swarm_expl/drone_state
+    * to: /exploration_node_1
+    * direction: outbound
+    * transport: INTRAPROCESS
+ * topic: /swarm_expl/pair_opt
+    * to: /exploration_node_1
+    * direction: outbound
+    * transport: INTRAPROCESS
+ * topic: /swarm_expl/pair_opt_res
+    * to: /exploration_node_1
+    * direction: outbound
+    * transport: INTRAPROCESS
+ * topic: /planning/swarm_traj
+    * to: /exploration_node_1
+    * direction: outbound
+    * transport: INTRAPROCESS
+ * topic: /pcl_render_node/depth_1
+    * to: /pcl_render_node_1 (http://a69f0e453c43:35557/)
+    * direction: inbound (45626 - a69f0e453c43:44747) [15]
+    * transport: TCPROS
+ * topic: /pcl_render_node/sensor_pose_1
+    * to: /pcl_render_node_1 (http://a69f0e453c43:35557/)
+    * direction: inbound (45640 - a69f0e453c43:44747) [14]
+    * transport: TCPROS
+ * topic: /multi_map_manager/chunk_stamps
+    * to: /exploration_node_1 (http://a69f0e453c43:35779/)
+    * direction: inbound
+    * transport: INTRAPROCESS
+ * topic: /multi_map_manager/chunk_data
+    * to: /exploration_node_1 (http://a69f0e453c43:35779/)
+    * direction: inbound
+    * transport: INTRAPROCESS
+ * topic: /move_base_simple/goal
+    * to: /rvizvisualisation (http://a69f0e453c43:34113/)
+    * direction: inbound (33856 - a69f0e453c43:46209) [24]
+    * transport: TCPROS
+ * topic: /state_ukf/odom_1
+    * to: /poscmd_2_odom_1 (http://a69f0e453c43:45259/)
+    * direction: inbound (46324 - a69f0e453c43:51859) [25]
+    * transport: TCPROS
+ * topic: /swarm_expl/drone_state
+    * to: /exploration_node_1 (http://a69f0e453c43:35779/)
+    * direction: inbound
+    * transport: INTRAPROCESS
+ * topic: /swarm_expl/pair_opt
+    * to: /exploration_node_1 (http://a69f0e453c43:35779/)
+    * direction: inbound
+    * transport: INTRAPROCESS
+ * topic: /swarm_expl/pair_opt_res
+    * to: /exploration_node_1 (http://a69f0e453c43:35779/)
+    * direction: inbound
+    * transport: INTRAPROCESS
+ * topic: /planning/swarm_traj
+    * to: /exploration_node_1 (http://a69f0e453c43:35779/)
+    * direction: inbound
+    * transport: INTRAPROCESS
+

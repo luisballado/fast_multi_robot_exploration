@@ -1,0 +1,11 @@
+#Crear una red en docker llamada foo
+
+#Correr el nodo roscore
+$ sudo docker run -it --net foo -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix -v drone_simulator:/home --device=/dev/dri:/dev/dri --name master --rm 133a822fe735 roscore
+
+
+#Correr un nodo slave
+$ sudo docker run -it --net foo -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix -v drone_simulator:/home --device=/dev/dri:/dev/dri --env ROS_HOSTNAME=slave --env ROS_MASTER_URI=http://7b5e1bbf3508:11311 --name slave --rm 133a822fe735
+
+#Correr otro nodo slave
+$ sudo docker run -it --net foo -e DISPLAY=$DISPLAY -v /tmp/.X11-unix:/tmp/.X11-unix -v drone_simulator:/home --device=/dev/dri:/dev/dri --env ROS_HOSTNAME=slave2 --env ROS_MASTER_URI=http://7b5e1bbf3508:11311 --name slave2 --rm 133a822fe735

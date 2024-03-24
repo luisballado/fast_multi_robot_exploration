@@ -1,0 +1,44 @@
+--------------------------------------------------------------------------------
+Node [/odom_visualization_1]
+Publications: 
+ * /odom_visualization_1/covariance [visualization_msgs/Marker]
+ * /odom_visualization_1/covariance_velocity [visualization_msgs/Marker]
+ * /odom_visualization_1/height [sensor_msgs/Range]
+ * /odom_visualization_1/path [nav_msgs/Path]
+ * /odom_visualization_1/pose [geometry_msgs/PoseStamped]
+ * /odom_visualization_1/robot [visualization_msgs/Marker]
+ * /odom_visualization_1/sensor [visualization_msgs/Marker]
+ * /odom_visualization_1/trajectory [visualization_msgs/Marker]
+ * /odom_visualization_1/velocity [visualization_msgs/Marker]
+ * /rosout [rosgraph_msgs/Log]
+ * /tf [tf2_msgs/TFMessage]
+
+Subscriptions: 
+ * /odom_visualization_1/cmd [unknown type]
+ * /state_ukf/odom_1 [nav_msgs/Odometry]
+
+Services: 
+ * /odom_visualization_1/get_loggers
+ * /odom_visualization_1/set_logger_level
+
+
+contacting node http://a69f0e453c43:42825/ ...
+Pid: 9438
+Connections:
+ * topic: /rosout
+    * to: /rosout
+    * direction: outbound (58207 - 172.17.0.3:57252) [13]
+    * transport: TCPROS
+ * topic: /odom_visualization_1/robot
+    * to: /rvizvisualisation
+    * direction: outbound (58207 - 172.17.0.3:57222) [14]
+    * transport: TCPROS
+ * topic: /tf
+    * to: /rvizvisualisation
+    * direction: outbound (58207 - 172.17.0.3:57238) [10]
+    * transport: TCPROS
+ * topic: /state_ukf/odom_1
+    * to: /poscmd_2_odom_1 (http://a69f0e453c43:45259/)
+    * direction: inbound (46296 - a69f0e453c43:51859) [11]
+    * transport: TCPROS
+

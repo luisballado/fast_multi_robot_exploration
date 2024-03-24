@@ -618,7 +618,7 @@ int main(int argc, char** argv) {
   //   pos_cmd_pub.publish(cmd);
   //   ros::Duration(0.01).sleep();
   // }
-
+  
   R_loop = Eigen::Quaterniond(1, 0, 0, 0).toRotationMatrix();
   T_loop = Eigen::Vector3d(0, 0, 0);
 

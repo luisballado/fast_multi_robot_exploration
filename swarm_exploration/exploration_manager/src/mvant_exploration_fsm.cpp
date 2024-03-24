@@ -34,8 +34,7 @@ void MvantExplorationFSM::init(ros::NodeHandle& nh) {
   nh.param("fsm/attempt_interval", fp_->attempt_interval_, 0.2);
   nh.param("fsm/pair_opt_interval", fp_->pair_opt_interval_, 1.0);
   nh.param("fsm/repeat_send_num", fp_->repeat_send_num_, 10);
-  nh.param(
-      "fsm/communication_range", fp_->communication_range_, std::numeric_limits<double>::max());
+  nh.param("fsm/communication_range", fp_->communication_range_, std::numeric_limits<double>::max());
 
   /* Initialize main modules */
   expl_manager_.reset(new MvantExplorationManager);
@@ -53,11 +52,12 @@ void MvantExplorationFSM::init(ros::NodeHandle& nh) {
 		     "INIT", "WAIT_TRIGGER", "PLAN_TRAJ",
 		     "PUB_TRAJ", "EXEC_TRAJ", "FINISH","IDLE"
   };
+
   fd_->static_state_ = true;
   fd_->trigger_ = false;
   fd_->avoid_collision_ = false;
   fd_->go_back_ = false;
-
+  
   num_fail_ = 0;
 
   /* Ros sub, pub and timer */
@@ -68,8 +68,7 @@ void MvantExplorationFSM::init(ros::NodeHandle& nh) {
 
   //Se puede invocar desde terminal
   //rostopic pub /move_base_simple/goal geometry_msgs/PoseStamped '{header: {stamp: now, frame_id: "map"}, pose: {position: {x: 1.0, y: 0.0, z: 0.0}, orientation: {w: 1.0}}}'
-  trigger_sub_ =
-      nh.subscribe("/move_base_simple/goal", 1, &MvantExplorationFSM::triggerCallback, this);
+  trigger_sub_ = nh.subscribe("/move_base_simple/goal", 1, &MvantExplorationFSM::triggerCallback, this);
   odom_sub_ = nh.subscribe("/odom_world", 1, &MvantExplorationFSM::odometryCallback, this);
 
   replan_pub_ = nh.advertise<std_msgs::Empty>("/planning/replan", 10);
@@ -81,28 +80,21 @@ void MvantExplorationFSM::init(ros::NodeHandle& nh) {
   emergency_handler_pub_ = nh.advertise<std_msgs::Bool>("/trigger_emergency", 10);
 
   // Swarm, timer, pub and sub
-  drone_state_timer_ =
-      nh.createTimer(ros::Duration(0.04), &MvantExplorationFSM::droneStateTimerCallback, this);
-  drone_state_pub_ =
-      nh.advertise<exploration_manager::DroneState>("/swarm_expl/drone_state_send", 10);
-  drone_state_sub_ = nh.subscribe(
-      "/swarm_expl/drone_state_recv", 10, &MvantExplorationFSM::droneStateMsgCallback, this);
+  drone_state_timer_ = nh.createTimer(ros::Duration(0.04), &MvantExplorationFSM::droneStateTimerCallback, this);
+  drone_state_pub_ = nh.advertise<exploration_manager::DroneState>("/swarm_expl/drone_state_send", 10);
+  drone_state_sub_ = nh.subscribe("/swarm_expl/drone_state_recv", 10, &MvantExplorationFSM::droneStateMsgCallback, this);
 
   opt_timer_ = nh.createTimer(ros::Duration(0.05), &MvantExplorationFSM::optTimerCallback, this);
   opt_pub_ = nh.advertise<exploration_manager::PairOpt>("/swarm_expl/pair_opt_send", 10);
   opt_sub_ = nh.subscribe("/swarm_expl/pair_opt_recv", 100, &MvantExplorationFSM::optMsgCallback,
       this, ros::TransportHints().tcpNoDelay());
 
-  opt_res_pub_ =
-      nh.advertise<exploration_manager::PairOptResponse>("/swarm_expl/pair_opt_res_send", 10);
-  opt_res_sub_ = nh.subscribe("/swarm_expl/pair_opt_res_recv", 100,
-      &MvantExplorationFSM::optResMsgCallback, this, ros::TransportHints().tcpNoDelay());
+  opt_res_pub_ = nh.advertise<exploration_manager::PairOptResponse>("/swarm_expl/pair_opt_res_send", 10);
+  opt_res_sub_ = nh.subscribe("/swarm_expl/pair_opt_res_recv", 100, &MvantExplorationFSM::optResMsgCallback, this, ros::TransportHints().tcpNoDelay());
 
   swarm_traj_pub_ = nh.advertise<bspline::Bspline>("/planning/swarm_traj_send", 100);
-  swarm_traj_sub_ =
-      nh.subscribe("/planning/swarm_traj_recv", 100, &MvantExplorationFSM::swarmTrajCallback, this);
-  swarm_traj_timer_ =
-      nh.createTimer(ros::Duration(0.1), &MvantExplorationFSM::swarmTrajTimerCallback, this);
+  swarm_traj_sub_ = nh.subscribe("/planning/swarm_traj_recv", 100, &MvantExplorationFSM::swarmTrajCallback, this);
+  swarm_traj_timer_ = nh.createTimer(ros::Duration(0.1), &MvantExplorationFSM::swarmTrajTimerCallback, this);
 
   hgrid_pub_ = nh.advertise<exploration_manager::HGrid>("/swarm_expl/hgrid_send", 10);
   grid_tour_pub_ = nh.advertise<exploration_manager::GridTour>("/swarm_expl/grid_tour_send", 10);
@@ -141,11 +133,11 @@ void MvantExplorationFSM::FSMCallback(const ros::TimerEvent& e) {
     case INIT: {
       // Wait for odometry ready
       if (!fd_->have_odom_) {
-        ROS_WARN_THROTTLE(1.0, "no datos odometria");
+        ROS_WARN_THROTTLE(1.0, "-- no datos odometria --");
         return;
       }
       if ((ros::Time::now() - fd_->fsm_init_time_).toSec() < 2.0) {
-        ROS_WARN_THROTTLE(1.0, "esperar para inicializar");
+        ROS_WARN_THROTTLE(1.0, "-- esperar para inicializar --");
         return;
       }
       // Go to wait trigger when odom is ok
@@ -156,14 +148,14 @@ void MvantExplorationFSM::FSMCallback(const ros::TimerEvent& e) {
     //Esperando el lanzador
     case WAIT_TRIGGER: {
       // Do nothing but wait for trigger
-      ROS_WARN_THROTTLE(1.0, "esperando lanzador.");
+      ROS_WARN_THROTTLE(1.0, "-- esperando lanzador --");
       break;
     }
 
     //Estado final
     case FINISH: {
       sendStopMsg(1);
-      ROS_INFO_THROTTLE(1.0, "exploracion terminada.");
+      ROS_INFO_THROTTLE(1.0, "-- exploracion terminada --");
       break;
     }
 
@@ -172,13 +164,12 @@ void MvantExplorationFSM::FSMCallback(const ros::TimerEvent& e) {
       double check_interval = (ros::Time::now() - fd_->last_check_frontier_time_).toSec();
 
       // Check: if we don't have any frontier, then stop
-      if (expl_manager_->updateFrontierStruct(fd_->odom_pos_, fd_->odom_yaw_, fd_->odom_vel_) <=
-          1) {
-        ROS_WARN_THROTTLE(1., "No fronteras para agente %d", getId());
+      if (expl_manager_->updateFrontierStruct(fd_->odom_pos_, fd_->odom_yaw_, fd_->odom_vel_) <= 1) {
+        ROS_WARN_THROTTLE(1., "-- No fronteras para agente %d", getId());
         sendStopMsg(1);
         break;
       }
-
+      
       if (check_interval > 100.0) {
         // if (!expl_manager_->updateFrontierStruct(fd_->odom_pos_)) {
         ROS_WARN("Go back to (0,0,1)");
@@ -230,15 +221,16 @@ void MvantExplorationFSM::FSMCallback(const ros::TimerEvent& e) {
 
       } else if (res == FAIL) {  // Keep trying to replan
         fd_->static_state_ = true;
-        ROS_WARN_THROTTLE(1., "Plan fail (drone %d)", getId());
+        ROS_WARN_THROTTLE(1., "-- Plan fail (drone %d) --",
+			  getId());
         // Check if we need to send a message
-        if (num_fail_ > 10) {
+	if (num_fail_ > 10) {
           sendEmergencyMsg(true);
           num_fail_ = 0;
         } else {
           ++num_fail_;
         }
-
+	
       } else if (res == NO_GRID) {
         fd_->static_state_ = true;
         fd_->last_check_frontier_time_ = ros::Time::now();
@@ -642,6 +634,8 @@ void MvantExplorationFSM::heartbitCallback(const ros::TimerEvent& e) {
 void MvantExplorationFSM::triggerCallback(const geometry_msgs::PoseStampedConstPtr& msg) {
 
   ROS_WARN("CALLBACK CLICK");
+
+  //----------------------------------------------
   
   // // Debug traj planner
   Eigen::Vector3d pos;
@@ -654,6 +648,8 @@ void MvantExplorationFSM::triggerCallback(const geometry_msgs::PoseStampedConstP
   transitState(PLAN_TRAJ, "triggerCallback");
   return;
 
+  //----------------------------------------------
+  
   //Solo se hace cuando el estado es WAIT_TRIGGER
   if (state_ != WAIT_TRIGGER) return;
 

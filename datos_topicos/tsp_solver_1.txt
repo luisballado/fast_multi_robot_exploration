@@ -1,0 +1,21 @@
+--------------------------------------------------------------------------------
+Node [/tsp_solver_1]
+Publications: 
+ * /rosout [rosgraph_msgs/Log]
+
+Subscriptions: None
+
+Services: 
+ * /solve_tsp_1
+ * /tsp_solver_1/get_loggers
+ * /tsp_solver_1/set_logger_level
+
+
+contacting node http://a69f0e453c43:37657/ ...
+Pid: 9419
+Connections:
+ * topic: /rosout
+    * to: /rosout
+    * direction: outbound (45155 - 172.17.0.3:55332) [11]
+    * transport: TCPROS
+

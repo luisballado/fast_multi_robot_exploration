@@ -1,0 +1,42 @@
+--------------------------------------------------------------------------------
+Node [/poscmd_2_odom_1]
+Publications: 
+ * /rosout [rosgraph_msgs/Log]
+ * /state_ukf/odom_1 [nav_msgs/Odometry]
+
+Subscriptions: 
+ * /planning/pos_cmd_1 [quadrotor_msgs/PositionCommand]
+
+Services: 
+ * /poscmd_2_odom_1/get_loggers
+ * /poscmd_2_odom_1/set_logger_level
+
+
+contacting node http://a69f0e453c43:45259/ ...
+Pid: 9432
+Connections:
+ * topic: /rosout
+    * to: /rosout
+    * direction: outbound (51859 - 172.17.0.3:46290) [16]
+    * transport: TCPROS
+ * topic: /state_ukf/odom_1
+    * to: /odom_visualization_1
+    * direction: outbound (51859 - 172.17.0.3:46296) [11]
+    * transport: TCPROS
+ * topic: /state_ukf/odom_1
+    * to: /traj_server_1
+    * direction: outbound (51859 - 172.17.0.3:46310) [10]
+    * transport: TCPROS
+ * topic: /state_ukf/odom_1
+    * to: /pcl_render_node_1
+    * direction: outbound (51859 - 172.17.0.3:46314) [13]
+    * transport: TCPROS
+ * topic: /state_ukf/odom_1
+    * to: /exploration_node_1
+    * direction: outbound (51859 - 172.17.0.3:46324) [17]
+    * transport: TCPROS
+ * topic: /planning/pos_cmd_1
+    * to: /traj_server_1 (http://a69f0e453c43:46603/)
+    * direction: inbound (34992 - a69f0e453c43:34169) [12]
+    * transport: TCPROS
+
