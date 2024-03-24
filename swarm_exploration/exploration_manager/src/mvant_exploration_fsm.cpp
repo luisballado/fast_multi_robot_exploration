@@ -343,7 +343,7 @@ int MvantExplorationFSM::callExplorationPlanner() {
         fd_->start_yaw_, expl_manager_->ed_->next_pos_, expl_manager_->ed_->next_yaw_);
     fd_->avoid_collision_ = false;
   } else {  // Do full planning normally
-    res = expl_manager_->planExploreMotion(
+    res3 = expl_manager_->planExploreMotion(
         fd_->start_pt_, fd_->start_vel_, fd_->start_acc_, fd_->start_yaw_);
   }
 
@@ -641,21 +641,28 @@ void MvantExplorationFSM::heartbitCallback(const ros::TimerEvent& e) {
 
 void MvantExplorationFSM::triggerCallback(const geometry_msgs::PoseStampedConstPtr& msg) {
 
-  //ROS_WARN("CALLBACK CLICK");
-    
+  ROS_WARN("CALLBACK CLICK");
+  
   // // Debug traj planner
-  // Eigen::Vector3d pos;
-  // pos << msg->pose.position.x, msg->pose.position.y, 1;
-  // expl_manager_->ed_->next_pos_ = pos;
+  Eigen::Vector3d pos;
+  pos << msg->pose.position.x, msg->pose.position.y, 1;
+  expl_manager_->ed_->next_pos_ = pos;
 
-  // Eigen::Vector3d dir = pos - fd_->odom_pos_;
-  // expl_manager_->ed_->next_yaw_ = atan2(dir[1], dir[0]);
-  // fd_->go_back_ = true;
-  // transitState(PLAN_TRAJ, "triggerCallback");
-  // return;
+  Eigen::Vector3d dir = pos - fd_->odom_pos_;
+  expl_manager_->ed_->next_yaw_ = atan2(dir[1], dir[0]);
+  fd_->go_back_ = true;
+  transitState(PLAN_TRAJ, "triggerCallback");
+  return;
 
   //Solo se hace cuando el estado es WAIT_TRIGGER
   if (state_ != WAIT_TRIGGER) return;
+
+  //obtener la posicion para ir hacia ella
+  
+  
+  ROS_WARN_STREAM("Start expl pos: " << fd_->odom_pos_);
+  ROS_WARN_STREAM("Start expl pos transpose: " << fd_->start_pos_.transpose());
+  /**
   fd_->trigger_ = true;
   cout << "Triggered!" << endl;
   fd_->start_pos_ = fd_->odom_pos_;
@@ -666,6 +673,7 @@ void MvantExplorationFSM::triggerCallback(const geometry_msgs::PoseStampedConstP
     transitState(PLAN_TRAJ, "triggerCallback");
   } else
     transitState(FINISH, "triggerCallback");
+  **/
 }
 
 void MvantExplorationFSM::safetyCallback(const ros::TimerEvent& e) {
