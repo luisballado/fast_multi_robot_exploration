@@ -1,4 +1,5 @@
 //mvant_exploration_fsm.cpp
+//FSM
 
 #include <plan_manage/planner_manager.h>
 #include <exploration_manager/mvant_exploration_manager.h>
@@ -646,11 +647,10 @@ void MvantExplorationFSM::heartbitCallback(const ros::TimerEvent& e) {
 void MvantExplorationFSM::triggerCallback(const geometry_msgs::PoseStampedConstPtr& msg) {
 
   ROS_WARN("CALLBACK CLICK");
-  //----------------------------------------------
   /**
-  ROS_WARN("CALLBACK CLICK");
-    
+  //----------------------------------------------
   // // Debug traj planner
+  //----------------------------------------------
   Eigen::Vector3d pos;
   pos << msg->pose.position.x, msg->pose.position.y, 1;
   expl_manager_->ed_->next_pos_ = pos;
@@ -665,6 +665,13 @@ void MvantExplorationFSM::triggerCallback(const geometry_msgs::PoseStampedConstP
   
   //Solo se hace cuando el estado es WAIT_TRIGGER
   if (state_ != WAIT_TRIGGER) return;
+
+  //obtener la posicion para ir hacia ella
+  
+  
+  ROS_WARN_STREAM("Start expl pos: " << fd_->odom_pos_);
+  ROS_WARN_STREAM("Start expl pos transpose: " << fd_->start_pos_.transpose());
+  
   fd_->trigger_ = true;
   cout << "Triggered!" << endl;
   fd_->start_pos_ = fd_->odom_pos_;
