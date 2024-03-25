@@ -55,7 +55,9 @@ do
       if [ ${i} == 1 ]; then
         planner_type="racer"
       elif [ ${i} == 2 ]; then
-        planner_type="fame"
+          planner_type="fame"
+      elif [ ${i} == 3 ]; then
+	  planner_type="mvant"
       else
         continue
       fi

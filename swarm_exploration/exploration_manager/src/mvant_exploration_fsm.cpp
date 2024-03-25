@@ -14,7 +14,7 @@
 #include <plan_env/multi_map_manager.h>
 #include <active_perception/perception_utils.h>
 #include <active_perception/hgrid.h>
-
+#include <ros/console.h>
 #include <std_msgs/Bool.h>
 #include <fstream>
 
@@ -27,6 +27,8 @@ void MvantExplorationFSM::init(ros::NodeHandle& nh) {
   fd_.reset(new FSMData);
 
   /*  Fsm param  */
+  // Nodes use the parameter server to store
+  // and retrieve parameters at runtime
   nh.param("fsm/thresh_replan1", fp_->replan_thresh1_, -1.0);
   nh.param("fsm/thresh_replan2", fp_->replan_thresh2_, -1.0);
   nh.param("fsm/thresh_replan3", fp_->replan_thresh3_, -1.0);
@@ -59,26 +61,30 @@ void MvantExplorationFSM::init(ros::NodeHandle& nh) {
   fd_->go_back_ = false;
   
   num_fail_ = 0;
-
+  
   /* Ros sub, pub and timer */
   exec_timer_ = nh.createTimer(ros::Duration(0.01), &MvantExplorationFSM::FSMCallback, this);
+
   safety_timer_ = nh.createTimer(ros::Duration(0.05), &MvantExplorationFSM::safetyCallback, this);
+
   frontier_timer_ = nh.createTimer(ros::Duration(0.1), &MvantExplorationFSM::frontierCallback, this);
+
   heartbit_timer_ = nh.createTimer(ros::Duration(1.0), &MvantExplorationFSM::heartbitCallback, this);
 
   //Se puede invocar desde terminal
   //rostopic pub /move_base_simple/goal geometry_msgs/PoseStamped '{header: {stamp: now, frame_id: "map"}, pose: {position: {x: 1.0, y: 0.0, z: 0.0}, orientation: {w: 1.0}}}'
   trigger_sub_ = nh.subscribe("/move_base_simple/goal", 1, &MvantExplorationFSM::triggerCallback, this);
+  
   odom_sub_ = nh.subscribe("/odom_world", 1, &MvantExplorationFSM::odometryCallback, this);
-
+  
   replan_pub_ = nh.advertise<std_msgs::Empty>("/planning/replan", 10);
   new_pub_ = nh.advertise<std_msgs::Empty>("/planning/new", 10);
   bspline_pub_ = nh.advertise<bspline::Bspline>("/planning/bspline", 10);
   stop_pub_ = nh.advertise<std_msgs::Int32>("/stop", 1000);
   heartbit_pub_ = nh.advertise<std_msgs::Empty>("/heartbit", 100);
-
+  
   emergency_handler_pub_ = nh.advertise<std_msgs::Bool>("/trigger_emergency", 10);
-
+  
   // Swarm, timer, pub and sub
   drone_state_timer_ = nh.createTimer(ros::Duration(0.04), &MvantExplorationFSM::droneStateTimerCallback, this);
   drone_state_pub_ = nh.advertise<exploration_manager::DroneState>("/swarm_expl/drone_state_send", 10);
@@ -162,7 +168,7 @@ void MvantExplorationFSM::FSMCallback(const ros::TimerEvent& e) {
     //Estado Inactivo
     case IDLE: {
       double check_interval = (ros::Time::now() - fd_->last_check_frontier_time_).toSec();
-
+      
       // Check: if we don't have any frontier, then stop
       if (expl_manager_->updateFrontierStruct(fd_->odom_pos_, fd_->odom_yaw_, fd_->odom_vel_) <= 1) {
         ROS_WARN_THROTTLE(1., "-- No fronteras para agente %d", getId());
@@ -558,7 +564,9 @@ void MvantExplorationFSM::clearVisMarker() {
 }
 
 void MvantExplorationFSM::frontierCallback(const ros::TimerEvent& e) {
-  if (state_ == WAIT_TRIGGER) {
+
+  if (state_ != WAIT_TRIGGER) {
+    ROS_ERROR("I did it all for the nookiee");
     auto ft = expl_manager_->frontier_finder_;
     auto ed = expl_manager_->ed_;
 
@@ -631,10 +639,15 @@ void MvantExplorationFSM::heartbitCallback(const ros::TimerEvent& e) {
   heartbit_pub_.publish(std_msgs::Empty());
 }
 
+  /**
+     Callback para comenzar el programa
+     maneja estados para evolucionar el comportamiento del código
+  **/
 void MvantExplorationFSM::triggerCallback(const geometry_msgs::PoseStampedConstPtr& msg) {
 
+  ROS_WARN("CALLBACK CLICK");
   //----------------------------------------------
-  
+  /**
   ROS_WARN("CALLBACK CLICK");
     
   // // Debug traj planner
@@ -647,7 +660,7 @@ void MvantExplorationFSM::triggerCallback(const geometry_msgs::PoseStampedConstP
   fd_->go_back_ = true;
   transitState(PLAN_TRAJ, "triggerCallback");
   return;
-
+  **/
   //----------------------------------------------
   
   //Solo se hace cuando el estado es WAIT_TRIGGER
@@ -674,7 +687,7 @@ void MvantExplorationFSM::safetyCallback(const ros::TimerEvent& e) {
       fd_->avoid_collision_ = true;
       transitState(PLAN_TRAJ, "safetyCallback");
     }
-
+    
     static auto time_check = ros::Time::now();
     if (expl_manager_->sdf_map_->getOccupancy(fd_->odom_pos_) != SDFMap::OCCUPANCY::FREE) {
       if ((ros::Time::now() - time_check).toSec() > 20.) {
@@ -685,7 +698,7 @@ void MvantExplorationFSM::safetyCallback(const ros::TimerEvent& e) {
     }
   }
 }
-
+  
 void MvantExplorationFSM::odometryCallback(const nav_msgs::OdometryConstPtr& msg) {
   fd_->odom_pos_(0) = msg->pose.pose.position.x;
   fd_->odom_pos_(1) = msg->pose.pose.position.y;
@@ -710,11 +723,14 @@ void MvantExplorationFSM::odometryCallback(const nav_msgs::OdometryConstPtr& msg
 }
 
 void MvantExplorationFSM::transitState(EXPL_STATE new_state, string pos_call) {
+  
   int pre_s = int(state_);
   state_ = new_state;
+  
   ROS_INFO_STREAM("[" + pos_call + "]: Drone "
                   << getId()
                   << " from " + fd_->state_str_[pre_s] + " to " + fd_->state_str_[int(new_state)]);
+  
 }
 
 void MvantExplorationFSM::droneStateTimerCallback(const ros::TimerEvent& e) {
@@ -749,9 +765,10 @@ void MvantExplorationFSM::droneStateTimerCallback(const ros::TimerEvent& e) {
 }
 
 void MvantExplorationFSM::droneStateMsgCallback(const exploration_manager::DroneStateConstPtr& msg) {
+
   // Update other drones' states
   if (msg->drone_id == getId()) return;
-
+  
   // Skip update if collaboration is inactive
   if (!coll_assigner_->isActive()) return;
 
@@ -760,7 +777,7 @@ void MvantExplorationFSM::droneStateMsgCallback(const exploration_manager::Drone
   if ((msg_pos - fd_->odom_pos_).norm() > fp_->communication_range_) {
     return;
   }
-
+  
   auto& drone_state = expl_manager_->ed_->swarm_state_[msg->drone_id - 1];
   if (drone_state.stamp_ + 1e-4 >= msg->stamp) return;  // Avoid unordered msg
 
@@ -774,8 +791,8 @@ void MvantExplorationFSM::droneStateMsgCallback(const exploration_manager::Drone
   drone_state.goal_pos_ = geometryMsgToEigen(msg->goal_posit);
   drone_state.role_ = ROLE(msg->role);
 
-  // std::cout << "Drone " << getId() << " get drone " << int(msg->drone_id) << "'s state" <<
-  // std::endl; std::cout << drone_state.pos_.transpose() << std::endl;
+  //std::cout << "Drone " << getId() << " get drone " << int(msg->drone_id) << "'s state" <<
+  //std::endl; std::cout << drone_state.pos_.transpose() << std::endl;
 }
 
 void MvantExplorationFSM::optTimerCallback(const ros::TimerEvent& e) {

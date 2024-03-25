@@ -3,7 +3,7 @@
   <arg name="map_size_x" default="35.0"/>
   <arg name="map_size_y" default="35.0"/>
   <arg name="map_size_z" default=" 3.5"/>
-  
+    
   <!-- Global odom prefix -->
   <arg name="odom_prefix" value="/state_ukf/odom" />
   <arg name="drone_num"   default="4" />

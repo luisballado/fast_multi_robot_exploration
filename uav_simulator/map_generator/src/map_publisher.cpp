@@ -11,14 +11,14 @@ string file_name;
 int main(int argc, char** argv) {
   ros::init(argc, argv, "map_recorder");
   ros::NodeHandle node;
-
+  
   ros::Publisher cloud_pub = node.advertise<sensor_msgs::PointCloud2>(
       "/map_generator/global_cloud", 10, true);
   file_name = argv[1];
 
   // file_name = "/home/boboyu/workspaces/catkin_ws/src/uav_simulator/map_generator/resource/tmp.pcd";
   // ros::Publisher cloud_pub = node.advertise<sensor_msgs::PointCloud2>("/pcl_render_node/local_map", 10, true);
-
+  
   ros::Duration(1.0).sleep();
 
   /* load cloud from pcd */
