@@ -20,10 +20,11 @@ void rcvPosCmdCallBack(const quadrotor_msgs::PositionCommand cmd) {
   rcv_cmd = true;
   _cmd = cmd;
 
-  //comandos vant
+  //pos vant
   //std::cout << "poscmd2odom" << std::endl;
+  //std::cout << cmd.child_frame_id << std::endl;
   //std::cout << cmd << std::endl;
-  
+
 }
 
 void pubOdom() {
@@ -31,7 +32,7 @@ void pubOdom() {
   odom.header.stamp = ros::Time::now();
   odom.header.frame_id = "world";
   odom.child_frame_id = std::to_string(drone_id_);
-
+  
   if (rcv_cmd) {
     odom.pose.pose.position.x = _cmd.position.x;
     odom.pose.pose.position.y = _cmd.position.y;
@@ -52,9 +53,11 @@ void pubOdom() {
     Eigen::Vector3d yB = (alpha.cross(xB)).normalized();
     Eigen::Vector3d zB = xB.cross(yB);
     Eigen::Matrix3d R;
+
     R.col(0) = xB;
     R.col(1) = yB;
     R.col(2) = zB;
+
     Eigen::Quaterniond q(R);
     odom.pose.pose.orientation.w = q.w();
     odom.pose.pose.orientation.x = q.x();
@@ -88,7 +91,9 @@ void pubOdom() {
   }
 
   _odom_pub.publish(odom);
+
   //std::cout << "poscmd_2_odom" << std::endl;
+  //std::cout << odom.child_frame_id << std::endl;
   //std::cout << odom.pose.pose.position.x << std::endl;
   //std::cout << odom.pose.pose.position.y << std::endl;
   //std::cout << odom.pose.pose.position.z << std::endl;
@@ -106,7 +111,7 @@ int main(int argc, char** argv) {
 
   _cmd_sub = nh.subscribe("command", 1, rcvPosCmdCallBack);
   _odom_pub = nh.advertise<nav_msgs::Odometry>("odometry", 1);
-
+  
   ros::Rate rate(100);
   bool status = ros::ok();
   while (status) {

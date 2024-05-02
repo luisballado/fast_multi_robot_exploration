@@ -15,7 +15,7 @@ void SDFMap::initMap(ros::NodeHandle& nh) {
   md_.reset(new MapData);
   mr_.reset(new MapROS);
   mm_.reset(new MultiMapManager);
-
+  
   // Params of map properties
   double x_size, y_size, z_size;
   nh.param("sdf_map/resolution", mp_->resolution_, -1.0);
@@ -92,7 +92,7 @@ void SDFMap::initMap(ros::NodeHandle& nh) {
   mm_->setMap(this);
   mm_->node_ = nh;
   mm_->init();
-
+  
   caster_.reset(new RayCaster);
   caster_->setParams(mp_->resolution_, mp_->map_origin_);
 
@@ -104,7 +104,7 @@ void SDFMap::initMap(ros::NodeHandle& nh) {
   // Compute initial vertices, box and normals of map in current drone's frame
   mp_->rot_sw_ << cos(0.0), -sin(0.0), 0, sin(0.0), cos(0.0), 0, 0, 0, 1;
   mp_->trans_sw_ << 0, 0, 0;
-
+  
   Eigen::Vector3d left_bottom, right_top, left_top, right_bottom;
   left_bottom = mp_->box_mind_;
   right_top = mp_->box_maxd_;

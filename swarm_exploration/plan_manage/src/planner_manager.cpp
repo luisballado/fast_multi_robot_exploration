@@ -1,4 +1,9 @@
+/**
+   Todo lo referente a su planificador
+ */
+
 // #include <fstream>
+
 #include <plan_manage/planner_manager.h>
 #include <plan_env/sdf_map.h>
 #include <plan_env/raycast.h>
@@ -37,8 +42,8 @@ void FastPlannerManager::initPlanModules(ros::NodeHandle& nh) {
   nh.param("manager/relax_time1", pp_.relax_time1_, 0.5);
   nh.param("manager/relax_time2", pp_.relax_time2_, 0.5);
 
-  bool use_geometric_path, use_kinodynamic_path, use_topo_path, use_optimization,
-      use_active_perception;
+  bool use_geometric_path, use_kinodynamic_path, use_topo_path, use_optimization, use_active_perception;
+  
   nh.param("manager/use_geometric_path", use_geometric_path, false);
   nh.param("manager/use_kinodynamic_path", use_kinodynamic_path, false);
   nh.param("manager/use_topo_path", use_topo_path, false);
@@ -58,7 +63,7 @@ void FastPlannerManager::initPlanModules(ros::NodeHandle& nh) {
     // path_finder_->init();
     path_finder_->init(nh, edt_environment_);
   }
-
+  
   if (use_kinodynamic_path) {
     kino_path_finder_.reset(new KinodynamicAstar);
     kino_path_finder_->setParam(nh);

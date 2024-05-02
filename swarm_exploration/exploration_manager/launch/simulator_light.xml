@@ -12,7 +12,7 @@
   <arg name="map_size_y"/>
   <arg name="map_size_z"/>
   <arg name="odometry_topic" />
-
+  
   <!-- Physical simulator (so3 simulator, disturbance generator and controller) is replaced by light weight cmd2odom -->
   <node pkg="poscmd_2_odom" name="poscmd_2_odom_$(arg drone_id)" type="poscmd_2_odom" output="screen">
       <param name="drone_id"     value="$(arg drone_id)"/>

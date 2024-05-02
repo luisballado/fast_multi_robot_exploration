@@ -18,11 +18,11 @@ void Astar::init(ros::NodeHandle& nh, const EDTEnvironment::Ptr& env) {
   nh.param("astar/lambda_heu", lambda_heu_, -1.0);
   nh.param("astar/max_search_time", max_search_time_, -1.0);
   nh.param("astar/allocate_num", allocate_num_, -1);
-
+  
   tie_breaker_ = 1.0 + 1.0 / 1000;
 
   this->edt_env_ = env;
-
+  
   /* ---------- map params ---------- */
   this->inv_resolution_ = 1.0 / resolution_;
   edt_env_->sdf_map_->getRegion(origin_, map_size_3d_);

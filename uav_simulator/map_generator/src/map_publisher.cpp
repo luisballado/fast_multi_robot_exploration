@@ -12,8 +12,8 @@ int main(int argc, char** argv) {
   ros::init(argc, argv, "map_recorder");
   ros::NodeHandle node;
   
-  ros::Publisher cloud_pub = node.advertise<sensor_msgs::PointCloud2>(
-      "/map_generator/global_cloud", 10, true);
+  ros::Publisher cloud_pub = node.advertise<sensor_msgs::PointCloud2>("/map_generator/global_cloud", 10, true);
+
   file_name = argv[1];
 
   // file_name = "/home/boboyu/workspaces/catkin_ws/src/uav_simulator/map_generator/resource/tmp.pcd";
@@ -55,8 +55,9 @@ int main(int argc, char** argv) {
     ros::Duration(0.2).sleep();
     cloud_pub.publish(msg);
   }
-
+  
   cout << "finish publish map." << endl;
-
+  //cout << "termine de cargar el mapa." << endl;
+    
   return 0;
 }

@@ -25,7 +25,7 @@ int main(int argc, char** argv) {
   expl_mvant.init(nh);
   
   ros::Duration(1.0).sleep();
-    
+  
   //processes callbacks and will not
   //return until the node has been shutdown 
   ros::spin();

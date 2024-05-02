@@ -24,9 +24,9 @@ using Eigen::Vector4d;
 namespace fast_planner {
 
 void MvantExplorationFSM::init(ros::NodeHandle& nh) {
-  fp_.reset(new FSMParam);
-  fd_.reset(new FSMData);
-
+  fp_.reset(new FSMParam); //expl_data.h
+  fd_.reset(new FSMData);  //expl_data.h
+  
   /*  Fsm param  */
   // Nodes use the parameter server to store
   // and retrieve parameters at runtime
@@ -44,12 +44,12 @@ void MvantExplorationFSM::init(ros::NodeHandle& nh) {
   expl_manager_->initialize(nh);
   visualization_.reset(new PlanningVisualization(nh));
   coll_assigner_.reset(new CollaborationAssigner(nh));
-
+  
   planner_manager_ = expl_manager_->planner_manager_;
   state_ = EXPL_STATE::INIT;
-
+  
   fd_->have_odom_ = false;
-
+  
   /* Estados VANT */
   fd_->state_str_ = {
 		     "INIT", "WAIT_TRIGGER", "PLAN_TRAJ",
@@ -106,7 +106,7 @@ void MvantExplorationFSM::init(ros::NodeHandle& nh) {
   hgrid_pub_ = nh.advertise<exploration_manager::HGrid>("/swarm_expl/hgrid_send", 10);
   grid_tour_pub_ = nh.advertise<exploration_manager::GridTour>("/swarm_expl/grid_tour_send", 10);
 }
-
+  
 int MvantExplorationFSM::getId() {
   return expl_manager_->ep_->drone_id_;
 }
@@ -134,11 +134,12 @@ void MvantExplorationFSM::FSMCallback(const ros::TimerEvent& e) {
       1.0, "[FSM]: Drone " << getId() << " state: " << fd_->state_str_[int(state_)]);
 
   switch (state_) {
-
+    
     // Estado inicial,
     // espera a tener valores de odometria
     case INIT: {
       // Wait for odometry ready
+      // La odometria la recibe del callback de odometria
       if (!fd_->have_odom_) {
         ROS_WARN_THROTTLE(1.0, "-- no datos odometria --");
         return;
@@ -151,11 +152,13 @@ void MvantExplorationFSM::FSMCallback(const ros::TimerEvent& e) {
       transitState(WAIT_TRIGGER, "FSM");
       break;
     }
-
+      
     //Esperando el lanzador
     case WAIT_TRIGGER: {
       // Do nothing but wait for trigger
+      // Espera el cambio de estado desde el triggerCallback
       ROS_WARN_THROTTLE(1.0, "-- esperando lanzador --");
+      
       break;
     }
 
@@ -172,7 +175,7 @@ void MvantExplorationFSM::FSMCallback(const ros::TimerEvent& e) {
       
       // Check: if we don't have any frontier, then stop
       if (expl_manager_->updateFrontierStruct(fd_->odom_pos_, fd_->odom_yaw_, fd_->odom_vel_) <= 1) {
-        ROS_WARN_THROTTLE(1., "-- No fronteras para agente %d", getId());
+        ROS_WARN_THROTTLE(1.0, "-- No fronteras para agente %d", getId());
         sendStopMsg(1);
         break;
       }
@@ -208,6 +211,7 @@ void MvantExplorationFSM::FSMCallback(const ros::TimerEvent& e) {
         fd_->start_yaw_ << fd_->odom_yaw_, 0, 0;
       } else {
         // Replan from non-static state, starting from 'replan_time' seconds later
+	//LocalTrajData esta dentro de plan_container.hpp
         LocalTrajData* info = &planner_manager_->local_data_;
         double t_r = (ros::Time::now() - info->start_time_).toSec() + fp_->replan_time_;
         fd_->start_pt_ = info->position_traj_.evaluateDeBoorT(t_r);
@@ -228,7 +232,7 @@ void MvantExplorationFSM::FSMCallback(const ros::TimerEvent& e) {
 
       } else if (res == FAIL) {  // Keep trying to replan
         fd_->static_state_ = true;
-        ROS_WARN_THROTTLE(1., "-- Plan fail (drone %d) --",
+        ROS_WARN_THROTTLE(1.0, "-- Plan fail (drone %d) --",
 			  getId());
         // Check if we need to send a message
 	if (num_fail_ > 10) {
@@ -292,8 +296,7 @@ void MvantExplorationFSM::FSMCallback(const ros::TimerEvent& e) {
         }
 
         if (need_replan) {
-          if (expl_manager_->updateFrontierStruct(fd_->odom_pos_, fd_->odom_yaw_, fd_->odom_vel_) !=
-              0) {
+          if (expl_manager_->updateFrontierStruct(fd_->odom_pos_, fd_->odom_yaw_, fd_->odom_vel_) != 0) {
             // Update frontier and plan new motion
             thread vis_thread(&MvantExplorationFSM::visualize, this, 1);
             vis_thread.detach();
@@ -342,10 +345,9 @@ int MvantExplorationFSM::callExplorationPlanner() {
         fd_->start_yaw_, expl_manager_->ed_->next_pos_, expl_manager_->ed_->next_yaw_);
     fd_->avoid_collision_ = false;
   } else {  // Do full planning normally
-    res = expl_manager_->planExploreMotion(
-        fd_->start_pt_, fd_->start_vel_, fd_->start_acc_, fd_->start_yaw_);
+    res = expl_manager_->planExploreMotion(fd_->start_pt_, fd_->start_vel_, fd_->start_acc_, fd_->start_yaw_);
   }
-
+  
   if (res == SUCCEED) {
     auto info = &planner_manager_->local_data_;
     info->start_time_ = (ros::Time::now() - time_r).toSec() > 0 ? ros::Time::now() : time_r;
@@ -383,6 +385,7 @@ void MvantExplorationFSM::visualize(int content) {
   auto plan_data = &planner_manager_->plan_data_;
   auto ed_ptr = expl_manager_->ed_;
 
+  //Obtencion de colores
   auto getColorVal = [&](const int& id, const int& num, const int& drone_id) {
     double a = (drone_id - 1) / double(num + 1);
     double b = 1 / double(num + 1);
@@ -543,7 +546,7 @@ void MvantExplorationFSM::visualize(int content) {
 void MvantExplorationFSM::clearVisMarker() {
   for (int i = 0; i < 10; ++i) {
     visualization_->drawCubes({}, 0.1, Vector4d(0, 0, 0, 1), "frontier", i, 4);
-    // visualization_->drawCubes({}, 0.1, Vector4d(0, 0, 0, 1), "dead_frontier", i, 4);
+    //visualization_->drawCubes({}, 0.1, Vector4d(0, 0, 0, 1), "dead_frontier", i, 4);
     // visualization_->drawBox(Vector3d(0, 0, 0), Vector3d(0, 0, 0), Vector4d(1, 0, 0, 0.3),
     //   "frontier_boxes", i, 4);
   }
@@ -567,7 +570,7 @@ void MvantExplorationFSM::clearVisMarker() {
 void MvantExplorationFSM::frontierCallback(const ros::TimerEvent& e) {
 
   if (state_ != WAIT_TRIGGER) {
-    ROS_ERROR("I did it all for the nookiee");
+    
     auto ft = expl_manager_->frontier_finder_;
     auto ed = expl_manager_->ed_;
 
@@ -633,6 +636,7 @@ void MvantExplorationFSM::frontierCallback(const ros::TimerEvent& e) {
 
     // Draw grid tour
   }
+  
 }
 
 void MvantExplorationFSM::heartbitCallback(const ros::TimerEvent& e) {
@@ -645,22 +649,26 @@ void MvantExplorationFSM::heartbitCallback(const ros::TimerEvent& e) {
      maneja estados para evolucionar el comportamiento del código
   **/
 void MvantExplorationFSM::triggerCallback(const geometry_msgs::PoseStampedConstPtr& msg) {
-
-  ROS_WARN("CALLBACK CLICK");
-  /**
+  
+  ROS_WARN("CALLBACK triggerCallback");
+  
   //----------------------------------------------
   // // Debug traj planner
   //----------------------------------------------
   Eigen::Vector3d pos;
   pos << msg->pose.position.x, msg->pose.position.y, 1;
   expl_manager_->ed_->next_pos_ = pos;
-
+  
   Eigen::Vector3d dir = pos - fd_->odom_pos_;
+  
   expl_manager_->ed_->next_yaw_ = atan2(dir[1], dir[0]);
   fd_->go_back_ = true;
+
+  ROS_WARN_STREAM("Start expl pos: " << fd_->odom_pos_);
+  
   transitState(PLAN_TRAJ, "triggerCallback");
   return;
-  **/
+  
   //----------------------------------------------
   
   //Solo se hace cuando el estado es WAIT_TRIGGER
@@ -772,7 +780,7 @@ void MvantExplorationFSM::droneStateTimerCallback(const ros::TimerEvent& e) {
 }
 
 void MvantExplorationFSM::droneStateMsgCallback(const exploration_manager::DroneStateConstPtr& msg) {
-
+  
   // Update other drones' states
   if (msg->drone_id == getId()) return;
   
@@ -840,7 +848,7 @@ void MvantExplorationFSM::optTimerCallback(const ros::TimerEvent& e) {
   auto ego_goal = expl_manager_->ed_->next_pos_;
   auto& state2 = states[select_id - 1];
   auto other_goal = state2.goal_pos_;
-
+  
   auto t1 = ros::Time::now();
   Eigen::Vector3d ego_opt, other_opt;
   const bool res = coll_assigner_->optimizePositions(ego_goal, other_goal, ego_opt, other_opt);

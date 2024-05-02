@@ -41,7 +41,7 @@ MvantExplorationManager::~MvantExplorationManager() {
 void MvantExplorationManager::initialize(ros::NodeHandle& nh) {
   planner_manager_.reset(new FastPlannerManager);
   planner_manager_->initPlanModules(nh);
-
+  
   edt_environment_ = planner_manager_->edt_environment_;
   sdf_map_ = edt_environment_->sdf_map_;
   frontier_finder_.reset(new FrontierFinder(edt_environment_, nh));
@@ -237,7 +237,7 @@ bool MvantExplorationManager::isPositionReachable(const Vector3d& from, const Ve
     // Dynamics-aware path finder doesn't find a solution
     return false;
   }*/
-
+  
   if (!ViewNode::validPathExists(from, to)) {
     // Discreate A* cannot find a solution
     return false;
@@ -247,8 +247,7 @@ bool MvantExplorationManager::isPositionReachable(const Vector3d& from, const Ve
   }
 }
 
-int MvantExplorationManager::planTrajToView(const Vector3d& pos, const Vector3d& vel,
-    const Vector3d& acc, const Vector3d& yaw, const Vector3d& next_pos, const double& next_yaw) {
+int MvantExplorationManager::planTrajToView(const Vector3d& pos, const Vector3d& vel, const Vector3d& acc, const Vector3d& yaw, const Vector3d& next_pos, const double& next_yaw) {
 
   // Plan trajectory (position and yaw) to the next viewpoint
   auto t1 = ros::Time::now();
@@ -257,16 +256,20 @@ int MvantExplorationManager::planTrajToView(const Vector3d& pos, const Vector3d&
   double diff0 = next_yaw - yaw[0];
   double diff1 = fabs(diff0);
   double time_lb = min(diff1, 2 * M_PI - diff1) / ViewNode::yd_;
-
+  
   // Generate trajectory of x,y,z
   bool goal_unknown = (edt_environment_->sdf_map_->getOccupancy(next_pos) == SDFMap::UNKNOWN);
   // bool start_unknown = (edt_environment_->sdf_map_->getOccupancy(pos) == SDFMap::UNKNOWN);
   bool optimistic = ed_->plan_num_ < ep_->init_plan_num_;
   planner_manager_->path_finder_->reset();
+
+
+  //???
   if (planner_manager_->path_finder_->search(pos, next_pos, optimistic) != Astar::REACH_END) {
     ROS_ERROR("No path to next viewpoint");
     return FAIL;
   }
+
   ed_->path_next_goal_ = planner_manager_->path_finder_->getPath();
   shortenPath(ed_->path_next_goal_);
   ed_->kino_path_.clear();
@@ -362,10 +365,10 @@ int MvantExplorationManager::updateFrontierStruct(
   }
 
   double view_time = (ros::Time::now() - t1).toSec();
-
+  
   t1 = ros::Time::now();
   frontier_finder_->updateFrontierCostMatrix();
-
+  
   double mat_time = (ros::Time::now() - t1).toSec();
   double total_time = frontier_time + view_time + mat_time;
   ROS_INFO("Drone %d: frontier t: %lf, viewpoint t: %lf, mat: %lf", ep_->drone_id_, frontier_time,

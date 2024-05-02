@@ -140,8 +140,7 @@ struct LocalTrajData {
   double duration_;
   ros::Time start_time_;
   Eigen::Vector3d start_pos_;
-  NonUniformBspline position_traj_, velocity_traj_, acceleration_traj_, yaw_traj_, yawdot_traj_,
-      yawdotdot_traj_;
+  NonUniformBspline position_traj_, velocity_traj_, acceleration_traj_, yaw_traj_, yawdot_traj_, yawdotdot_traj_;
 };
 
 // structure of trajectory info

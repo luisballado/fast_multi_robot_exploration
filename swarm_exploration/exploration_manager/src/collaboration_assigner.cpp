@@ -11,7 +11,7 @@ CollaborationAssigner::CollaborationAssigner(const ros::NodeHandle& nh) {
   nh.param("collab_assigner/w_range", params_->w_range, 0.6);
   nh.param("collab_assigner/w_collision", params_->w_collision, 0.3);
   nh.param("collab_assigner/active", active_, true);
-
+  
   d_star_ =
       (params_->w_collision * params_->dist_collision + params_->w_range * params_->dist_range) /
       (params_->w_collision + params_->w_range);

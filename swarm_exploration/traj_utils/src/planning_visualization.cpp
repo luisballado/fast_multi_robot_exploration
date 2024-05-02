@@ -11,15 +11,15 @@ PlanningVisualization::PlanningVisualization(ros::NodeHandle& nh) {
 
   topo_pub_ = node.advertise<visualization_msgs::Marker>("/planning_vis/topo_path", 100);
   pubs_.push_back(topo_pub_);
-
+  
   predict_pub_ = node.advertise<visualization_msgs::Marker>("/planning_vis/prediction", 100);
   pubs_.push_back(predict_pub_);
-
+  
   visib_pub_ = node.advertise<visualization_msgs::Marker>("/planning_vis/"
                                                           "visib_constraint",
       100);
   pubs_.push_back(visib_pub_);
-
+  
   frontier_pub_ = node.advertise<visualization_msgs::Marker>("/planning_vis/frontier", 10000);
   pubs_.push_back(frontier_pub_);
 
@@ -688,39 +688,42 @@ void PlanningVisualization::drawYawPath(
   displayLineList(pts1, pts2, 0.04, Eigen::Vector4d(1, 0, 1, 1), 1, 5);
 }
 
+  /**
+     Metodo para obtener colores
+   */
 Eigen::Vector4d PlanningVisualization::getColor(const double& h, double alpha) {
   double h1 = h;
   if (h1 < 0.0 || h1 > 1.0) {
     std::cout << "h out of range" << std::endl;
     h1 = 0.0;
   }
-
+  
   double lambda;
   Eigen::Vector4d color1, color2;
   if (h1 >= -1e-4 && h1 < 1.0 / 6) {
     lambda = (h1 - 0.0) * 6;
-    color1 = Eigen::Vector4d(1, 0, 0, 1);
-    color2 = Eigen::Vector4d(1, 0, 1, 1);
+    color1 = Eigen::Vector4d(1, 0, 0, 1); //RED
+    color2 = Eigen::Vector4d(1, 0, 1, 1); //VIOLET
   } else if (h1 >= 1.0 / 6 && h1 < 2.0 / 6) {
     lambda = (h1 - 1.0 / 6) * 6;
-    color1 = Eigen::Vector4d(1, 0, 1, 1);
-    color2 = Eigen::Vector4d(0, 0, 1, 1);
+    color1 = Eigen::Vector4d(1, 0, 1, 1); //VIOLET
+    color2 = Eigen::Vector4d(0, 0, 1, 1); //BLUE
   } else if (h1 >= 2.0 / 6 && h1 < 3.0 / 6) {
     lambda = (h1 - 2.0 / 6) * 6;
-    color1 = Eigen::Vector4d(0, 0, 1, 1);
-    color2 = Eigen::Vector4d(0, 1, 1, 1);
+    color1 = Eigen::Vector4d(0, 0, 1, 1); //BLUE
+    color2 = Eigen::Vector4d(0, 1, 1, 1); //CYAN
   } else if (h1 >= 3.0 / 6 && h1 < 4.0 / 6) {
     lambda = (h1 - 3.0 / 6) * 6;
-    color1 = Eigen::Vector4d(0, 1, 1, 1);
-    color2 = Eigen::Vector4d(0, 1, 0, 1);
+    color1 = Eigen::Vector4d(0, 1, 1, 1); //CYAN
+    color2 = Eigen::Vector4d(0, 1, 0, 1); //GREEN
   } else if (h1 >= 4.0 / 6 && h1 < 5.0 / 6) {
     lambda = (h1 - 4.0 / 6) * 6;
-    color1 = Eigen::Vector4d(0, 1, 0, 1);
-    color2 = Eigen::Vector4d(1, 1, 0, 1);
+    color1 = Eigen::Vector4d(0, 1, 0, 1); //GREEN
+    color2 = Eigen::Vector4d(1, 1, 0, 1); //YELLOW
   } else if (h1 >= 5.0 / 6 && h1 <= 1.0 + 1e-4) {
     lambda = (h1 - 5.0 / 6) * 6;
-    color1 = Eigen::Vector4d(1, 1, 0, 1);
-    color2 = Eigen::Vector4d(1, 0, 0, 1);
+    color1 = Eigen::Vector4d(1, 1, 0, 1); //YELLOW
+    color2 = Eigen::Vector4d(1, 0, 0, 1); //RED
   }
 
   Eigen::Vector4d fcolor = (1 - lambda) * color1 + lambda * color2;

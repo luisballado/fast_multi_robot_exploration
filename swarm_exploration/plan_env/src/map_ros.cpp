@@ -42,7 +42,7 @@ void MapROS::init() {
   point_cloud_.points.resize(640 * 480 / (skip_pixel_ * skip_pixel_));
   // proj_points_.reserve(640 * 480 / map_->mp_->skip_pixel_ / map_->mp_->skip_pixel_);
   proj_points_cnt = 0;
-
+  
   local_updated_ = false;
   esdf_need_update_ = false;
   fuse_time_ = 0.0;

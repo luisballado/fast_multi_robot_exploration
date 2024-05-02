@@ -28,6 +28,7 @@ using std::string;
 using std::unique_ptr;
 using std::vector;
 
+
 namespace fast_planner {
 class FastPlannerManager;
 class MvantExplorationManager;
@@ -56,9 +57,9 @@ public:
   }
   ~MvantExplorationFSM() {
   }
-
+  
   void init(ros::NodeHandle& nh);
-
+  
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
 private:

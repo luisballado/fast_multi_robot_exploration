@@ -35,7 +35,7 @@ public:
       const Eigen::Vector3d& cur_acc, const double& time_lb = -1);
   bool planGlobalTraj(const Eigen::Vector3d& start_pos);
   bool topoReplan(bool collide);
-
+  
   void planYaw(const Eigen::Vector3d& start_yaw);
   void planYawExplore(const Eigen::Vector3d& start_yaw, const double& end_yaw, bool lookfwd,
       const double& relax_time);
@@ -45,11 +45,11 @@ public:
 
   bool checkTrajCollision(double& distance);
   void calcNextYaw(const double& last_yaw, double& yaw);
-
+  
   double getKinodynamicAstarVMax() const {
     return kino_path_finder_->getVMax();
   }
-
+  
   void setKinodynamicAstarVMax(double max_vel) {
     kino_path_finder_->setVMax(max_vel);
   }
@@ -102,7 +102,7 @@ private:
   vector<BsplineOptimizer::Ptr> bspline_optimizers_;
 
   void updateTrajInfo();
-
+  
   // topology guided optimization
 
   void findCollisionRange(vector<Eigen::Vector3d>& colli_start, vector<Eigen::Vector3d>& colli_end,

@@ -40,7 +40,7 @@ FrontierFinder::FrontierFinder(const EDTEnvironment::Ptr& edt, ros::NodeHandle& 
   nh.param("frontier/min_visib_num", min_visib_num_, -1);
   nh.param("frontier/min_view_finish_fraction", min_view_finish_fraction_, -1.0);
 
-  raycaster_.reset(new RayCaster);
+  raycaster_.reset(new RayCaster);   
   resolution_ = edt_env_->sdf_map_->getResolution();
   Eigen::Vector3d origin, size;
   edt_env_->sdf_map_->getRegion(origin, size);

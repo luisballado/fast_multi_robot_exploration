@@ -24,7 +24,7 @@ struct FSMData {
   Eigen::Vector3d start_pt_, start_vel_, start_acc_, start_yaw_;  // start state
   vector<Eigen::Vector3d> start_poss;
   bspline::Bspline newest_traj_;
-
+  
   // Swarm collision avoidance
   bool avoid_collision_, go_back_;
   ros::Time fsm_init_time_;
@@ -38,7 +38,7 @@ struct FSMParam {
   double replan_thresh2_;
   double replan_thresh3_;
   double replan_time_;  // second
-
+  
   // Swarm
   double attempt_interval_;   // Min interval of opt attempt
   double pair_opt_interval_;  // Min interval of successful pair opt

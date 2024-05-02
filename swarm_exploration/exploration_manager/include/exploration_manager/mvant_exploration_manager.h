@@ -75,8 +75,7 @@ public:
 
   bool isPositionReachable(const Vector3d& from, const Vector3d& to) const;
 
-  int planTrajToView(const Vector3d& pos, const Vector3d& vel, const Vector3d& acc,
-      const Vector3d& yaw, const Vector3d& next_pos, const double& next_yaw);
+  int planTrajToView(const Vector3d& pos, const Vector3d& vel, const Vector3d& acc, const Vector3d& yaw, const Vector3d& next_pos, const double& next_yaw);
 
   int updateFrontierStruct(const Eigen::Vector3d& pos, double yaw, const Eigen::Vector3d& vel);
 
@@ -97,6 +96,7 @@ public:
       const vector<int>& first, const vector<vector<int>>& firsts,
       const vector<vector<int>>& seconds, const double& w_f);
 
+  //puntero inteligente que conserva la propiedad compartida de un objeto a traves de un puntero
   shared_ptr<ExplorationData> ed_;
   shared_ptr<ExplorationParam> ep_;
   shared_ptr<FastPlannerManager> planner_manager_;
