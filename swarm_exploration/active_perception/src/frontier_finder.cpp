@@ -26,7 +26,7 @@ FrontierFinder::FrontierFinder(const EDTEnvironment::Ptr& edt, ros::NodeHandle& 
   int voxel_num = edt->sdf_map_->getVoxelNum();
   frontier_flag_ = vector<char>(voxel_num, 0);
   fill(frontier_flag_.begin(), frontier_flag_.end(), 0);
-
+  
   nh.param("frontier/cluster_min", cluster_min_, -1);
   nh.param("frontier/cluster_size_xy", cluster_size_xy_, -1.0);
   nh.param("frontier/cluster_size_z", cluster_size_z_, -1.0);
@@ -59,11 +59,11 @@ void FrontierFinder::searchFrontiers() {
   // Bounding box of updated region
   Vector3d update_min, update_max;
   edt_env_->sdf_map_->getUpdatedBox(update_min, update_max, false);
-
+  
   // Bounding box of external chunks
   vector<Eigen::Vector3d> chunk_mins, chunk_maxs;
   edt_env_->sdf_map_->mm_->getChunkBoxes(chunk_mins, chunk_maxs, false);
-
+  
   vector<Eigen::Vector3d> mins, maxs;
   mins.push_back(update_min);
   mins.insert(mins.end(), chunk_mins.begin(), chunk_mins.end());

@@ -159,6 +159,21 @@ void MvantExplorationFSM::FSMCallback(const ros::TimerEvent& e) {
       // Espera el cambio de estado desde el triggerCallback
       ROS_WARN_THROTTLE(1.0, "-- esperando lanzador --");
       
+      ROS_WARN_STREAM("odom_vx: " << fd_->odom_vel_[0]);
+      ROS_WARN_STREAM("odom_vy: " << fd_->odom_vel_[1]);
+      ROS_WARN_STREAM("odom_vz: " << fd_->odom_vel_[2]);
+
+      ROS_WARN_STREAM("odom_posx: " << fd_->odom_pos_[0]);
+      ROS_WARN_STREAM("odom_posy: " << fd_->odom_pos_[1]);
+      ROS_WARN_STREAM("odom_posz: " << fd_->odom_pos_[2]);
+
+      //K-nearest
+      //listar los voxels
+      
+      ros::Duration(0.8).sleep();
+      
+      //ROS_WARN_STREAM("Start expl pos: " << fd_->odom_pos_);
+      
       break;
     }
 
@@ -655,6 +670,7 @@ void MvantExplorationFSM::triggerCallback(const geometry_msgs::PoseStampedConstP
   //----------------------------------------------
   // // Debug traj planner
   //----------------------------------------------
+  /**
   Eigen::Vector3d pos;
   pos << msg->pose.position.x, msg->pose.position.y, 1;
   expl_manager_->ed_->next_pos_ = pos;
@@ -668,7 +684,7 @@ void MvantExplorationFSM::triggerCallback(const geometry_msgs::PoseStampedConstP
   
   transitState(PLAN_TRAJ, "triggerCallback");
   return;
-  
+  **/
   //----------------------------------------------
   
   //Solo se hace cuando el estado es WAIT_TRIGGER

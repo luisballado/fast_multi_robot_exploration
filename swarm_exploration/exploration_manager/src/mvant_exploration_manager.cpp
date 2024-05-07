@@ -330,15 +330,15 @@ int MvantExplorationManager::updateFrontierStruct(
   auto t1 = ros::Time::now();
   auto t2 = t1;
   ed_->views_.clear();
-
+  
   // Search frontiers and group them into clusters
   frontier_finder_->searchFrontiers();
   double frontier_time = (ros::Time::now() - t1).toSec();
   t1 = ros::Time::now();
-
+  
   // Find viewpoints (x,y,z,yaw) for all clusters; find the informative ones
   frontier_finder_->computeFrontiersToVisit();
-
+  
   // Binary classification of frontiers
   frontier_finder_->binaryClassify();
 

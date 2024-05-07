@@ -30,7 +30,7 @@ ROLE RoleAssigner::assignRoleCloseByFrontiers(
   if (fixed_) {
     return fix_role_;
   }
-
+  
   //
   size_t num_trails = 0, num_ftrs = 0;
   for (const auto& ftr : frontiers) {
@@ -48,7 +48,7 @@ ROLE RoleAssigner::assignRoleCloseByFrontiers(
       }
     }
   }
-
+  
   // In case we do not have any frontier/trail around, speed up the drone
   // by going into GARBAGE_COLLECTOR mode
   if (num_trails == 0 && num_ftrs == 0) {

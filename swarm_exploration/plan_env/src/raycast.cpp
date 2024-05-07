@@ -52,7 +52,7 @@ void Raycast(const Eigen::Vector3d& start, const Eigen::Vector3d& end, const Eig
   int endZ = (int)std::floor(end.z());
   Eigen::Vector3d direction = (end - start);
   double maxDist = direction.squaredNorm();
-
+  
   // Break out direction vector.
   double dx = endX - x;
   double dy = endY - y;
@@ -62,7 +62,7 @@ void Raycast(const Eigen::Vector3d& start, const Eigen::Vector3d& end, const Eig
   int stepX = (int)signum((int)dx);
   int stepY = (int)signum((int)dy);
   int stepZ = (int)signum((int)dz);
-
+  
   // See description above. The initial values depend on the fractional
   // part of the origin.
   double tMaxX = intbound(start.x(), dx);
@@ -73,10 +73,10 @@ void Raycast(const Eigen::Vector3d& start, const Eigen::Vector3d& end, const Eig
   double tDeltaX = ((double)stepX) / dx;
   double tDeltaY = ((double)stepY) / dy;
   double tDeltaZ = ((double)stepZ) / dz;
-
+  
   // Avoids an infinite loop.
   if (stepX == 0 && stepY == 0 && stepZ == 0) return;
-
+  
   double dist = 0;
   while (true) {
     if (x >= min.x() && x < max.x() && y >= min.y() && y < max.y() && z >= min.z() && z < max.z()) {

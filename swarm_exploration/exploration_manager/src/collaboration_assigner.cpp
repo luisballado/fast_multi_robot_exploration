@@ -1,5 +1,4 @@
 #include <exploration_manager/collaboration_assigner.h>
-
 #include <nlopt.hpp>
 
 namespace fast_planner {
@@ -43,7 +42,7 @@ bool CollaborationAssigner::optimizePositions(const Eigen::Vector3d& x1, const E
 
   const double tol = 1e-5;
   opt.set_xtol_rel(tol);
-
+  
   const double max_time = 1.;  // [s]
   opt.set_maxtime(max_time);
 
@@ -66,7 +65,7 @@ bool CollaborationAssigner::optimizePositions(const Eigen::Vector3d& x1, const E
 
   x2_opt[0] = x[2];
   x2_opt[1] = x[3];
-
+  
   std::cout << "Agent 1 from " << x1.transpose() << " to " << x1_opt.transpose() << std::endl;
   std::cout << "Agent 2 from " << x2.transpose() << " to " << x2_opt.transpose() << std::endl;
 
@@ -90,7 +89,7 @@ double CollaborationAssigner::distanceCost(
   grad[1] = (x[1] - x[3]) * d_star * factor;
   grad[2] = -grad[0];
   grad[3] = -grad[1];
-
+  
   // Cost
   return d_star * std::sqrt(distance2) + 0.5 * d_star4 / distance2 - 3. / 2. * d_star2;
 }

@@ -16,7 +16,7 @@ struct FSMData {
   // FSM data
   bool trigger_, have_odom_, static_state_;
   vector<string> state_str_;
-
+  
   Eigen::Vector3d odom_pos_, odom_vel_;  // odometry state
   Eigen::Quaterniond odom_orient_;
   double odom_yaw_;
