@@ -157,20 +157,9 @@ void MvantExplorationFSM::FSMCallback(const ros::TimerEvent& e) {
     case WAIT_TRIGGER: {
       // Do nothing but wait for trigger
       // Espera el cambio de estado desde el triggerCallback
-      ROS_WARN_THROTTLE(1.0, "-- esperando lanzador --");
-      
-      ROS_WARN_STREAM("odom_vx: " << fd_->odom_vel_[0]);
-      ROS_WARN_STREAM("odom_vy: " << fd_->odom_vel_[1]);
-      ROS_WARN_STREAM("odom_vz: " << fd_->odom_vel_[2]);
+      //ROS_WARN_THROTTLE(1.0, "-- esperando lanzador --");
 
-      ROS_WARN_STREAM("odom_posx: " << fd_->odom_pos_[0]);
-      ROS_WARN_STREAM("odom_posy: " << fd_->odom_pos_[1]);
-      ROS_WARN_STREAM("odom_posz: " << fd_->odom_pos_[2]);
-
-      //K-nearest
-      //listar los voxels
       
-      ros::Duration(0.8).sleep();
       
       //ROS_WARN_STREAM("Start expl pos: " << fd_->odom_pos_);
       
@@ -181,6 +170,7 @@ void MvantExplorationFSM::FSMCallback(const ros::TimerEvent& e) {
     case FINISH: {
       sendStopMsg(1);
       ROS_INFO_THROTTLE(1.0, "-- exploracion terminada --");
+
       break;
     }
 
@@ -192,7 +182,26 @@ void MvantExplorationFSM::FSMCallback(const ros::TimerEvent& e) {
       if (expl_manager_->updateFrontierStruct(fd_->odom_pos_, fd_->odom_yaw_, fd_->odom_vel_) <= 1) {
         ROS_WARN_THROTTLE(1.0, "-- No fronteras para agente %d", getId());
         sendStopMsg(1);
-        break;
+
+	ROS_WARN_STREAM("Velocidad");
+	ROS_WARN_STREAM("odom_vx: " << fd_->odom_vel_[0]);
+	ROS_WARN_STREAM("odom_vy: " << fd_->odom_vel_[1]);
+	ROS_WARN_STREAM("odom_vz: " << fd_->odom_vel_[2]);
+	
+	ROS_WARN_STREAM("Posicion");
+	ROS_WARN_STREAM("odom_posx: " << fd_->odom_pos_[0]);
+	ROS_WARN_STREAM("odom_posy: " << fd_->odom_pos_[1]);
+	ROS_WARN_STREAM("odom_posz: " << fd_->odom_pos_[2]);
+	
+	//listar los voxels
+	//obtener los voxel a la redonda en base a la distancia euclideana
+	
+	ROS_WARN_STREAM("getOccupancy");
+	ROS_WARN_STREAM("occupancy: " << planner_manager_->edt_environment_->sdf_map_->getOccupancy(Eigen::Vector3d(3, 0, 1))); 
+	
+	ros::Duration(1).sleep();
+	
+	break;
       }
       
       if (check_interval > 100.0) {

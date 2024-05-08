@@ -262,7 +262,7 @@ int MvantExplorationManager::planTrajToView(const Vector3d& pos, const Vector3d&
   // bool start_unknown = (edt_environment_->sdf_map_->getOccupancy(pos) == SDFMap::UNKNOWN);
   bool optimistic = ed_->plan_num_ < ep_->init_plan_num_;
   planner_manager_->path_finder_->reset();
-
+  
 
   //???
   if (planner_manager_->path_finder_->search(pos, next_pos, optimistic) != Astar::REACH_END) {
