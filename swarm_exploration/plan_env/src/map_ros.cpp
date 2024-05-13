@@ -37,7 +37,7 @@ void MapROS::init() {
   node_.param("map_ros/show_esdf_time", show_esdf_time_, false);
   node_.param("map_ros/show_all_map", show_all_map_, false);
   node_.param("map_ros/frame_id", frame_id_, string("world"));
-
+  
   proj_points_.resize(640 * 480 / (skip_pixel_ * skip_pixel_));
   point_cloud_.points.resize(640 * 480 / (skip_pixel_ * skip_pixel_));
   // proj_points_.reserve(640 * 480 / map_->mp_->skip_pixel_ / map_->mp_->skip_pixel_);
@@ -107,10 +107,12 @@ void MapROS::visCallback(const ros::TimerEvent& e) {
     }
   }
   // publishUnknown();
-  // publishESDF();
+  //publishESDF();
 
+  //esta estaba
   publishUpdateRange();
-  // publishDepth();
+  //nada diferente
+  //publishDepth();
 }
 
 void MapROS::updateESDFCallback(const ros::TimerEvent& /*event*/) {

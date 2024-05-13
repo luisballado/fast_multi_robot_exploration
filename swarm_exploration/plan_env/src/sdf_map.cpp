@@ -47,7 +47,7 @@ void SDFMap::initMap(ros::NodeHandle& nh) {
   nh.param("sdf_map/p_occ", mp_->p_occ_, 0.80);
   nh.param("sdf_map/max_ray_length", mp_->max_ray_length_, -0.1);
   nh.param("sdf_map/virtual_ceil_height", mp_->virtual_ceil_height_, -0.1);
-
+  
   auto logit = [](const double& x) { return log(x / (1 - x)); };
   mp_->prob_hit_log_ = logit(mp_->p_hit_);
   mp_->prob_miss_log_ = logit(mp_->p_miss_);

@@ -110,11 +110,11 @@ void MvantExplorationFSM::init(ros::NodeHandle& nh) {
 int MvantExplorationFSM::getId() {
   return expl_manager_->ep_->drone_id_;
 }
-
+  
 void MvantExplorationFSM::sendStopMsg(int code) {
   std_msgs::Int32 msg;
   msg.data = code;
-
+  
   const size_t kNumAttempts = 5;
   for (size_t i = 0; i < kNumAttempts; ++i) {
     stop_pub_.publish(msg);
@@ -132,7 +132,7 @@ void MvantExplorationFSM::sendEmergencyMsg(bool emergency) {
 void MvantExplorationFSM::FSMCallback(const ros::TimerEvent& e) {
   ROS_INFO_STREAM_THROTTLE(
       1.0, "[FSM]: Drone " << getId() << " state: " << fd_->state_str_[int(state_)]);
-
+  
   switch (state_) {
     
     // Estado inicial,
@@ -157,15 +157,12 @@ void MvantExplorationFSM::FSMCallback(const ros::TimerEvent& e) {
     case WAIT_TRIGGER: {
       // Do nothing but wait for trigger
       // Espera el cambio de estado desde el triggerCallback
-      //ROS_WARN_THROTTLE(1.0, "-- esperando lanzador --");
-
-      
-      
+      ROS_WARN_THROTTLE(1.0, "-- esperando lanzador --");
       //ROS_WARN_STREAM("Start expl pos: " << fd_->odom_pos_);
       
       break;
     }
-
+      
     //Estado final
     case FINISH: {
       sendStopMsg(1);
@@ -173,16 +170,18 @@ void MvantExplorationFSM::FSMCallback(const ros::TimerEvent& e) {
 
       break;
     }
-
+      
     //Estado Inactivo
     case IDLE: {
       double check_interval = (ros::Time::now() - fd_->last_check_frontier_time_).toSec();
       
       // Check: if we don't have any frontier, then stop
       if (expl_manager_->updateFrontierStruct(fd_->odom_pos_, fd_->odom_yaw_, fd_->odom_vel_) <= 1) {
-        ROS_WARN_THROTTLE(1.0, "-- No fronteras para agente %d", getId());
-        sendStopMsg(1);
-
+	
+	ROS_WARN_THROTTLE(1.0, "-- No fronteras para agente %d", getId());
+	
+	sendStopMsg(1);
+	
 	ROS_WARN_STREAM("Velocidad");
 	ROS_WARN_STREAM("odom_vx: " << fd_->odom_vel_[0]);
 	ROS_WARN_STREAM("odom_vy: " << fd_->odom_vel_[1]);
@@ -198,6 +197,15 @@ void MvantExplorationFSM::FSMCallback(const ros::TimerEvent& e) {
 	
 	ROS_WARN_STREAM("getOccupancy");
 	ROS_WARN_STREAM("occupancy: " << planner_manager_->edt_environment_->sdf_map_->getOccupancy(Eigen::Vector3d(3, 0, 1))); 
+
+	//numero de voxels
+	ROS_WARN_STREAM("getVoxelNum: " << expl_manager_->sdf_map_->getVoxelNum());
+	ROS_WARN_STREAM("isInMap: " << expl_manager_->sdf_map_->isInMap(Eigen::Vector3d(3, 0, 1)));
+
+	ROS_WARN_STREAM("isInMap: " << expl_manager_->sdf_map_->isInBox(Eigen::Vector3d(3, 0, 1)));
+	
+	expl_manager_->sdf_map_->setOccupied(Eigen::Vector3d(0, 0, 1),1);
+	expl_manager_->sdf_map_->setOccupied(Eigen::Vector3d(1, 1, 1),2);
 	
 	ros::Duration(1).sleep();
 	
