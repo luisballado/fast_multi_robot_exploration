@@ -55,7 +55,7 @@ void MvantExplorationFSM::init(ros::NodeHandle& nh) {
 		     "INIT", "WAIT_TRIGGER", "PLAN_TRAJ",
 		     "PUB_TRAJ", "EXEC_TRAJ", "FINISH","IDLE"
   };
-
+  
   fd_->static_state_ = true;
   fd_->trigger_ = false;
   fd_->avoid_collision_ = false;
@@ -71,7 +71,7 @@ void MvantExplorationFSM::init(ros::NodeHandle& nh) {
   frontier_timer_ = nh.createTimer(ros::Duration(0.1), &MvantExplorationFSM::frontierCallback, this);
 
   heartbit_timer_ = nh.createTimer(ros::Duration(1.0), &MvantExplorationFSM::heartbitCallback, this);
-
+  
   //Se puede invocar desde terminal
   //rostopic pub /move_base_simple/goal geometry_msgs/PoseStamped '{header: {stamp: now, frame_id: "map"}, pose: {position: {x: 1.0, y: 0.0, z: 0.0}, orientation: {w: 1.0}}}'
   trigger_sub_ = nh.subscribe("/move_base_simple/goal", 1, &MvantExplorationFSM::triggerCallback, this);
@@ -193,7 +193,7 @@ void MvantExplorationFSM::FSMCallback(const ros::TimerEvent& e) {
 	ROS_WARN_STREAM("odom_posz: " << fd_->odom_pos_[2]);
 	
 	//listar los voxels
-	//obtener los voxel a la redonda en base a la distancia euclideana
+	//obtener los voxel a la redonda en base a la distancia de influencia
 	
 	ROS_WARN_STREAM("getOccupancy");
 	ROS_WARN_STREAM("occupancy: " << planner_manager_->edt_environment_->sdf_map_->getOccupancy(Eigen::Vector3d(3, 0, 1))); 
@@ -326,7 +326,7 @@ void MvantExplorationFSM::FSMCallback(const ros::TimerEvent& e) {
           // ROS_WARN("Replan: periodic call=======================================");
           need_replan = true;
         }
-
+	
         if (need_replan) {
           if (expl_manager_->updateFrontierStruct(fd_->odom_pos_, fd_->odom_yaw_, fd_->odom_vel_) != 0) {
             // Update frontier and plan new motion
@@ -367,7 +367,7 @@ void MvantExplorationFSM::FSMCallback(const ros::TimerEvent& e) {
     }
   }
 }
-
+  
 int MvantExplorationFSM::callExplorationPlanner() {
   ros::Time time_r = ros::Time::now() + ros::Duration(fp_->replan_time_);
 
@@ -687,7 +687,6 @@ void MvantExplorationFSM::triggerCallback(const geometry_msgs::PoseStampedConstP
   //----------------------------------------------
   // // Debug traj planner
   //----------------------------------------------
-  /**
   Eigen::Vector3d pos;
   pos << msg->pose.position.x, msg->pose.position.y, 1;
   expl_manager_->ed_->next_pos_ = pos;
@@ -701,15 +700,13 @@ void MvantExplorationFSM::triggerCallback(const geometry_msgs::PoseStampedConstP
   
   transitState(PLAN_TRAJ, "triggerCallback");
   return;
-  **/
+  
   //----------------------------------------------
   
   //Solo se hace cuando el estado es WAIT_TRIGGER
   if (state_ != WAIT_TRIGGER) return;
 
   //obtener la posicion para ir hacia ella
-  
-  
   ROS_WARN_STREAM("Start expl pos: " << fd_->odom_pos_);
   ROS_WARN_STREAM("Start expl pos transpose: " << fd_->start_pos_.transpose());
   

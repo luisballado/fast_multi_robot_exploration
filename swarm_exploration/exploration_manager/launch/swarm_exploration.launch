@@ -11,6 +11,10 @@
   <!-- Planner Type -->
   <!-- tipos: fame-racer-mvant -->
   <arg name="planner_type" default="mvant"/>
+
+  <!-- Coordination Type-->
+  <!-- branchnbound-epsilon-->
+  <arg name="coordination_type" default="branchnbound"/>
   
   <!-- Renderer (Vulkan) -->
   <arg name="vulkan_renderer" default="false"/>
@@ -52,6 +56,8 @@
     <arg name="active_collaboration" default="$(arg active_collaboration)"/>
     <!-- Ablation study (all) -->
     <arg name="communication_range" default="$(arg communication_range)"/>
+    <!-- Coordintation type-->
+    <arg name="coordination_type" value="$(arg coordination_type)"/>
   </include>
 
   <include file="$(find exploration_manager)/launch/single_drone_exploration.xml" if="$(eval arg('drone_num') >= 2)">
@@ -75,6 +81,8 @@
     <arg name="active_collaboration" default="$(arg active_collaboration)"/>
     <!-- Ablation study (all) -->
     <arg name="communication_range" default="$(arg communication_range)"/>
+    <!-- Coordintation type -->
+    <arg name="coordination_type" value="$(arg coordination_type)"/>
   </include>
 
   <include file="$(find exploration_manager)/launch/single_drone_exploration.xml" if="$(eval arg('drone_num') >= 3)">
@@ -98,6 +106,8 @@
     <arg name="active_collaboration" default="$(arg active_collaboration)"/>
     <!-- Ablation study (all) -->
     <arg name="communication_range" default="$(arg communication_range)"/>
+    <!-- Coordintation type-->
+    <arg name="coordination_type" value="$(arg coordination_type)"/>
   </include>
 
   <include file="$(find exploration_manager)/launch/single_drone_exploration.xml" if="$(eval arg('drone_num') >= 4)">
@@ -121,6 +131,8 @@
     <arg name="active_collaboration" default="$(arg active_collaboration)"/>
     <!-- Ablation study (all) -->
     <arg name="communication_range" default="$(arg communication_range)"/>
+    <!-- Coordintation type-->
+    <arg name="coordination_type" value="$(arg coordination_type)"/>
   </include>
 
   <include file="$(find exploration_manager)/launch/single_drone_exploration.xml" if="$(eval arg('drone_num') >= 5)">
@@ -144,6 +156,8 @@
     <arg name="active_collaboration" default="$(arg active_collaboration)"/>
     <!-- Ablation study (all) -->
     <arg name="communication_range" default="$(arg communication_range)"/>
+    <!-- Coordintation type-->
+    <arg name="coordination_type" value="$(arg coordination_type)"/>
   </include>
   
 
@@ -168,6 +182,8 @@
     <arg name="active_collaboration" default="$(arg active_collaboration)"/>
     <!-- Ablation study (all) -->
     <arg name="communication_range" default="$(arg communication_range)"/>
+    <!-- Coordintation type-->
+    <arg name="coordination_type" value="$(arg coordination_type)"/>
   </include> -->
 
   <include file="$(find exploration_manager)/launch/single_drone_exploration.xml" if="$(eval arg('drone_num') >= 7)">
@@ -191,6 +207,8 @@
     <arg name="active_collaboration" default="$(arg active_collaboration)"/>
     <!-- Ablation study (all) -->
     <arg name="communication_range" default="$(arg communication_range)"/>
+    <!-- Coordintation type-->
+    <arg name="coordination_type" value="$(arg coordination_type)"/>
   </include>
 
   <include file="$(find exploration_manager)/launch/single_drone_exploration.xml" if="$(eval arg('drone_num') >= 8)">
@@ -214,6 +232,8 @@
     <arg name="active_collaboration" default="$(arg active_collaboration)"/>
     <!-- Ablation study (all) -->
     <arg name="communication_range" default="$(arg communication_range)"/>
+    <!-- Coordintation type-->
+    <arg name="coordination_type" value="$(arg coordination_type)"/>
   </include>
 
   <include file="$(find exploration_manager)/launch/single_drone_exploration.xml" if="$(eval arg('drone_num') >= 9)">
@@ -237,6 +257,8 @@
     <arg name="active_collaboration" default="$(arg active_collaboration)"/>
     <!-- Ablation study (all) -->
     <arg name="communication_range" default="$(arg communication_range)"/>
+    <!-- Coordintation type-->
+    <arg name="coordination_type" value="$(arg coordination_type)"/>
   </include>
 
   <include file="$(find exploration_manager)/launch/single_drone_exploration.xml" if="$(eval arg('drone_num') >= 10)">
@@ -260,6 +282,8 @@
     <arg name="active_collaboration" default="$(arg active_collaboration)"/>
     <!-- Ablation study (all) -->
     <arg name="communication_range" default="$(arg communication_range)"/>
+    <!-- Coordintation type-->
+    <arg name="coordination_type" value="$(arg coordination_type)"/>
   </include>
 
 </launch>

@@ -345,7 +345,7 @@ int MvantExplorationManager::updateFrontierStruct(
   // Get frontiers in front
   frontier_finder_->updateFrontiersInFront(
       pos, vel, yaw, explorer_params_->ftr_max_distance, explorer_params_->max_ang_dist);
-
+  
   // Retrieve the updated info
   frontier_finder_->getFrontiers(ed_->frontiers_);
   frontier_finder_->getFrontiersIds(ed_->fronters_ids_);
@@ -353,14 +353,15 @@ int MvantExplorationManager::updateFrontierStruct(
   frontier_finder_->getFrontierBoxes(ed_->frontier_boxes_);
   frontier_finder_->getLabeledFrontiers(ed_->labeled_frontiers_);
   frontier_finder_->getInFrontFrontiers(ed_->infront_frontiers_);
-
+  
   frontier_finder_->getTopViewpointsInfo(pos, ed_->points_, ed_->yaws_, ed_->averages_);
   for (int i = 0; i < ed_->points_.size(); ++i)
     ed_->views_.push_back(
         ed_->points_[i] + 2.0 * Vector3d(cos(ed_->yaws_[i]), sin(ed_->yaws_[i]), 0));
 
   if (ed_->frontiers_.empty()) {
-    ROS_WARN("No coverable frontier.");
+    ROS_WARN("La frontera no puede ser cubierta");
+    //ROS_WARN("No coverable frontier.");
     return 0;
   }
 

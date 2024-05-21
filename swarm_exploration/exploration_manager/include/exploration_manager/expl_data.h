@@ -12,6 +12,8 @@ using std::vector;
 using namespace std;
 
 namespace fast_planner {
+
+  //FinitStateMachineData
 struct FSMData {
   // FSM data
   bool trigger_, have_odom_, static_state_;
@@ -33,6 +35,7 @@ struct FSMData {
   Eigen::Vector3d start_pos_;
 };
 
+  //FinitStateParameters
 struct FSMParam {
   double replan_thresh1_;
   double replan_thresh2_;
@@ -100,6 +103,9 @@ struct ExplorationData {
   vector<Vector3d> centers_, scales_;
 
   // Swarm, other drones' state
+  //Vector of structs can be used when there is a situation where
+  //we need to keep track of records in a data structure of different
+  //people with different characteristics.
   vector<DroneState> swarm_state_;
   vector<double> pair_opt_stamps_, pair_opt_res_stamps_;
   vector<int> ego_ids_, other_ids_;
