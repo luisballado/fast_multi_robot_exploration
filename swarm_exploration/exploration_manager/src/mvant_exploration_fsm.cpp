@@ -146,7 +146,7 @@ void MvantExplorationFSM::FSMCallback(const ros::TimerEvent& e) {
       }
       if ((ros::Time::now() - fd_->fsm_init_time_).toSec() < 2.0) {
         ROS_WARN_THROTTLE(1.0, "-- esperar para inicializar --");
-        return;
+	return;
       }
       // Go to wait trigger when odom is ok
       transitState(WAIT_TRIGGER, "FSM");

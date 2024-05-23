@@ -20,7 +20,7 @@ int main(int argc, char** argv) {
   // ros::Publisher cloud_pub = node.advertise<sensor_msgs::PointCloud2>("/pcl_render_node/local_map", 10, true);
   
   ros::Duration(1.0).sleep();
-
+  
   /* load cloud from pcd */
   pcl::PointCloud<pcl::PointXYZ> cloud;
   int status = pcl::io::loadPCDFile<pcl::PointXYZ>(file_name, cloud);
@@ -57,7 +57,6 @@ int main(int argc, char** argv) {
   }
   
   cout << "finish publish map." << endl;
-  //cout << "termine de cargar el mapa." << endl;
     
   return 0;
 }

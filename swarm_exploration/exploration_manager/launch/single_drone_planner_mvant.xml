@@ -42,7 +42,9 @@
   <arg name="log_folder"/>
 
   <!-- main node -->
-  <node pkg="exploration_manager" name="exploration_node_$(arg drone_id)" type="mvant_node" output="log" launch-prefix="$(arg launch_prefix)">
+  <!--output="log"-->
+  <!--output="screen"-->
+  <node pkg="exploration_manager" name="exploration_node_$(arg drone_id)" type="mvant_node" output="screen" launch-prefix="$(arg launch_prefix)">
     <remap from ="/odom_world" to="$(arg odometry_topic)"/>
     <remap from ="/map_ros/pose"   to = "$(arg sensor_pose_topic)"/> 
     <remap from ="/map_ros/depth" to = "$(arg depth_topic)"/>
@@ -89,7 +91,6 @@
     <remap from="/sdf_map/basecoor" to="/swarm_drones/swarm_drone_basecoor" unless="$(arg simulation)"/>
     <remap from="/sdf_map/depth_cloud" to="/sdf_map/depth_cloud_$(arg drone_id)"/>
     
-
     <!--
     <param name="sdf_map/resolution"      value="$(arg map_resolution)" /> 
     <param name="sdf_map/map_size_x"   value="$(arg map_size_x)" /> 
@@ -113,7 +114,7 @@
     <param name="sdf_map/virtual_ceil_height"   value="-10"/>
     <param name="sdf_map/optimistic" value="true" type="bool"/>
     <param name="sdf_map/signed_dist" value="false" type="bool"/>
-  
+    
     <!--
     <param name="sdf_map/box_min_x" value="$(arg box_min_x)" type="double"/>
     <param name="sdf_map/box_min_y" value="$(arg box_min_y)" type="double"/>

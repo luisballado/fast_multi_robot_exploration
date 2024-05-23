@@ -37,10 +37,7 @@
   
   <!-- Ablation study (all) -->
   <arg name="communication_range" default="100000.0"/>
-
-  <!-- Coordintation type (all)-->
-  <arg name="coordination_type" value="$(arg coordination_type)"/>
-  
+    
   <!-- main algorithm params -->
   <include file="$(find exploration_manager)/launch/single_drone_planner_$(arg planner_type).xml">
     
@@ -94,7 +91,7 @@
     <arg name="communication_range" default="$(arg communication_range)"/>
 
     <!-- Coordintation type (all)-->
-    <arg name="coordination_type" value="$(arg coordination_type)"/>
+    <!--<arg name="coordination_type" value="$(arg coordination_type)"/>-->
     
   </include>
   

@@ -57,7 +57,7 @@
     <!-- Ablation study (all) -->
     <arg name="communication_range" default="$(arg communication_range)"/>
     <!-- Coordintation type-->
-    <arg name="coordination_type" value="$(arg coordination_type)"/>
+    <!--<arg name="coordination_type" value="$(arg coordination_type)"/>-->
   </include>
 
   <include file="$(find exploration_manager)/launch/single_drone_exploration.xml" if="$(eval arg('drone_num') >= 2)">
@@ -82,7 +82,7 @@
     <!-- Ablation study (all) -->
     <arg name="communication_range" default="$(arg communication_range)"/>
     <!-- Coordintation type -->
-    <arg name="coordination_type" value="$(arg coordination_type)"/>
+    <!--<arg name="coordination_type" value="$(arg coordination_type)"/>-->
   </include>
 
   <include file="$(find exploration_manager)/launch/single_drone_exploration.xml" if="$(eval arg('drone_num') >= 3)">
