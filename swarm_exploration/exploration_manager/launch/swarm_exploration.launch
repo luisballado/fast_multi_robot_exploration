@@ -12,7 +12,7 @@
   <!-- tipos: fame-racer-mvant -->
   <arg name="planner_type" default="mvant"/>
 
-  <!-- Coordination Type-->
+  <!-- Coordination Type (MVANT only)-->
   <!-- branchnbound-epsilon-->
   <arg name="coordination_type" default="branchnbound"/>
   
@@ -22,7 +22,7 @@
   
   <!-- Logging -->
   <arg name="log_folder" default="$(env HOME)/exp_logs/test"/> 
-
+  
   <!-- Ablation study (FAME only) -->
   <arg name="role_assigner_fixed" default="false"/>
   <arg name="role_assigner_fix_role" default="0"/> <!-- 0: EXPL, 1: GC -->
@@ -56,8 +56,8 @@
     <arg name="active_collaboration" default="$(arg active_collaboration)"/>
     <!-- Ablation study (all) -->
     <arg name="communication_range" default="$(arg communication_range)"/>
-    <!-- Coordintation type-->
-    <!--<arg name="coordination_type" value="$(arg coordination_type)"/>-->
+    <!-- Coordination Type (MVANT only)-->
+    <arg name="coordination_type" value="$(arg coordination_type)"/>
   </include>
 
   <include file="$(find exploration_manager)/launch/single_drone_exploration.xml" if="$(eval arg('drone_num') >= 2)">
@@ -81,8 +81,8 @@
     <arg name="active_collaboration" default="$(arg active_collaboration)"/>
     <!-- Ablation study (all) -->
     <arg name="communication_range" default="$(arg communication_range)"/>
-    <!-- Coordintation type -->
-    <!--<arg name="coordination_type" value="$(arg coordination_type)"/>-->
+    <!-- Coordination Type (MVANT only)-->
+    <arg name="coordination_type" value="$(arg coordination_type)"/>
   </include>
 
   <include file="$(find exploration_manager)/launch/single_drone_exploration.xml" if="$(eval arg('drone_num') >= 3)">
@@ -106,7 +106,7 @@
     <arg name="active_collaboration" default="$(arg active_collaboration)"/>
     <!-- Ablation study (all) -->
     <arg name="communication_range" default="$(arg communication_range)"/>
-    <!-- Coordintation type-->
+    <!-- Coordination Type (MVANT only)-->
     <arg name="coordination_type" value="$(arg coordination_type)"/>
   </include>
 
@@ -131,7 +131,7 @@
     <arg name="active_collaboration" default="$(arg active_collaboration)"/>
     <!-- Ablation study (all) -->
     <arg name="communication_range" default="$(arg communication_range)"/>
-    <!-- Coordintation type-->
+    <!-- Coordination Type (MVANT only)-->
     <arg name="coordination_type" value="$(arg coordination_type)"/>
   </include>
 
@@ -156,7 +156,7 @@
     <arg name="active_collaboration" default="$(arg active_collaboration)"/>
     <!-- Ablation study (all) -->
     <arg name="communication_range" default="$(arg communication_range)"/>
-    <!-- Coordintation type-->
+    <!-- Coordination Type (MVANT only)-->
     <arg name="coordination_type" value="$(arg coordination_type)"/>
   </include>
   
@@ -182,7 +182,7 @@
     <arg name="active_collaboration" default="$(arg active_collaboration)"/>
     <!-- Ablation study (all) -->
     <arg name="communication_range" default="$(arg communication_range)"/>
-    <!-- Coordintation type-->
+    <!-- Coordination Type (MVANT only)-->
     <arg name="coordination_type" value="$(arg coordination_type)"/>
   </include> -->
 
@@ -207,7 +207,7 @@
     <arg name="active_collaboration" default="$(arg active_collaboration)"/>
     <!-- Ablation study (all) -->
     <arg name="communication_range" default="$(arg communication_range)"/>
-    <!-- Coordintation type-->
+    <!-- Coordination Type (MVANT only)-->
     <arg name="coordination_type" value="$(arg coordination_type)"/>
   </include>
 
@@ -232,7 +232,7 @@
     <arg name="active_collaboration" default="$(arg active_collaboration)"/>
     <!-- Ablation study (all) -->
     <arg name="communication_range" default="$(arg communication_range)"/>
-    <!-- Coordintation type-->
+    <!-- Coordination Type (MVANT only)-->
     <arg name="coordination_type" value="$(arg coordination_type)"/>
   </include>
 
@@ -257,7 +257,7 @@
     <arg name="active_collaboration" default="$(arg active_collaboration)"/>
     <!-- Ablation study (all) -->
     <arg name="communication_range" default="$(arg communication_range)"/>
-    <!-- Coordintation type-->
+    <!-- Coordination Type (MVANT only)-->
     <arg name="coordination_type" value="$(arg coordination_type)"/>
   </include>
 
@@ -282,7 +282,7 @@
     <arg name="active_collaboration" default="$(arg active_collaboration)"/>
     <!-- Ablation study (all) -->
     <arg name="communication_range" default="$(arg communication_range)"/>
-    <!-- Coordintation type-->
+    <!-- Coordination Type (MVANT only)-->
     <arg name="coordination_type" value="$(arg coordination_type)"/>
   </include>
 
