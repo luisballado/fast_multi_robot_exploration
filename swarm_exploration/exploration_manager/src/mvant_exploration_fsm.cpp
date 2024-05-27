@@ -39,6 +39,9 @@ void MvantExplorationFSM::init(ros::NodeHandle& nh) {
   nh.param("fsm/repeat_send_num", fp_->repeat_send_num_, 10);
   nh.param("fsm/communication_range", fp_->communication_range_, std::numeric_limits<double>::max());
 
+  //coordination
+  nh.param("exploration/coordination/type", fp_->coordination_type, string("null"));
+  
   /* Initialize main modules */
   expl_manager_.reset(new MvantExplorationManager);
   expl_manager_->initialize(nh);
@@ -158,6 +161,7 @@ void MvantExplorationFSM::FSMCallback(const ros::TimerEvent& e) {
       // Do nothing but wait for trigger
       // Espera el cambio de estado desde el triggerCallback
       ROS_WARN_THROTTLE(1.0, "-- esperando lanzador --");
+      ROS_WARN_THROTTLE(1.0, "Tipo coordinacion: %s", fp_->coordination_type.c_str());
       //ROS_WARN_STREAM("Start expl pos: " << fd_->odom_pos_);
       
       break;

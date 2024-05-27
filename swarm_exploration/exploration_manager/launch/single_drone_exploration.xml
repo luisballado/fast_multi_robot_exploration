@@ -37,6 +37,8 @@
   
   <!-- Ablation study (all) -->
   <arg name="communication_range" default="100000.0"/>
+
+  <arg name="coordination_type" default="branchandbound"/>
     
   <!-- main algorithm params -->
   <include file="$(find exploration_manager)/launch/single_drone_planner_$(arg planner_type).xml">
@@ -90,9 +92,9 @@
     <!-- Ablation study (all) -->
     <arg name="communication_range" default="$(arg communication_range)"/>
 
-    <!-- Coordintation type (all)-->
-    <!--<arg name="coordination_type" value="$(arg coordination_type)"/>-->
-    
+    <!-- Coordintation type (MVANT only)-->
+    <arg name="coordination_type" value="$(arg coordination_type)"/>
+        
   </include>
   
   <!-- trajectory server -->

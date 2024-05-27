@@ -41,6 +41,9 @@
   <!-- Logging -->
   <arg name="log_folder"/>
 
+  <!-- Coordintation type (MVANT only)-->
+  <arg name="coordination_type" default="branchandbound"/>
+  
   <!-- main node -->
   <!--output="log"-->
   <!--output="screen"-->
@@ -190,6 +193,9 @@
     <param name="exploration/drone_num" value="$(arg drone_num)" type="double"/>
     <param name="exploration/drone_id" value="$(arg drone_id)" type="int"/>
     <param name="exploration/init_plan_num" value="2" type="int"/>
+
+    <!--Coordination type (MVANT only)-->
+    <param name="exploration/coordination/type" value="$(arg coordination_type)" type="string"/>
     
     <param name="frontier/cluster_min" value="100" type="int"/>
     <param name="frontier/cluster_size_xy" value="2.0" type="double"/>

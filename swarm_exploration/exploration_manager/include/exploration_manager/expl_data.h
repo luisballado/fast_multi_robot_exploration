@@ -49,6 +49,10 @@ struct FSMParam {
 
   // Communication
   double communication_range_;
+
+  //Coordination
+  string coordination_type;
+  
 };
 
 struct DroneState {
