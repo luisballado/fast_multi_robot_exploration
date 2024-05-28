@@ -948,7 +948,7 @@ void MvantExplorationManager::refineLocalTour(const Vector3d& cur_pos, const Vec
     vector<double>& refined_yaws) {
   double create_time, search_time, parse_time;
   auto t1 = ros::Time::now();
-
+  
   // Create graph for viewpoints selection
   GraphSearch<ViewNode> g_search;
   vector<ViewNode::Ptr> last_group, cur_group;
@@ -1367,7 +1367,7 @@ bool MvantExplorationManager::findTourOfTrails(const Vector3d& cur_pos,
   ed_->trails_tour_ = { { cur_pos, cur_yaw[0] } };
   for (auto id : ids) {
     if (id <= 0) continue;
-
+    
     auto it = close_by_trails.begin();
     std::advance(it, id - 1);
     ed_->trails_tour_.push_back({ it->viewpoints_.front().pos_, it->viewpoints_.front().yaw_ });

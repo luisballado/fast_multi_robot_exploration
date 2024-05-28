@@ -12,7 +12,7 @@ backward::SignalHandling sh;
 using namespace fast_planner;
 
 int main(int argc, char** argv) {
-
+  
   //ros::init(..) has to be called before calling other ROS functions
   ros::init(argc, argv, "mvant_node");
 

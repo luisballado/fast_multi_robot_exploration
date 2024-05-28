@@ -17,6 +17,7 @@
 #include <active_perception/hgrid.h>
 #include <ros/console.h>
 #include <std_msgs/Bool.h>
+#include <std_msgs/String.h>
 #include <fstream>
 
 using Eigen::Vector4d;
@@ -42,7 +43,8 @@ void MvantExplorationFSM::init(ros::NodeHandle& nh) {
   nh.param("fsm/repeat_send_num", fp_->repeat_send_num_, 10);
   nh.param("fsm/communication_range", fp_->communication_range_, std::numeric_limits<double>::max());
 
-  //coordination
+  //ejemplo paso de un parametro
+  //para la coordination
   nh.param("exploration/coordination/type", fp_->coordination_type, string("null"));
   
   /* Initialize main modules */
@@ -79,9 +81,9 @@ void MvantExplorationFSM::init(ros::NodeHandle& nh) {
   safety_timer_ = nh.createTimer(ros::Duration(0.05), &MvantExplorationFSM::safetyCallback, this);
 
   frontier_timer_ = nh.createTimer(ros::Duration(0.1), &MvantExplorationFSM::frontierCallback, this);
-
-  heartbit_timer_ = nh.createTimer(ros::Duration(1.0), &MvantExplorationFSM::heartbitCallback, this);
   
+  heartbit_timer_ = nh.createTimer(ros::Duration(1.0), &MvantExplorationFSM::heartbitCallback, this);
+
   //Se puede invocar desde terminal
   //rostopic pub /move_base_simple/goal geometry_msgs/PoseStamped '{header: {stamp: now, frame_id: "map"}, pose: {position: {x: 1.0, y: 0.0, z: 0.0}, orientation: {w: 1.0}}}'
   trigger_sub_ = nh.subscribe("/move_base_simple/goal", 1, &MvantExplorationFSM::triggerCallback, this);
@@ -94,6 +96,14 @@ void MvantExplorationFSM::init(ros::NodeHandle& nh) {
   stop_pub_ = nh.advertise<std_msgs::Int32>("/stop", 1000);
   heartbit_pub_ = nh.advertise<std_msgs::Empty>("/heartbit", 100);
   
+  //prueba un nuevo publicador
+  //el segundo parametro es el message queue buffer?
+  //publish
+  example_pub_ = nh.advertise<std_msgs::String>("/example", 1000);
+  
+  //subscriber
+  example_sub_ = nh.subscribe("/example", 1000, &MvantExplorationFSM::exampleCallback, this);
+  
   emergency_handler_pub_ = nh.advertise<std_msgs::Bool>("/trigger_emergency", 10);
   
   // Swarm, timer, pub and sub
@@ -105,7 +115,7 @@ void MvantExplorationFSM::init(ros::NodeHandle& nh) {
   opt_pub_ = nh.advertise<exploration_manager::PairOpt>("/swarm_expl/pair_opt_send", 10);
   opt_sub_ = nh.subscribe("/swarm_expl/pair_opt_recv", 100, &MvantExplorationFSM::optMsgCallback,
       this, ros::TransportHints().tcpNoDelay());
-
+  
   opt_res_pub_ = nh.advertise<exploration_manager::PairOptResponse>("/swarm_expl/pair_opt_res_send", 10);
   opt_res_sub_ = nh.subscribe("/swarm_expl/pair_opt_res_recv", 100, &MvantExplorationFSM::optResMsgCallback, this, ros::TransportHints().tcpNoDelay());
 
@@ -682,6 +692,11 @@ void MvantExplorationFSM::frontierCallback(const ros::TimerEvent& e) {
   
 }
 
+  //Ejemplo sencillo
+  void MvantExplorationFSM::exampleCallback(const std_msgs::String::ConstPtr& msg){
+    ROS_ERROR("I heard: [%s]", msg->data.c_str());
+  }
+  
 void MvantExplorationFSM::heartbitCallback(const ros::TimerEvent& e) {
   //ROS_ERROR("HEART-BIT-BIT");
   heartbit_pub_.publish(std_msgs::Empty());

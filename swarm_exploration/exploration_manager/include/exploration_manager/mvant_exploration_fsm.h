@@ -7,6 +7,7 @@
 #include <nav_msgs/Path.h>
 #include <std_msgs/Empty.h>
 #include <std_msgs/Int32.h>
+#include <std_msgs/String.h>
 #include <nav_msgs/Odometry.h>
 #include <visualization_msgs/Marker.h>
 #include <exploration_manager/DroneState.h>
@@ -80,7 +81,8 @@ private:
   void heartbitCallback(const ros::TimerEvent& e);
   void triggerCallback(const geometry_msgs::PoseStampedConstPtr& msg);
   void odometryCallback(const nav_msgs::OdometryConstPtr& msg);
-
+  void exampleCallback(const std_msgs::String::ConstPtr& msg);
+  
   // Swarm
   void droneStateTimerCallback(const ros::TimerEvent& e);
   void droneStateMsgCallback(const exploration_manager::DroneStateConstPtr& msg);
@@ -106,10 +108,16 @@ private:
   ros::Subscriber trigger_sub_, odom_sub_;
   ros::Publisher replan_pub_, new_pub_, bspline_pub_;
 
+  //Example
+  ros::Subscriber example_sub_;
+
+  //Example
+  ros::Publisher example_pub_;
+  
   // Logging
   ros::Timer heartbit_timer_;
   ros::Publisher stop_pub_, heartbit_pub_;
-
+  
   // Emergency handler
   ros::Publisher emergency_handler_pub_;
   size_t num_fail_;
