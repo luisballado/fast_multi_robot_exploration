@@ -196,7 +196,7 @@ void odom_callback(const nav_msgs::Odometry::ConstPtr& msg) {
   velROS.color.g = color[1];
   velROS.color.b = color[2];
   velPub.publish(velROS);
-
+  
   // // Path
   // static ros::Time prevt = msg->header.stamp;
   // if ((msg->header.stamp - prevt).toSec() > 0.1) {

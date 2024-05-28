@@ -22,7 +22,10 @@
 using Eigen::Vector4d;
 
 namespace fast_planner {
-
+  
+/**
+     INIT
+*/
 void MvantExplorationFSM::init(ros::NodeHandle& nh) {
   fp_.reset(new FSMParam); //expl_data.h
   fd_.reset(new FSMData);  //expl_data.h
@@ -45,15 +48,17 @@ void MvantExplorationFSM::init(ros::NodeHandle& nh) {
   /* Initialize main modules */
   expl_manager_.reset(new MvantExplorationManager);
   expl_manager_->initialize(nh);
+
   visualization_.reset(new PlanningVisualization(nh));
   coll_assigner_.reset(new CollaborationAssigner(nh));
   
   planner_manager_ = expl_manager_->planner_manager_;
+
   state_ = EXPL_STATE::INIT;
   
   fd_->have_odom_ = false;
   
-  /* Estados VANT */
+  /* Estados VANT FSM*/
   fd_->state_str_ = {
 		     "INIT", "WAIT_TRIGGER", "PLAN_TRAJ",
 		     "PUB_TRAJ", "EXEC_TRAJ", "FINISH","IDLE"
@@ -65,8 +70,10 @@ void MvantExplorationFSM::init(ros::NodeHandle& nh) {
   fd_->go_back_ = false;
   
   num_fail_ = 0;
-  
+
+  // PROGRAMAS EN PARALELO CORRIENDO CADA CIERTO TIEMPO
   /* Ros sub, pub and timer */
+  
   exec_timer_ = nh.createTimer(ros::Duration(0.01), &MvantExplorationFSM::FSMCallback, this);
 
   safety_timer_ = nh.createTimer(ros::Duration(0.05), &MvantExplorationFSM::safetyCallback, this);
@@ -691,6 +698,7 @@ void MvantExplorationFSM::triggerCallback(const geometry_msgs::PoseStampedConstP
   //----------------------------------------------
   // // Debug traj planner
   //----------------------------------------------
+  /**
   Eigen::Vector3d pos;
   pos << msg->pose.position.x, msg->pose.position.y, 1;
   expl_manager_->ed_->next_pos_ = pos;
@@ -704,7 +712,7 @@ void MvantExplorationFSM::triggerCallback(const geometry_msgs::PoseStampedConstP
   
   transitState(PLAN_TRAJ, "triggerCallback");
   return;
-  
+  **/
   //----------------------------------------------
   
   //Solo se hace cuando el estado es WAIT_TRIGGER
