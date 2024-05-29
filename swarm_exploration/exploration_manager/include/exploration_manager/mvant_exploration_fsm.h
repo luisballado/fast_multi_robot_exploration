@@ -81,7 +81,7 @@ private:
   void heartbitCallback(const ros::TimerEvent& e);
   void triggerCallback(const geometry_msgs::PoseStampedConstPtr& msg);
   void odometryCallback(const nav_msgs::OdometryConstPtr& msg);
-  void exampleCallback(const std_msgs::String::ConstPtr& msg);
+  void exampleCallback(const geometry_msgs::PoseStamped::ConstPtr& msg);
   
   // Swarm
   void droneStateTimerCallback(const ros::TimerEvent& e);

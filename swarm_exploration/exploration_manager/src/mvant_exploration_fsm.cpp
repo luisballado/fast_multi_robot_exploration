@@ -83,7 +83,7 @@ void MvantExplorationFSM::init(ros::NodeHandle& nh) {
   frontier_timer_ = nh.createTimer(ros::Duration(0.1), &MvantExplorationFSM::frontierCallback, this);
   
   heartbit_timer_ = nh.createTimer(ros::Duration(1.0), &MvantExplorationFSM::heartbitCallback, this);
-
+  
   //Se puede invocar desde terminal
   //rostopic pub /move_base_simple/goal geometry_msgs/PoseStamped '{header: {stamp: now, frame_id: "map"}, pose: {position: {x: 1.0, y: 0.0, z: 0.0}, orientation: {w: 1.0}}}'
   trigger_sub_ = nh.subscribe("/move_base_simple/goal", 1, &MvantExplorationFSM::triggerCallback, this);
@@ -99,7 +99,7 @@ void MvantExplorationFSM::init(ros::NodeHandle& nh) {
   //prueba un nuevo publicador
   //el segundo parametro es el message queue buffer?
   //publish
-  example_pub_ = nh.advertise<std_msgs::String>("/example", 1000);
+  example_pub_ = nh.advertise<geometry_msgs::PoseStamped>("/example", 1000);
   
   //subscriber
   example_sub_ = nh.subscribe("/example", 1000, &MvantExplorationFSM::exampleCallback, this);
@@ -693,8 +693,10 @@ void MvantExplorationFSM::frontierCallback(const ros::TimerEvent& e) {
 }
 
   //Ejemplo sencillo
-  void MvantExplorationFSM::exampleCallback(const std_msgs::String::ConstPtr& msg){
-    ROS_ERROR("I heard: [%s]", msg->data.c_str());
+  void MvantExplorationFSM::exampleCallback(const geometry_msgs::PoseStamped::ConstPtr& msg){
+    ROS_ERROR("Received pose: position(%f, %f, %f) orientation(%f, %f, %f, %f)",
+             msg->pose.position.x, msg->pose.position.y, msg->pose.position.z,
+             msg->pose.orientation.x, msg->pose.orientation.y, msg->pose.orientation.z, msg->pose.orientation.w);
   }
   
 void MvantExplorationFSM::heartbitCallback(const ros::TimerEvent& e) {
