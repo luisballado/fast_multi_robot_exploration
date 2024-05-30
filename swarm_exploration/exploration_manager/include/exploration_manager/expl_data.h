@@ -92,7 +92,7 @@ struct ExplorationData {
   vector<Vector3d> refined_views_;  // points + dir(yaw)
   vector<Vector3d> refined_views1_, refined_views2_;
   vector<Vector3d> refined_tour_;
-
+  
   Vector3d next_goal_;
   vector<Vector3d> path_next_goal_, kino_path_;
   Vector3d next_pos_;

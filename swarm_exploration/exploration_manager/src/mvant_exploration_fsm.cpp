@@ -85,7 +85,8 @@ void MvantExplorationFSM::init(ros::NodeHandle& nh) {
   heartbit_timer_ = nh.createTimer(ros::Duration(1.0), &MvantExplorationFSM::heartbitCallback, this);
   
   //Se puede invocar desde terminal
-  //rostopic pub /move_base_simple/goal geometry_msgs/PoseStamped '{header: {stamp: now, frame_id: "map"}, pose: {position: {x: 1.0, y: 0.0, z: 0.0}, orientation: {w: 1.0}}}'
+  //rostopic pub /move_base_simple/goal
+  //geometry_msgs/PoseStamped '{header: {stamp: now, frame_id: "map"}, pose: {position: {x: 1.0, y: 0.0, z: 0.0}, orientation: {w: 1.0}}}'
   trigger_sub_ = nh.subscribe("/move_base_simple/goal", 1, &MvantExplorationFSM::triggerCallback, this);
   
   odom_sub_ = nh.subscribe("/odom_world", 1, &MvantExplorationFSM::odometryCallback, this);
