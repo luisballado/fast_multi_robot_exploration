@@ -64,6 +64,10 @@ public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
 private:
+
+  double calcularDistancia(double x, double y, double z,
+			   double cx, double cy, double cz);
+  
   /* helper functions */
   int callExplorationPlanner();
   void transitState(EXPL_STATE new_state, string pos_call);

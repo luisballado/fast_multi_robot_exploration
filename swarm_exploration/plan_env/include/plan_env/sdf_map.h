@@ -33,9 +33,7 @@ public:
   enum OCCUPANCY { UNKNOWN, FREE, OCCUPIED };
   
   void initMap(ros::NodeHandle& nh);
-  void inputPointCloud(const pcl::PointCloud<pcl::PointXYZ>& points, const int& point_num,
-      const Eigen::Vector3d& camera_pos);
-  
+  void inputPointCloud(const pcl::PointCloud<pcl::PointXYZ>& points, const int& point_num, const Eigen::Vector3d& camera_pos);
   void posToIndex(const Eigen::Vector3d& pos, Eigen::Vector3i& id);
   void indexToPos(const Eigen::Vector3i& id, Eigen::Vector3d& pos);
   void boundIndex(Eigen::Vector3i& id);

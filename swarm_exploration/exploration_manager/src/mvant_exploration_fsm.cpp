@@ -131,6 +131,10 @@ void MvantExplorationFSM::init(ros::NodeHandle& nh) {
 int MvantExplorationFSM::getId() {
   return expl_manager_->ep_->drone_id_;
 }
+
+double MvantExplorationFSM::calcularDistancia(double x, double y, double z, double cx, double cy, double cz){
+  return std::sqrt(std::pow(x - cx, 2) + std::pow(y - cy, 2) + std::pow(z - cz, 2)); 
+}
   
 void MvantExplorationFSM::sendStopMsg(int code) {
   std_msgs::Int32 msg;
@@ -695,9 +699,53 @@ void MvantExplorationFSM::frontierCallback(const ros::TimerEvent& e) {
 
   //Ejemplo sencillo
   void MvantExplorationFSM::exampleCallback(const geometry_msgs::PoseStamped::ConstPtr& msg){
+
     ROS_ERROR("Received pose: position(%f, %f, %f) orientation(%f, %f, %f, %f)",
              msg->pose.position.x, msg->pose.position.y, msg->pose.position.z,
              msg->pose.orientation.x, msg->pose.orientation.y, msg->pose.orientation.z, msg->pose.orientation.w);
+
+    // Punto central y distancia de interes
+    int cx = msg->pose.position.x;
+    int cy = msg->pose.position.y;
+    int cz = msg->pose.position.z;
+
+    double di = 20.0;
+
+    // Definir los limites del cubo
+    double minX = cx-di, maxX = cx+di;
+    double minY = cy-di, maxY = cy+di;
+    double minZ = cz-di, maxZ = cz+di;
+    
+    // Iterar sobre el cubo 3D
+    for (int x = minX; x <= maxX; ++x) {
+      for (int y = minY; y <= maxY; ++y) {
+	for (int z = minZ; z <= maxZ; ++z) {
+	  // Calcular la distancia desde el punto (x, y, z) al punto central (cx, cy, cz)
+	  
+	  expl_manager_->sdf_map_->setOccupied(Eigen::Vector3d(x,y,z));
+	  //double distancia = calcularDistancia(x, y, z, cx, cy, cz);
+	  if(expl_manager_->sdf_map_->getOccupancy(Eigen::Vector3d(x,y,z))==SDFMap::OCCUPANCY::FREE){
+	    std::cout << "x: " << x << ", y:" << y << ", z:" << z << " - FREE :: " << expl_manager_->sdf_map_->getOccupancy(Eigen::Vector3d(x,y,z)) << "\n";
+	  }
+
+	  if(expl_manager_->sdf_map_->getOccupancy(Eigen::Vector3d(x,y,z))==SDFMap::OCCUPANCY::OCCUPIED){
+	    std::cout << "x: " << x << ", y:" << y << ", z:" << z << " - OCCUPPIED:: " << expl_manager_->sdf_map_->getOccupancy(Eigen::Vector3d(x,y,z)) << "\n";
+	  }
+
+	  /*
+	    if(expl_manager_->sdf_map_->getOccupancy(Eigen::Vector3d(x,y,z))==SDFMap::OCCUPANCY::UNKNOWN){
+	    std::cout << "UNKNOWN :: " << expl_manager_->sdf_map_->getOccupancy(Eigen::Vector3d(x,y,z));
+	  }
+	  */
+	  
+	  // Verificar si la distancia está dentro del rango de interés
+	  //if (distancia <= di) {
+	  //std::cout << "Punto (" << x << ", " << y << ", " << z << ") está dentro de la distancia de interés.\n";
+	  //}
+	}
+      }
+    }
+    
   }
   
 void MvantExplorationFSM::heartbitCallback(const ros::TimerEvent& e) {
