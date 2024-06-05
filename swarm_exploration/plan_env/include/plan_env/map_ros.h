@@ -54,7 +54,7 @@ private:
   // may use ExactTime?
   typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::Image,
       geometry_msgs::PoseStamped>
-      SyncPolicyImagePose;
+  SyncPolicyImagePose;
   typedef shared_ptr<message_filters::Synchronizer<SyncPolicyImagePose>> SynchronizerImagePose;
   typedef message_filters::sync_policies::ApproximateTime<sensor_msgs::PointCloud2,
       geometry_msgs::PoseStamped>
