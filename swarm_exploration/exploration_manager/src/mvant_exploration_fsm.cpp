@@ -709,7 +709,7 @@ void MvantExplorationFSM::frontierCallback(const ros::TimerEvent& e) {
     int cy = msg->pose.position.y;
     int cz = msg->pose.position.z;
 
-    double di = 20.0;
+    double di = 3.0;
 
     // Definir los limites del cubo
     double minX = cx-di, maxX = cx+di;
@@ -732,11 +732,11 @@ void MvantExplorationFSM::frontierCallback(const ros::TimerEvent& e) {
 	    std::cout << "x: " << x << ", y:" << y << ", z:" << z << " - OCCUPPIED:: " << expl_manager_->sdf_map_->getOccupancy(Eigen::Vector3d(x,y,z)) << "\n";
 	  }
 
-	  /*
-	    if(expl_manager_->sdf_map_->getOccupancy(Eigen::Vector3d(x,y,z))==SDFMap::OCCUPANCY::UNKNOWN){
-	    std::cout << "UNKNOWN :: " << expl_manager_->sdf_map_->getOccupancy(Eigen::Vector3d(x,y,z));
+	  
+	  if(expl_manager_->sdf_map_->getOccupancy(Eigen::Vector3d(x,y,z))==SDFMap::OCCUPANCY::UNKNOWN){
+	    std::cout << "x: " << x << ", y:" << y << ", z:" << z << " - UNKNOWN:: " << expl_manager_->sdf_map_->getOccupancy(Eigen::Vector3d(x,y,z)) << "\n";
 	  }
-	  */
+	  
 	  
 	  // Verificar si la distancia está dentro del rango de interés
 	  //if (distancia <= di) {
