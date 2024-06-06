@@ -102,7 +102,7 @@ void MvantExplorationFSM::init(ros::NodeHandle& nh) {
   //publish
   example_pub_ = nh.advertise<geometry_msgs::PoseStamped>("/example", 1000);
   
-  //subscriber
+  //subscriber llevarlo a nuevo archivo
   example_sub_ = nh.subscribe("/example", 1000, &MvantExplorationFSM::exampleCallback, this);
   
   emergency_handler_pub_ = nh.advertise<std_msgs::Bool>("/trigger_emergency", 10);
@@ -155,8 +155,11 @@ void MvantExplorationFSM::sendEmergencyMsg(bool emergency) {
   
   /*FINIT STATE CALLBACK*/
 void MvantExplorationFSM::FSMCallback(const ros::TimerEvent& e) {
-  ROS_INFO_STREAM_THROTTLE(
-      1.0, "[FSM]: Drone " << getId() << " state: " << fd_->state_str_[int(state_)]);
+
+  /*
+    ROS_INFO_STREAM_THROTTLE(
+    1.0, "[FSM]: Drone " << getId() << " state: " << fd_->state_str_[int(state_)]);
+  */
   
   switch (state_) {
     
@@ -182,8 +185,8 @@ void MvantExplorationFSM::FSMCallback(const ros::TimerEvent& e) {
     case WAIT_TRIGGER: {
       // Do nothing but wait for trigger
       // Espera el cambio de estado desde el triggerCallback
-      ROS_WARN_THROTTLE(1.0, "-- esperando lanzador --");
-      ROS_WARN_THROTTLE(1.0, "Tipo coordinacion: %s", fp_->coordination_type.c_str());
+      //ROS_WARN_THROTTLE(1.0, "-- esperando lanzador --");
+      //ROS_WARN_THROTTLE(1.0, "Tipo coordinacion: %s", fp_->coordination_type.c_str());
       //ROS_WARN_STREAM("Start expl pos: " << fd_->odom_pos_);
       
       break;
