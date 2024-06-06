@@ -60,6 +60,9 @@ void MapROS::init() {
   esdf_timer_ = node_.createTimer(ros::Duration(0.05), &MapROS::updateESDFCallback, this);
   vis_timer_ = node_.createTimer(ros::Duration(0.2), &MapROS::visCallback, this);
 
+  /**
+     Estos topicos tienen la informacion del mapa
+   **/
   map_all_pub_ = node_.advertise<sensor_msgs::PointCloud2>("/sdf_map/occupancy_all", 10);
   map_local_pub_ = node_.advertise<sensor_msgs::PointCloud2>("/sdf_map/occupancy_local", 10);
   map_local_inflate_pub_ =
