@@ -700,55 +700,60 @@ void MvantExplorationFSM::frontierCallback(const ros::TimerEvent& e) {
   
 }
 
+  // Función para calcular la distancia euclidiana en 3D
+  double MvantExplorationFSM::getDistance(double x, double y, double z, double px, double py, double pz) {
+    return std::sqrt(std::pow(x - px, 2) + std::pow(y - py, 2) + std::pow(z - pz, 2));
+  }
+  
   //Ejemplo sencillo
   void MvantExplorationFSM::exampleCallback(const geometry_msgs::PoseStamped::ConstPtr& msg){
-
-    ROS_ERROR("Received pose: position(%f, %f, %f) orientation(%f, %f, %f, %f)",
+    
+    ROS_ERROR("VANT %d - Received pose: position(%f, %f, %f) orientation(%f, %f, %f, %f)",getId(),
              msg->pose.position.x, msg->pose.position.y, msg->pose.position.z,
              msg->pose.orientation.x, msg->pose.orientation.y, msg->pose.orientation.z, msg->pose.orientation.w);
 
+    ROS_WARN_STREAM("Posicion VANT");
+    ROS_WARN_STREAM("odom_posx: " << fd_->odom_pos_[0]);
+    ROS_WARN_STREAM("odom_posy: " << fd_->odom_pos_[1]);
+    ROS_WARN_STREAM("odom_posz: " << fd_->odom_pos_[2]);
+    
     // Punto central
-    int cx = msg->pose.position.x;
-    int cy = msg->pose.position.y;
-    int cz = msg->pose.position.z;
+    int cx = fd_->odom_pos_[0]; //msg->pose.position.x;
+    int cy = fd_->odom_pos_[1]; //msg->pose.position.y;
+    int cz = fd_->odom_pos_[2]; //msg->pose.position.z;
 
-    //distancia de interes
+    // distancia de interes
     double di = 10.0;
 
     // Definir los limites del cubo
     double minX = cx-di, maxX = cx+di;
     double minY = cy-di, maxY = cy+di;
     double minZ = 0, maxZ = cz+di;
+
+    // guardar distancia
+    double distancia;
     
     // Iterar sobre el cubo 3D
     for (int x = minX; x <= maxX; ++x) {
       for (int y = minY; y <= maxY; ++y) {
 	for (int z = minZ; z <= maxZ; ++z) {
-	  // Verificar si el punto (x, y, z) está dentro de los límites del cubo
+
+	  // Verificar si el punto (x,y,z) esta dentro del cubo
 	  if (x >= minX && x <= maxX && y >= minY && y <= maxY && z >= minZ && z <= maxZ) {
 	    
-	    //expl_manager_->sdf_map_->setOccupied(Eigen::Vector3d(x,y,z));
-	    //double distancia = calcularDistancia(x, y, z, cx, cy, cz);
-	    
+	    distancia = getDistance(x,y,z,cx,cy,cz);
+
 	    if(expl_manager_->sdf_map_->getOccupancy(Eigen::Vector3d(x,y,z)) == SDFMap::OCCUPANCY::FREE){
-	      std::cout << "x: " << x << ", y:" << y << ", z:" << z << " - FREE :: " << expl_manager_->sdf_map_->getOccupancy(Eigen::Vector3d(x,y,z)) << "\n";
+	      ROS_WARN_STREAM("LIBRE       - (x: " << x << ", y:" << y << ", z:" << z << ") - " << "[d: " << distancia << "]");
 	    }
 	    
 	    if(expl_manager_->sdf_map_->getOccupancy(Eigen::Vector3d(x,y,z)) == SDFMap::OCCUPANCY::OCCUPIED){
-	      std::cout << "x: " << x << ", y:" << y << ", z:" << z << " - OCCUPPIED:: " << expl_manager_->sdf_map_->getOccupancy(Eigen::Vector3d(x,y,z)) << "\n";
+	      ROS_WARN_STREAM("OCUPADO     - (x: " << x << ", y:" << y << ", z:" << z << ") - " << "[d: " << distancia << "]");
 	    }
-	    
-	    /*
-	      if(expl_manager_->sdf_map_->getOccupancy(Eigen::Vector3d(x,y,z)) == SDFMap::OCCUPANCY::UNKNOWN){
-	      std::cout << "x: " << x << ", y:" << y << ", z:" << z << " - UNKNOWN:: " << expl_manager_->sdf_map_->getOccupancy(Eigen::Vector3d(x,y,z)) << "\n";
-	      }
-	    */
-	    
-	    // Verificar si la distancia está dentro del rango de interés
-	    //if (distancia <= di) {
-	    //std::cout << "Punto (" << x << ", " << y << ", " << z << ") está dentro de la distancia de interés.\n";
-	    //}
-	    
+		
+	    if(expl_manager_->sdf_map_->getOccupancy(Eigen::Vector3d(x,y,z)) == SDFMap::OCCUPANCY::UNKNOWN){
+	      ROS_WARN_STREAM("DESCONOCIDO - (x: " << x << ", y:" << y << ", z:" << z << ") - " << "[d: " << distancia << "]");
+	    }
 	  }
 	}
       }

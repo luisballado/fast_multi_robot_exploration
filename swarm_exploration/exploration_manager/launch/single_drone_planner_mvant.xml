@@ -47,7 +47,7 @@
   <!-- main node -->
   <!--output="log"-->
   <!--output="screen"-->
-  <node pkg="exploration_manager" name="exploration_node_$(arg drone_id)" type="mvant_node" output="screen" launch-prefix="$(arg launch_prefix)">
+  <node pkg="exploration_manager" name="exploration_node_$(arg drone_id)" type="mvant_node" output="log" launch-prefix="$(arg launch_prefix)">
     <remap from ="/odom_world" to="$(arg odometry_topic)"/>
     <remap from ="/map_ros/pose"   to = "$(arg sensor_pose_topic)"/> 
     <remap from ="/map_ros/depth" to = "$(arg depth_topic)"/>
