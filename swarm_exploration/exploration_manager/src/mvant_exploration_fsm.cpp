@@ -704,44 +704,49 @@ void MvantExplorationFSM::frontierCallback(const ros::TimerEvent& e) {
              msg->pose.position.x, msg->pose.position.y, msg->pose.position.z,
              msg->pose.orientation.x, msg->pose.orientation.y, msg->pose.orientation.z, msg->pose.orientation.w);
 
-    // Punto central y distancia de interes
+    // Punto central
     int cx = msg->pose.position.x;
     int cy = msg->pose.position.y;
     int cz = msg->pose.position.z;
 
-    double di = 3.0;
+    //distancia de interes
+    double di = 10.0;
 
     // Definir los limites del cubo
     double minX = cx-di, maxX = cx+di;
     double minY = cy-di, maxY = cy+di;
-    double minZ = cz-di, maxZ = cz+di;
+    double minZ = 0, maxZ = cz+di;
     
     // Iterar sobre el cubo 3D
     for (int x = minX; x <= maxX; ++x) {
       for (int y = minY; y <= maxY; ++y) {
 	for (int z = minZ; z <= maxZ; ++z) {
-	  // Calcular la distancia desde el punto (x, y, z) al punto central (cx, cy, cz)
-	  
-	  expl_manager_->sdf_map_->setOccupied(Eigen::Vector3d(x,y,z));
-	  //double distancia = calcularDistancia(x, y, z, cx, cy, cz);
-	  if(expl_manager_->sdf_map_->getOccupancy(Eigen::Vector3d(x,y,z))==SDFMap::OCCUPANCY::FREE){
-	    std::cout << "x: " << x << ", y:" << y << ", z:" << z << " - FREE :: " << expl_manager_->sdf_map_->getOccupancy(Eigen::Vector3d(x,y,z)) << "\n";
+	  // Verificar si el punto (x, y, z) está dentro de los límites del cubo
+	  if (x >= minX && x <= maxX && y >= minY && y <= maxY && z >= minZ && z <= maxZ) {
+	    
+	    //expl_manager_->sdf_map_->setOccupied(Eigen::Vector3d(x,y,z));
+	    //double distancia = calcularDistancia(x, y, z, cx, cy, cz);
+	    
+	    if(expl_manager_->sdf_map_->getOccupancy(Eigen::Vector3d(x,y,z)) == SDFMap::OCCUPANCY::FREE){
+	      std::cout << "x: " << x << ", y:" << y << ", z:" << z << " - FREE :: " << expl_manager_->sdf_map_->getOccupancy(Eigen::Vector3d(x,y,z)) << "\n";
+	    }
+	    
+	    if(expl_manager_->sdf_map_->getOccupancy(Eigen::Vector3d(x,y,z)) == SDFMap::OCCUPANCY::OCCUPIED){
+	      std::cout << "x: " << x << ", y:" << y << ", z:" << z << " - OCCUPPIED:: " << expl_manager_->sdf_map_->getOccupancy(Eigen::Vector3d(x,y,z)) << "\n";
+	    }
+	    
+	    /*
+	      if(expl_manager_->sdf_map_->getOccupancy(Eigen::Vector3d(x,y,z)) == SDFMap::OCCUPANCY::UNKNOWN){
+	      std::cout << "x: " << x << ", y:" << y << ", z:" << z << " - UNKNOWN:: " << expl_manager_->sdf_map_->getOccupancy(Eigen::Vector3d(x,y,z)) << "\n";
+	      }
+	    */
+	    
+	    // Verificar si la distancia está dentro del rango de interés
+	    //if (distancia <= di) {
+	    //std::cout << "Punto (" << x << ", " << y << ", " << z << ") está dentro de la distancia de interés.\n";
+	    //}
+	    
 	  }
-
-	  if(expl_manager_->sdf_map_->getOccupancy(Eigen::Vector3d(x,y,z))==SDFMap::OCCUPANCY::OCCUPIED){
-	    std::cout << "x: " << x << ", y:" << y << ", z:" << z << " - OCCUPPIED:: " << expl_manager_->sdf_map_->getOccupancy(Eigen::Vector3d(x,y,z)) << "\n";
-	  }
-
-	  
-	  if(expl_manager_->sdf_map_->getOccupancy(Eigen::Vector3d(x,y,z))==SDFMap::OCCUPANCY::UNKNOWN){
-	    std::cout << "x: " << x << ", y:" << y << ", z:" << z << " - UNKNOWN:: " << expl_manager_->sdf_map_->getOccupancy(Eigen::Vector3d(x,y,z)) << "\n";
-	  }
-	  
-	  
-	  // Verificar si la distancia está dentro del rango de interés
-	  //if (distancia <= di) {
-	  //std::cout << "Punto (" << x << ", " << y << ", " << z << ") está dentro de la distancia de interés.\n";
-	  //}
 	}
       }
     }
