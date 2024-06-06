@@ -726,6 +726,7 @@ void MvantExplorationFSM::frontierCallback(const ros::TimerEvent& e) {
     double di = 10.0;
 
     // Definir los limites del cubo
+    // TODO: revisar que no salga del limite del mundo
     double minX = cx-di, maxX = cx+di;
     double minY = cy-di, maxY = cy+di;
     double minZ = 0, maxZ = cz+di;
@@ -738,7 +739,9 @@ void MvantExplorationFSM::frontierCallback(const ros::TimerEvent& e) {
       for (int y = minY; y <= maxY; ++y) {
 	for (int z = minZ; z <= maxZ; ++z) {
 
+	  
 	  // Verificar si el punto (x,y,z) esta dentro del cubo
+	  //demas
 	  if (x >= minX && x <= maxX && y >= minY && y <= maxY && z >= minZ && z <= maxZ) {
 	    
 	    distancia = getDistance(x,y,z,cx,cy,cz);
