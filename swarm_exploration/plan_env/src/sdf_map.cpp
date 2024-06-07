@@ -58,7 +58,7 @@ void SDFMap::initMap(ros::NodeHandle& nh) {
   cout << "hit: " << mp_->prob_hit_log_ << ", miss: " << mp_->prob_miss_log_
        << ", min: " << mp_->clamp_min_log_ << ", max: " << mp_->clamp_max_log_
        << ", thresh: " << mp_->min_occupancy_log_ << endl;
-
+  
   // Initialize data buffer of map
   int buffer_size = mp_->map_voxel_num_(0) * mp_->map_voxel_num_(1) * mp_->map_voxel_num_(2);
   md_->occupancy_buffer_ = vector<double>(buffer_size, mp_->clamp_min_log_ - mp_->unknown_flag_);
