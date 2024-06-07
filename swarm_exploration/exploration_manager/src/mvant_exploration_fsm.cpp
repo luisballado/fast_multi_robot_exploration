@@ -50,7 +50,7 @@ void MvantExplorationFSM::init(ros::NodeHandle& nh) {
   /* Initialize main modules */
   expl_manager_.reset(new MvantExplorationManager);
   expl_manager_->initialize(nh);
-
+  
   visualization_.reset(new PlanningVisualization(nh));
   coll_assigner_.reset(new CollaborationAssigner(nh));
   
@@ -716,6 +716,8 @@ void MvantExplorationFSM::frontierCallback(const ros::TimerEvent& e) {
     ROS_WARN_STREAM("odom_posx: " << fd_->odom_pos_[0]);
     ROS_WARN_STREAM("odom_posy: " << fd_->odom_pos_[1]);
     ROS_WARN_STREAM("odom_posz: " << fd_->odom_pos_[2]);
+
+    ROS_WARN_STREAM("Map Resolution " << expl_manager_->sdf_map_->getResolution());
     
     // Punto central
     int cx = fd_->odom_pos_[0]; //msg->pose.position.x;
@@ -723,8 +725,11 @@ void MvantExplorationFSM::frontierCallback(const ros::TimerEvent& e) {
     int cz = fd_->odom_pos_[2]; //msg->pose.position.z;
 
     // distancia de interes
+    // di * mp_->resolution_inv
     double di = 10.0;
 
+    
+    // posToIndex
     // Definir los limites del cubo
     // TODO: revisar que no salga del limite del mundo
     double minX = cx-di, maxX = cx+di;
@@ -739,24 +744,26 @@ void MvantExplorationFSM::frontierCallback(const ros::TimerEvent& e) {
       for (int y = minY; y <= maxY; ++y) {
 	for (int z = minZ; z <= maxZ; ++z) {
 
+	  //solo me interesan los ocupados
 	  
-	  // Verificar si el punto (x,y,z) esta dentro del cubo
-	  //demas
-	  if (x >= minX && x <= maxX && y >= minY && y <= maxY && z >= minZ && z <= maxZ) {
-	    
-	    distancia = getDistance(x,y,z,cx,cy,cz);
-
-	    if(expl_manager_->sdf_map_->getOccupancy(Eigen::Vector3d(x,y,z)) == SDFMap::OCCUPANCY::FREE){
+	  distancia = getDistance(x,y,z,cx,cy,cz);
+	  
+	  if(expl_manager_->sdf_map_->getOccupancy(Eigen::Vector3d(x,y,z)) == SDFMap::OCCUPANCY::FREE){
+	    /*
 	      ROS_WARN_STREAM("LIBRE       - (x: " << x << ", y:" << y << ", z:" << z << ") - " << "[d: " << distancia << "]");
-	    }
-	    
-	    if(expl_manager_->sdf_map_->getOccupancy(Eigen::Vector3d(x,y,z)) == SDFMap::OCCUPANCY::OCCUPIED){
+	    */
+	  }
+	  
+	  if(expl_manager_->sdf_map_->getOccupancy(Eigen::Vector3d(x,y,z)) == SDFMap::OCCUPANCY::OCCUPIED){
+	    /*
 	      ROS_WARN_STREAM("OCUPADO     - (x: " << x << ", y:" << y << ", z:" << z << ") - " << "[d: " << distancia << "]");
-	    }
-		
-	    if(expl_manager_->sdf_map_->getOccupancy(Eigen::Vector3d(x,y,z)) == SDFMap::OCCUPANCY::UNKNOWN){
+	    */
+	  }
+	  
+	  if(expl_manager_->sdf_map_->getOccupancy(Eigen::Vector3d(x,y,z)) == SDFMap::OCCUPANCY::UNKNOWN){
+	    /*
 	      ROS_WARN_STREAM("DESCONOCIDO - (x: " << x << ", y:" << y << ", z:" << z << ") - " << "[d: " << distancia << "]");
-	    }
+	    */
 	  }
 	}
       }
