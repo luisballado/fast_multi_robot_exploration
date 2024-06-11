@@ -727,7 +727,9 @@ namespace fast_planner {
     ROS_WARN_STREAM("odom_posx: " << fd_->odom_pos_[0]);
     ROS_WARN_STREAM("odom_posy: " << fd_->odom_pos_[1]);
     ROS_WARN_STREAM("odom_posz: " << fd_->odom_pos_[2]);
-    
+
+    // obtener resolucion del mapa
+    // se establece en el archivo .yaml 0.15
     ROS_WARN_STREAM("Map Resolution " << expl_manager_->sdf_map_->getResolution());
     
     ROS_WARN_STREAM("isPositionReachable:: " << expl_manager_->isPositionReachable(Eigen::Vector3d(fd_->odom_pos_[0],fd_->odom_pos_[1],fd_->odom_pos_[2]),Eigen::Vector3d(msg->pose.position.x,msg->pose.position.y,msg->pose.position.z)));
