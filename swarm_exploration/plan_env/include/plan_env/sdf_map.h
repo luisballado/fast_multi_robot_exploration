@@ -143,7 +143,7 @@ struct MapData {
 
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 };
-
+  
 inline void SDFMap::posToIndex(const Eigen::Vector3d& pos, Eigen::Vector3i& id) {
   for (int i = 0; i < 3; ++i) id(i) = floor((pos(i) - mp_->map_origin_(i)) * mp_->resolution_inv_);
 }

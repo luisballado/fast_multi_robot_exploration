@@ -186,8 +186,8 @@ void PlanningVisualization::drawSpheres(const vector<Eigen::Vector3d>& list, con
   ros::Duration(0.0005).sleep();
 }
 
-void PlanningVisualization::drawCubes(const vector<Eigen::Vector3d>& list, const double& scale,
-    const Eigen::Vector4d& color, const string& ns, const int& id, const int& pub_id) {
+void PlanningVisualization::drawCubes(const vector<Eigen::Vector3d>& list, const double& scale, const Eigen::Vector4d& color, const string& ns, const int& id, const int& pub_id) {
+
   if (pubs_[pub_id].getNumSubscribers() == 0) return;
 
   visualization_msgs::Marker mk;
@@ -242,7 +242,7 @@ void PlanningVisualization::drawLines(const vector<Eigen::Vector3d>& list, const
   pubs_[pub_id].publish(mk);
 
   if (list.size() == 0) return;
-
+  
   // split the single list into two
   vector<Eigen::Vector3d> list1, list2;
   for (int i = 0; i < list.size() - 1; ++i) {
