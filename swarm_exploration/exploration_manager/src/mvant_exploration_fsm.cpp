@@ -721,14 +721,16 @@ namespace fast_planner {
     ROS_WARN_STREAM("Map Resolution " << expl_manager_->sdf_map_->getResolution());
 
     // Punto central
+    // este punto viene en metros
     int cx = fd_->odom_pos_[0]; //msg->pose.position.x;
     int cy = fd_->odom_pos_[1]; //msg->pose.position.y;
     int cz = fd_->odom_pos_[2]; //msg->pose.position.z;
-    
+
+    //de esto, posToIndex
     // distancia de interes
-    // di * mp_->resolution_inv
-    double di = 10.0;
-    
+    // cada voxel en realidad es el valor getResolution()
+    // que viene del archivo del mapa yaml
+    double di = 30.0 * expl_manager_->sdf_map_->getResolution();
     
     // posToIndex
     // Definir los limites del cubo
