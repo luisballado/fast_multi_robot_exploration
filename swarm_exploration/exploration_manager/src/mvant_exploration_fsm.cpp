@@ -233,8 +233,8 @@ namespace fast_planner {
 	
 	ROS_WARN_STREAM("isInMap: " << expl_manager_->sdf_map_->isInBox(Eigen::Vector3d(3, 0, 1)));
 	
-	expl_manager_->sdf_map_->setOccupied(Eigen::Vector3d(0, 0, 1),1);
-	expl_manager_->sdf_map_->setOccupied(Eigen::Vector3d(1, 1, 1),2);
+	//expl_manager_->sdf_map_->setOccupied(Eigen::Vector3d(0, 0, 1),1);
+	//expl_manager_->sdf_map_->setOccupied(Eigen::Vector3d(1, 1, 1),2);
 	
 	ros::Duration(1).sleep();
 	
@@ -473,6 +473,7 @@ namespace fast_planner {
 	// visualization_->drawText(ed_ptr->frontiers_[i][0] - Eigen::Vector3d(0., 0., 0.), id_str,
 	// 0.5, Eigen::Vector4d::Ones(), "id", ed_ptr->frontiers_.size() + i, 4);
       }
+      
       for (int i = ed_ptr->frontiers_.size(); i < last_ftr_num; ++i) {
 	visualization_->drawCubes({}, res, Vector4d(0, 0, 0, 1), "frontier", i, 4);
 	// visualization_->drawBox(Vector3d(0, 0, 0), Vector3d(0, 0, 0), Vector4d(1, 0, 0, 0.3),
@@ -480,10 +481,12 @@ namespace fast_planner {
 	// visualization_->drawText(ed_ptr->frontiers_[i][0] - Eigen::Vector3d(0., 0., 0.), "", 0.5,
 	// Eigen::Vector4d::Ones(), "id", i + 1, 4);
       }
+      
       last_ftr_num = ed_ptr->frontiers_.size();
       
       // Draw labeled frontier
       static size_t last_ftr_num_labeled = 0;
+      
       for (size_t i = 0; i < ed_ptr->labeled_frontiers_.size(); ++i) {
 	Eigen::Vector4d color(0, 0, 0, 0.5);
 	if (ed_ptr->labeled_frontiers_[i].first == 0) {
@@ -496,43 +499,48 @@ namespace fast_planner {
 	visualization_->drawCubes(
 				  ed_ptr->labeled_frontiers_[i].second, res, color, "labeled_frontier", i, 7);
       }
+      
       for (size_t i = ed_ptr->labeled_frontiers_.size(); i < last_ftr_num_labeled; ++i) {
 	visualization_->drawCubes({}, res, Eigen::Vector4d(0, 0, 0, 1), "labeled_frontier", i, 7);
       }
+      
       last_ftr_num_labeled = ed_ptr->labeled_frontiers_.size();
       
       // Draw frontiers in front
       static size_t last_ftr_num_infront = 0;
+      
       for (size_t i = 0; i < ed_ptr->infront_frontiers_.size(); ++i) {
 	Eigen::Vector4d color(1, 1, 0, 0.5);
 	visualization_->drawCubes(
 				  ed_ptr->infront_frontiers_[i].second, res, color, "infront_frontiers", i, 10);
       }
+      
       for (size_t i = ed_ptr->infront_frontiers_.size(); i < last_ftr_num_labeled; ++i) {
 	visualization_->drawCubes({}, res, Eigen::Vector4d(0, 0, 0, 1), "infront_frontiers", i, 10);
       }
-    last_ftr_num_infront = ed_ptr->infront_frontiers_.size();
-    
-    // Publish role
-    const std::string role_str = roleToString(expl_manager_->role_);
-    visualization_->drawText(fd_->odom_pos_ - Eigen::Vector3d(1., 0., 0.), role_str, 0.4,
-			     Eigen::Vector4d::Ones(), "role", 0, 8);
-    
-    // Publish current goal
-    auto color =
-      PlanningVisualization::getColor((getId() - 1) / double(expl_manager_->ep_->drone_num_));
-    visualization_->drawArrow(expl_manager_->ed_->next_pos_, expl_manager_->ed_->next_yaw_,
-			      Eigen::Vector3d(0.75, 0.3, 0.75), color, "goal", 0, 9);
-    
-    // Publish trails tour
-    if (expl_manager_->role_ == ROLE::GARBAGE_COLLECTOR) {
-      std::vector<Eigen::Vector3d> tour;
-      for (const auto& p : expl_manager_->ed_->trails_tour_) tour.push_back(p.first);
-      visualization_->drawLines(tour, 0.07, color, "trails_tour", 0, 11);
-    } else {
-      visualization_->drawLines({}, 0.07, Eigen::Vector4d::Zero(), "trails_tour", 0, 11);
-    }
-    
+      
+      last_ftr_num_infront = ed_ptr->infront_frontiers_.size();
+      
+      // Publish role
+      const std::string role_str = roleToString(expl_manager_->role_);
+      visualization_->drawText(fd_->odom_pos_ - Eigen::Vector3d(1., 0., 0.), role_str, 0.4,
+			       Eigen::Vector4d::Ones(), "role", 0, 8);
+      
+      // Publish current goal
+      auto color =
+	PlanningVisualization::getColor((getId() - 1) / double(expl_manager_->ep_->drone_num_));
+      visualization_->drawArrow(expl_manager_->ed_->next_pos_, expl_manager_->ed_->next_yaw_,
+				Eigen::Vector3d(0.75, 0.3, 0.75), color, "goal", 0, 9);
+      
+      // Publish trails tour
+      if (expl_manager_->role_ == ROLE::GARBAGE_COLLECTOR) {
+	std::vector<Eigen::Vector3d> tour;
+	for (const auto& p : expl_manager_->ed_->trails_tour_) tour.push_back(p.first);
+	visualization_->drawLines(tour, 0.07, color, "trails_tour", 0, 11);
+      } else {
+	visualization_->drawLines({}, 0.07, Eigen::Vector4d::Zero(), "trails_tour", 0, 11);
+      }
+      
     } else if (content == 2) {
       
       // Hierarchical grid and global tour --------------------------------
@@ -550,13 +558,16 @@ namespace fast_planner {
 	vector<string> texts;
 	expl_manager_->hgrid_->getGridMarker2(pts, texts);
 	static int last_text_num = 0;
+
 	for (int i = 0; i < pts.size(); ++i) {
 	  visualization_->drawText(pts[i], texts[i], 1, Eigen::Vector4d(0, 0, 0, 1), "text", i, 6);
 	}
+
 	for (int i = pts.size(); i < last_text_num; ++i) {
 	  visualization_->drawText(
 				   Eigen::Vector3d(0, 0, 0), string(""), 1, Eigen::Vector4d(0, 0, 0, 1), "text", i, 6);
 	}
+
 	last_text_num = pts.size();
 	
 	// // Pub hgrid to ground node
@@ -580,13 +591,11 @@ namespace fast_planner {
       // auto grid_tour = expl_manager_->ed_->grid_tour2_;
       // for (auto& pt : grid_tour) pt = pt + trans;
       
-      visualization_->drawLines(grid_tour, 0.05,
-				PlanningVisualization::getColor(
-								(expl_manager_->ep_->drone_id_ - 1) / double(expl_manager_->ep_->drone_num_)),
-				"grid_tour", 0, 6);
+      visualization_->drawLines(grid_tour, 0.05,PlanningVisualization::getColor((expl_manager_->ep_->drone_id_ - 1) / double(expl_manager_->ep_->drone_num_)),"grid_tour", 0, 6);
       
       // Publish grid tour to ground node
       exploration_manager::GridTour tour;
+
       for (int i = 0; i < grid_tour.size(); ++i) {
 	geometry_msgs::Point point;
 	point.x = grid_tour[i][0];
@@ -594,24 +603,25 @@ namespace fast_planner {
 	point.z = grid_tour[i][2];
 	tour.points.push_back(point);
       }
+
       tour.drone_id = expl_manager_->ep_->drone_id_;
       tour.stamp = ros::Time::now().toSec();
       grid_tour_pub_.publish(tour);
       
-      visualization_->drawBspline(info->position_traj_, 0.1,
-				  PlanningVisualization::getColor(
-								  (expl_manager_->ep_->drone_id_ - 1) / double(expl_manager_->ep_->drone_num_)),
-				  false, 0.15, Vector4d(1, 1, 0, 1));
+      visualization_->drawBspline(info->position_traj_, 0.1,PlanningVisualization::getColor((expl_manager_->ep_->drone_id_ - 1) / double(expl_manager_->ep_->drone_num_)),false, 0.15, Vector4d(1, 1, 0, 1));
+      
     }
   }
   
   void MvantExplorationFSM::clearVisMarker() {
+
     for (int i = 0; i < 10; ++i) {
       visualization_->drawCubes({}, 0.1, Vector4d(0, 0, 0, 1), "frontier", i, 4);
       //visualization_->drawCubes({}, 0.1, Vector4d(0, 0, 0, 1), "dead_frontier", i, 4);
       // visualization_->drawBox(Vector3d(0, 0, 0), Vector3d(0, 0, 0), Vector4d(1, 0, 0, 0.3),
       //   "frontier_boxes", i, 4);
     }
+    
     for (int i = 0; i < 10; ++i) {
       visualization_->drawCubes({}, 0.1, Vector4d(0, 0, 0, 1), "lebeled_frontier", i, 7);
       // visualization_->drawCubes({}, 0.1, Vector4d(0, 0, 0, 1), "dead_frontier", i, 4);
@@ -717,20 +727,32 @@ namespace fast_planner {
     ROS_WARN_STREAM("odom_posx: " << fd_->odom_pos_[0]);
     ROS_WARN_STREAM("odom_posy: " << fd_->odom_pos_[1]);
     ROS_WARN_STREAM("odom_posz: " << fd_->odom_pos_[2]);
-    
+
+    // obtener resolucion del mapa
+    // se establece en el archivo .yaml 0.15
     ROS_WARN_STREAM("Map Resolution " << expl_manager_->sdf_map_->getResolution());
-
+    
+    ROS_WARN_STREAM("isPositionReachable:: " << expl_manager_->isPositionReachable(Eigen::Vector3d(fd_->odom_pos_[0],fd_->odom_pos_[1],fd_->odom_pos_[2]),Eigen::Vector3d(msg->pose.position.x,msg->pose.position.y,msg->pose.position.z)));
+    
     // Punto central
-    // este punto viene en metros
-    int cx = fd_->odom_pos_[0]; //msg->pose.position.x;
-    int cy = fd_->odom_pos_[1]; //msg->pose.position.y;
-    int cz = fd_->odom_pos_[2]; //msg->pose.position.z;
+    int cx = msg->pose.position.x; //fd_->odom_pos_[0]; //msg->pose.position.x;
+    int cy = msg->pose.position.y; //fd_->odom_pos_[1]; //msg->pose.position.y;
+    int cz = msg->pose.position.z; //fd_->odom_pos_[2]; //msg->pose.position.z;
+    
+    //posToIndex
+    Eigen::Vector3i id_xxx;
+    
+    expl_manager_->sdf_map_->posToIndex(Eigen::Vector3d(msg->pose.position.x,msg->pose.position.y,msg->pose.position.z),id_xxx);
 
+    ROS_WARN_STREAM("posToIndex :pos0:" << id_xxx(0) << " pos1: " << id_xxx(1) << " pos3:" << id_xxx(2));
+    
+    // distancia de interes
     //de esto, posToIndex
     // distancia de interes
     // cada voxel en realidad es el valor getResolution()
     // que viene del archivo del mapa yaml
-    double di = 30.0 * expl_manager_->sdf_map_->getResolution();
+    // di * mp_->resolution_inv
+    double di = 10.0 * expl_manager_->sdf_map_->getResolution();
     
     // posToIndex
     // Definir los limites del cubo
@@ -742,36 +764,38 @@ namespace fast_planner {
     // guardar distancia
     double distancia;
     
+    //expl_manager_->sdf_map_->setOccupied(Eigen::Vector3d(10,10,0),1);
+    //expl_manager_->sdf_map_->setOccupied(Eigen::Vector3d(11,11,0),1);
+    
     // Iterar sobre el cubo 3D
     for (int x = minX; x <= maxX; ++x) {
       for (int y = minY; y <= maxY; ++y) {
 	for (int z = minZ; z <= maxZ; ++z) {
 	  
 	  //solo me interesan los ocupados
-	  
-	  distancia = getDistance(x,y,z,cx,cy,cz);
+	  //distancia = getDistance(x,y,z,cx,cy,cz);
 	  
 	  if(expl_manager_->sdf_map_->getOccupancy(Eigen::Vector3d(x,y,z)) == SDFMap::OCCUPANCY::FREE){
-	    /*
-	      ROS_WARN_STREAM("LIBRE       - (x: " << x << ", y:" << y << ", z:" << z << ") - " << "[d: " << distancia << "]");
-	    */
+	    
+	    //ROS_WARN_STREAM("LIBRE       - (x: " << x << ", y:" << y << ", z:" << z << ") - " << "[d: " << distancia << "]");
+	    ROS_WARN_STREAM("LIBRE       - (x: " << x << ", y:" << y << ", z:" << z << ")");
+	    
 	  }
 	  
 	  if(expl_manager_->sdf_map_->getOccupancy(Eigen::Vector3d(x,y,z)) == SDFMap::OCCUPANCY::OCCUPIED){
-	    /*
-	      ROS_WARN_STREAM("OCUPADO     - (x: " << x << ", y:" << y << ", z:" << z << ") - " << "[d: " << distancia << "]");
-	    */
+	    
+	    ROS_WARN_STREAM("OCUPADO     - (x: " << x << ", y:" << y << ", z:" << z << ")");
+	    
 	  }
 	  
 	  if(expl_manager_->sdf_map_->getOccupancy(Eigen::Vector3d(x,y,z)) == SDFMap::OCCUPANCY::UNKNOWN){
-	    /*
-	      ROS_WARN_STREAM("DESCONOCIDO - (x: " << x << ", y:" << y << ", z:" << z << ") - " << "[d: " << distancia << "]");
-	    */
+	    
+	    ROS_WARN_STREAM("DESCONOCIDO - (x: " << x << ", y:" << y << ", z:" << z << ")");
+	    
 	  }
 	}
       }
     }
-    
   }
   
   void MvantExplorationFSM::heartbitCallback(const ros::TimerEvent& e) {

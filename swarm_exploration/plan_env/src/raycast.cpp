@@ -33,7 +33,7 @@ void Raycast(const Eigen::Vector3d& start, const Eigen::Vector3d& end, const Eig
   //   • Imposed a distance limit.
   //   • The face passed through to reach the current cube is provided to
   //     the callback.
-
+  
   // The foundation of this algorithm is a parameterized representation of
   // the provided ray,
   //                    origin + t * direction,

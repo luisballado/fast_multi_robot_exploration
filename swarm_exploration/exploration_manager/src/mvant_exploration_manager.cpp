@@ -127,7 +127,7 @@ void MvantExplorationManager::initialize(ros::NodeHandle& nh) {
   sdf_map_->getRegion(origin, size);
   ViewNode::caster_.reset(new RayCaster);
   ViewNode::caster_->setParams(resolution_, origin);
-
+  
   planner_manager_->path_finder_->lambda_heu_ = 1.0;
   // planner_manager_->path_finder_->max_search_time_ = 0.05;
   planner_manager_->path_finder_->max_search_time_ = 1.0;
