@@ -739,15 +739,15 @@ namespace fast_planner {
     int cz = msg->pose.position.z; //fd_->odom_pos_[2]; //msg->pose.position.z;
     
     //posToIndex
-    Eigen::Vector3i id_xxx;
-    expl_manager_->sdf_map_->posToIndex(Eigen::Vector3d(msg->pose.position.x,msg->pose.position.y,msg->pose.position.z),id_xxx);
+    Eigen::Vector3i index_pos;
+    expl_manager_->sdf_map_->posToIndex(Eigen::Vector3d(msg->pose.position.x,msg->pose.position.y,msg->pose.position.z),index_pos);
 
-    ROS_WARN_STREAM("posToIndex - index0: " << id_xxx(0) << ", index1: " << id_xxx(1) << ", index3: " << id_xxx(2));
+    ROS_WARN_STREAM("posToIndex - index0: " << index_pos(0) << ", index1: " << index_pos(1) << ", index3: " << index_pos(2));
     
-    Eigen::Vector3d id_xxx_pos;
-    expl_manager_->sdf_map_->indexToPos(id_xxx,id_xxx_pos);
+    Eigen::Vector3d pos_index;
+    expl_manager_->sdf_map_->indexToPos(index_pos,pos_index);
 
-    ROS_WARN_STREAM("indexToPos - pos0: " << id_xxx_pos(0) << ", pos1: " << id_xxx_pos(1) << ". pos3: " << id_xxx_pos(2));
+    ROS_WARN_STREAM("indexToPos - pos0: " << pos_index(0) << ", pos1: " << pos_index(1) << ". pos3: " << pos_index(2));
     
     // distancia de interes
     //de esto, posToIndex
@@ -757,6 +757,7 @@ namespace fast_planner {
     // di * mp_->resolution_inv
     double di = 4.0 * (1 / expl_manager_->sdf_map_->getResolution());
     ROS_WARN_STREAM("di:: " << di);
+
     // posToIndex
     // Definir los limites del cubo
     // TODO: revisar que no salga del limite del mundo
@@ -764,44 +765,39 @@ namespace fast_planner {
     double minY = cy-di, maxY = cy+di;
     double minZ = cz-1 , maxZ = cz+2;
 
-    ROS_WARN_STREAM("minX:: " << minX);
-    ROS_WARN_STREAM("minY:: " << minY);
-    ROS_WARN_STREAM("minZ:: " << minZ);
-
-    ROS_WARN_STREAM("maxX:: " << maxX);
-    ROS_WARN_STREAM("maxY:: " << maxY);
-    ROS_WARN_STREAM("maxZ:: " << maxZ);
+    ROS_WARN_STREAM("minX:: " << minX << " - maxX:: " << maxX);
+    ROS_WARN_STREAM("minY:: " << minY << " - maxY:: " << maxY);
+    ROS_WARN_STREAM("minZ:: " << minZ << " - maxZ:: " << maxZ);
     
     // guardar distancia
     double distancia;
-    
-    //expl_manager_->sdf_map_->setOccupied(Eigen::Vector3d(10,10,0),1);
-    //expl_manager_->sdf_map_->setOccupied(Eigen::Vector3d(11,11,0),1);
     
     // Iterar sobre el cubo 3D con los valores del voxel, entonces la sumatoria debe ser la resolucion del mapa
     for (int x = minX; x <= maxX; ++x) {
       for (int y = minY; y <= maxY; ++y) {
 	for (int z = minZ; z <= maxZ; ++z) {
 	  
+	  //0 - DESCONOCIDO
+	  if(expl_manager_->sdf_map_->getOccupancy(Eigen::Vector3d(x,y,z)) == SDFMap::OCCUPANCY::UNKNOWN){
+	    
+	    //ROS_WARN_STREAM("DESCONOCIDO - (x: " << x << ", y:" << y << ", z:" << z << ")");
+	    
+	  }
+	  
 	  //solo me interesan los ocupados
 	  //distancia = getDistance(x,y,z,cx,cy,cz);
-	  
+	  //1 - LIBRE
 	  if(expl_manager_->sdf_map_->getOccupancy(Eigen::Vector3d(x,y,z)) == SDFMap::OCCUPANCY::FREE){
 	    
 	    //ROS_WARN_STREAM("LIBRE       - (x: " << x << ", y:" << y << ", z:" << z << ") - " << "[d: " << distancia << "]");
 	    ROS_WARN_STREAM("LIBRE       - (x: " << x << ", y:" << y << ", z:" << z << ")");
 	    
 	  }
-	  
+
+	  //2 - OCUPADO
 	  if(expl_manager_->sdf_map_->getOccupancy(Eigen::Vector3d(x,y,z)) == SDFMap::OCCUPANCY::OCCUPIED){
 	    
 	    ROS_WARN_STREAM("OCUPADO     - (x: " << x << ", y:" << y << ", z:" << z << ")");
-	    
-	  }
-	  
-	  if(expl_manager_->sdf_map_->getOccupancy(Eigen::Vector3d(x,y,z)) == SDFMap::OCCUPANCY::UNKNOWN){
-	    
-	    ROS_WARN_STREAM("DESCONOCIDO - (x: " << x << ", y:" << y << ", z:" << z << ")");
 	    
 	  }
 	}
