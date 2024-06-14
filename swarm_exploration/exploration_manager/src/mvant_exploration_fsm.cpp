@@ -76,55 +76,50 @@ namespace fast_planner {
     // PROGRAMAS EN PARALELO CORRIENDO CADA CIERTO TIEMPO
     /* Ros sub, pub and timer */
     
-    exec_timer_ = nh.createTimer(ros::Duration(0.01), &MvantExplorationFSM::FSMCallback, this);
-    
-    safety_timer_ = nh.createTimer(ros::Duration(0.05), &MvantExplorationFSM::safetyCallback, this);
-    
+    exec_timer_     = nh.createTimer(ros::Duration(0.01), &MvantExplorationFSM::FSMCallback, this);
+    safety_timer_   = nh.createTimer(ros::Duration(0.05), &MvantExplorationFSM::safetyCallback, this);
     frontier_timer_ = nh.createTimer(ros::Duration(0.1), &MvantExplorationFSM::frontierCallback, this);
-    
     heartbit_timer_ = nh.createTimer(ros::Duration(1.0), &MvantExplorationFSM::heartbitCallback, this);
     
     //Se puede invocar desde terminal
     //rostopic pub /move_base_simple/goal
     //geometry_msgs/PoseStamped '{header: {stamp: now, frame_id: "map"}, pose: {position: {x: 1.0, y: 0.0, z: 0.0}, orientation: {w: 1.0}}}'
     trigger_sub_ = nh.subscribe("/move_base_simple/goal", 1, &MvantExplorationFSM::triggerCallback, this);
-    
-    odom_sub_ = nh.subscribe("/odom_world", 1, &MvantExplorationFSM::odometryCallback, this);
-    
-    replan_pub_ = nh.advertise<std_msgs::Empty>("/planning/replan", 10);
-    new_pub_ = nh.advertise<std_msgs::Empty>("/planning/new", 10);
-    bspline_pub_ = nh.advertise<bspline::Bspline>("/planning/bspline", 10);
-    stop_pub_ = nh.advertise<std_msgs::Int32>("/stop", 1000);
-    heartbit_pub_ = nh.advertise<std_msgs::Empty>("/heartbit", 100);
-    
-    //prueba un nuevo publicador
-    //el segundo parametro es el message queue buffer?
-    //publish
-    example_pub_ = nh.advertise<geometry_msgs::PoseStamped>("/example", 1000);
+    odom_sub_    = nh.subscribe("/odom_world", 1, &MvantExplorationFSM::odometryCallback, this);
     
     //subscriber llevarlo a nuevo archivo
     example_sub_ = nh.subscribe("/example", 1000, &MvantExplorationFSM::exampleCallback, this);
-    
+    //-------------------------------------------------------------------------------------------------
+    replan_pub_   = nh.advertise<std_msgs::Empty>("/planning/replan", 10);
+    new_pub_      = nh.advertise<std_msgs::Empty>("/planning/new", 10);
+    bspline_pub_  = nh.advertise<bspline::Bspline>("/planning/bspline", 10);
+    stop_pub_     = nh.advertise<std_msgs::Int32>("/stop", 1000);
+    heartbit_pub_ = nh.advertise<std_msgs::Empty>("/heartbit", 100);
+
     emergency_handler_pub_ = nh.advertise<std_msgs::Bool>("/trigger_emergency", 10);
-    
+
+    //prueba un nuevo publicador
+    example_pub_ = nh.advertise<geometry_msgs::PoseStamped>("/example", 1000);
+
+    //-------------------------------------------------------------------------------------------------
     // Swarm, timer, pub and sub
     drone_state_timer_ = nh.createTimer(ros::Duration(0.04), &MvantExplorationFSM::droneStateTimerCallback, this);
-    drone_state_pub_ = nh.advertise<exploration_manager::DroneState>("/swarm_expl/drone_state_send", 10);
-    drone_state_sub_ = nh.subscribe("/swarm_expl/drone_state_recv", 10, &MvantExplorationFSM::droneStateMsgCallback, this);
+    drone_state_pub_   = nh.advertise<exploration_manager::DroneState>("/swarm_expl/drone_state_send", 10);
+    drone_state_sub_   = nh.subscribe("/swarm_expl/drone_state_recv", 10, &MvantExplorationFSM::droneStateMsgCallback, this);
     
     opt_timer_ = nh.createTimer(ros::Duration(0.05), &MvantExplorationFSM::optTimerCallback, this);
-    opt_pub_ = nh.advertise<exploration_manager::PairOpt>("/swarm_expl/pair_opt_send", 10);
-    opt_sub_ = nh.subscribe("/swarm_expl/pair_opt_recv", 100, &MvantExplorationFSM::optMsgCallback,
+    opt_pub_   = nh.advertise<exploration_manager::PairOpt>("/swarm_expl/pair_opt_send", 10);
+    opt_sub_   = nh.subscribe("/swarm_expl/pair_opt_recv", 100, &MvantExplorationFSM::optMsgCallback,
 			    this, ros::TransportHints().tcpNoDelay());
     
     opt_res_pub_ = nh.advertise<exploration_manager::PairOptResponse>("/swarm_expl/pair_opt_res_send", 10);
     opt_res_sub_ = nh.subscribe("/swarm_expl/pair_opt_res_recv", 100, &MvantExplorationFSM::optResMsgCallback, this, ros::TransportHints().tcpNoDelay());
     
-    swarm_traj_pub_ = nh.advertise<bspline::Bspline>("/planning/swarm_traj_send", 100);
-    swarm_traj_sub_ = nh.subscribe("/planning/swarm_traj_recv", 100, &MvantExplorationFSM::swarmTrajCallback, this);
+    swarm_traj_pub_   = nh.advertise<bspline::Bspline>("/planning/swarm_traj_send", 100);
+    swarm_traj_sub_   = nh.subscribe("/planning/swarm_traj_recv", 100, &MvantExplorationFSM::swarmTrajCallback, this);
     swarm_traj_timer_ = nh.createTimer(ros::Duration(0.1), &MvantExplorationFSM::swarmTrajTimerCallback, this);
     
-    hgrid_pub_ = nh.advertise<exploration_manager::HGrid>("/swarm_expl/hgrid_send", 10);
+    hgrid_pub_     = nh.advertise<exploration_manager::HGrid>("/swarm_expl/hgrid_send", 10);
     grid_tour_pub_ = nh.advertise<exploration_manager::GridTour>("/swarm_expl/grid_tour_send", 10);
   }
   
@@ -156,10 +151,8 @@ namespace fast_planner {
   /*FINIT STATE CALLBACK*/
   void MvantExplorationFSM::FSMCallback(const ros::TimerEvent& e) {
     
-    /*
-      ROS_INFO_STREAM_THROTTLE(
-      1.0, "[FSM]: Drone " << getId() << " state: " << fd_->state_str_[int(state_)]);
-    */
+    //ROS_WARN_STREAM_THROTTLE(1.0, "Hola mundo cruel");
+    //ROS_WARN_STREAM_THROTTLE(1.0, "[FSM]: Drone " << getId() << " state: " << fd_->state_str_[int(state_)]);
     
     switch (state_) {
       
@@ -185,9 +178,9 @@ namespace fast_planner {
     case WAIT_TRIGGER: {
       // Do nothing but wait for trigger
       // Espera el cambio de estado desde el triggerCallback
-      //ROS_WARN_THROTTLE(1.0, "-- esperando lanzador --");
-      //ROS_WARN_THROTTLE(1.0, "Tipo coordinacion: %s", fp_->coordination_type.c_str());
-      //ROS_WARN_STREAM("Start expl pos: " << fd_->odom_pos_);
+      ROS_WARN_ONCE(" -- esperando lanzador -- ");
+      ROS_WARN_ONCE("Tipo coordinacion: %s", fp_->coordination_type.c_str());
+      //ROS_WARN_STREAM_THROTTLE(2.0, getId() << " - Start expl pos: " << fd_->odom_pos_);
       
       break;
     }
@@ -211,27 +204,27 @@ namespace fast_planner {
 	
 	sendStopMsg(1);
 	
-	ROS_WARN_STREAM("Velocidad");
-	ROS_WARN_STREAM("odom_vx: " << fd_->odom_vel_[0]);
-	ROS_WARN_STREAM("odom_vy: " << fd_->odom_vel_[1]);
-	ROS_WARN_STREAM("odom_vz: " << fd_->odom_vel_[2]);
+	//ROS_WARN_STREAM("Velocidad");
+	//ROS_WARN_STREAM("odom_vx: " << fd_->odom_vel_[0]);
+	//ROS_WARN_STREAM("odom_vy: " << fd_->odom_vel_[1]);
+	//ROS_WARN_STREAM("odom_vz: " << fd_->odom_vel_[2]);
 	
-	ROS_WARN_STREAM("Posicion");
-	ROS_WARN_STREAM("odom_posx: " << fd_->odom_pos_[0]);
-	ROS_WARN_STREAM("odom_posy: " << fd_->odom_pos_[1]);
-	ROS_WARN_STREAM("odom_posz: " << fd_->odom_pos_[2]);
+	//ROS_WARN_STREAM("Posicion");
+	//ROS_WARN_STREAM("odom_posx: " << fd_->odom_pos_[0]);
+	//ROS_WARN_STREAM("odom_posy: " << fd_->odom_pos_[1]);
+	//ROS_WARN_STREAM("odom_posz: " << fd_->odom_pos_[2]);
 	
 	//listar los voxels
 	//obtener los voxel a la redonda en base a la distancia de influencia
 	
-	ROS_WARN_STREAM("getOccupancy");
-	ROS_WARN_STREAM("occupancy: " << planner_manager_->edt_environment_->sdf_map_->getOccupancy(Eigen::Vector3d(3, 0, 1))); 
+	//ROS_WARN_STREAM("getOccupancy");
+	//ROS_WARN_STREAM("occupancy: " << planner_manager_->edt_environment_->sdf_map_->getOccupancy(Eigen::Vector3d(3, 0, 1))); 
 	
 	//numero de voxels
-	ROS_WARN_STREAM("getVoxelNum: " << expl_manager_->sdf_map_->getVoxelNum());
-	ROS_WARN_STREAM("isInMap: " << expl_manager_->sdf_map_->isInMap(Eigen::Vector3d(3, 0, 1)));
+	//ROS_WARN_STREAM("getVoxelNum: " << expl_manager_->sdf_map_->getVoxelNum());
+	//ROS_WARN_STREAM("isInMap: " << expl_manager_->sdf_map_->isInMap(Eigen::Vector3d(3, 0, 1)));
 	
-	ROS_WARN_STREAM("isInMap: " << expl_manager_->sdf_map_->isInBox(Eigen::Vector3d(3, 0, 1)));
+	//ROS_WARN_STREAM("isInMap: " << expl_manager_->sdf_map_->isInBox(Eigen::Vector3d(3, 0, 1)));
 	
 	//expl_manager_->sdf_map_->setOccupied(Eigen::Vector3d(0, 0, 1),1);
 	//expl_manager_->sdf_map_->setOccupied(Eigen::Vector3d(1, 1, 1),2);
@@ -284,7 +277,9 @@ namespace fast_planner {
       }
       // Inform traj_server the replanning
       replan_pub_.publish(std_msgs::Empty());
+
       int res = callExplorationPlanner();
+      
       if (res == SUCCEED) {
         transitState(PUB_TRAJ, "FSM");
         // Emergency
@@ -292,10 +287,9 @@ namespace fast_planner {
         sendEmergencyMsg(false);
 	
       } else if (res == FAIL) {  // Keep trying to replan
-        fd_->static_state_ = true;
-        ROS_WARN_THROTTLE(1.0, "-- Plan fail (drone %d) --",
-			  getId());
-        // Check if we need to send a message
+	fd_->static_state_ = true;
+	ROS_WARN_THROTTLE(1.0, "-- Plan fail (drone %d) --", getId());
+	// Check if we need to send a message
 	if (num_fail_ > 10) {
           sendEmergencyMsg(true);
           num_fail_ = 0;
@@ -402,6 +396,7 @@ namespace fast_planner {
     ros::Time time_r = ros::Time::now() + ros::Duration(fp_->replan_time_);
     
     int res;
+    
     if (fd_->avoid_collision_ || fd_->go_back_) {  // Only replan trajectory
       res = expl_manager_->planTrajToView(fd_->start_pt_, fd_->start_vel_, fd_->start_acc_,
 					  fd_->start_yaw_, expl_manager_->ed_->next_pos_, expl_manager_->ed_->next_yaw_);
@@ -718,21 +713,25 @@ namespace fast_planner {
   
   //Ejemplo sencillo
   void MvantExplorationFSM::exampleCallback(const geometry_msgs::PoseStamped::ConstPtr& msg){
-    
+
+    //mensaje recibido
     ROS_ERROR("VANT %d - Received pose: position(%f, %f, %f) orientation(%f, %f, %f, %f)",getId(),
 	      msg->pose.position.x, msg->pose.position.y, msg->pose.position.z,
 	      msg->pose.orientation.x, msg->pose.orientation.y, msg->pose.orientation.z, msg->pose.orientation.w);
     
+    //posicion vant en todo momento
     ROS_WARN_STREAM("Posicion VANT");
     ROS_WARN_STREAM("odom_posx: " << fd_->odom_pos_[0]);
     ROS_WARN_STREAM("odom_posy: " << fd_->odom_pos_[1]);
     ROS_WARN_STREAM("odom_posz: " << fd_->odom_pos_[2]);
-
+    
     // obtener resolucion del mapa
     // se establece en el archivo .yaml 0.15
-    ROS_WARN_STREAM("Map Resolution " << expl_manager_->sdf_map_->getResolution());
-    
-    ROS_WARN_STREAM("isPositionReachable:: " << expl_manager_->isPositionReachable(Eigen::Vector3d(fd_->odom_pos_[0],fd_->odom_pos_[1],fd_->odom_pos_[2]),Eigen::Vector3d(msg->pose.position.x,msg->pose.position.y,msg->pose.position.z)));
+    ROS_WARN_STREAM("Map Resolution     : " << expl_manager_->sdf_map_->getResolution());
+    ROS_WARN_STREAM("Map Resolution Inv : " << (1 / expl_manager_->sdf_map_->getResolution()));
+
+    //respecto a la posicion del vant y el punto recibido por el mensaje del topico
+    ROS_WARN_STREAM("isPositionReachable : " << (expl_manager_->isPositionReachable(Eigen::Vector3d(fd_->odom_pos_[0],fd_->odom_pos_[1],fd_->odom_pos_[2]), Eigen::Vector3d(msg->pose.position.x,msg->pose.position.y,msg->pose.position.z)) ? "true" : "false"));
     
     // Punto central
     int cx = msg->pose.position.x; //fd_->odom_pos_[0]; //msg->pose.position.x;
@@ -741,10 +740,14 @@ namespace fast_planner {
     
     //posToIndex
     Eigen::Vector3i id_xxx;
-    
     expl_manager_->sdf_map_->posToIndex(Eigen::Vector3d(msg->pose.position.x,msg->pose.position.y,msg->pose.position.z),id_xxx);
 
-    ROS_WARN_STREAM("posToIndex :pos0:" << id_xxx(0) << " pos1: " << id_xxx(1) << " pos3:" << id_xxx(2));
+    ROS_WARN_STREAM("posToIndex - index0: " << id_xxx(0) << ", index1: " << id_xxx(1) << ", index3: " << id_xxx(2));
+    
+    Eigen::Vector3d id_xxx_pos;
+    expl_manager_->sdf_map_->indexToPos(id_xxx,id_xxx_pos);
+
+    ROS_WARN_STREAM("indexToPos - pos0: " << id_xxx_pos(0) << ", pos1: " << id_xxx_pos(1) << ". pos3: " << id_xxx_pos(2));
     
     // distancia de interes
     //de esto, posToIndex
@@ -752,14 +755,22 @@ namespace fast_planner {
     // cada voxel en realidad es el valor getResolution()
     // que viene del archivo del mapa yaml
     // di * mp_->resolution_inv
-    double di = 10.0 * expl_manager_->sdf_map_->getResolution();
-    
+    double di = 4.0 * (1 / expl_manager_->sdf_map_->getResolution());
+    ROS_WARN_STREAM("di:: " << di);
     // posToIndex
     // Definir los limites del cubo
     // TODO: revisar que no salga del limite del mundo
     double minX = cx-di, maxX = cx+di;
     double minY = cy-di, maxY = cy+di;
-    double minZ = 0, maxZ = cz+di;
+    double minZ = cz-1 , maxZ = cz+2;
+
+    ROS_WARN_STREAM("minX:: " << minX);
+    ROS_WARN_STREAM("minY:: " << minY);
+    ROS_WARN_STREAM("minZ:: " << minZ);
+
+    ROS_WARN_STREAM("maxX:: " << maxX);
+    ROS_WARN_STREAM("maxY:: " << maxY);
+    ROS_WARN_STREAM("maxZ:: " << maxZ);
     
     // guardar distancia
     double distancia;
@@ -767,7 +778,7 @@ namespace fast_planner {
     //expl_manager_->sdf_map_->setOccupied(Eigen::Vector3d(10,10,0),1);
     //expl_manager_->sdf_map_->setOccupied(Eigen::Vector3d(11,11,0),1);
     
-    // Iterar sobre el cubo 3D
+    // Iterar sobre el cubo 3D con los valores del voxel, entonces la sumatoria debe ser la resolucion del mapa
     for (int x = minX; x <= maxX; ++x) {
       for (int y = minY; y <= maxY; ++y) {
 	for (int z = minZ; z <= maxZ; ++z) {
