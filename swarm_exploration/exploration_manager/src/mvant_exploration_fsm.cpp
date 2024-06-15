@@ -88,19 +88,19 @@ namespace fast_planner {
     odom_sub_    = nh.subscribe("/odom_world", 1, &MvantExplorationFSM::odometryCallback, this);
     
     //subscriber llevarlo a nuevo archivo
-    example_sub_ = nh.subscribe("/example", 1000, &MvantExplorationFSM::exampleCallback, this);
+    nearby_obs_sub_ = nh.subscribe("/nearby_obstacles", 1000, &MvantExplorationFSM::nearbyObstaclesCallback, this);
     //-------------------------------------------------------------------------------------------------
     replan_pub_   = nh.advertise<std_msgs::Empty>("/planning/replan", 10);
     new_pub_      = nh.advertise<std_msgs::Empty>("/planning/new", 10);
     bspline_pub_  = nh.advertise<bspline::Bspline>("/planning/bspline", 10);
     stop_pub_     = nh.advertise<std_msgs::Int32>("/stop", 1000);
     heartbit_pub_ = nh.advertise<std_msgs::Empty>("/heartbit", 100);
-
+    
     emergency_handler_pub_ = nh.advertise<std_msgs::Bool>("/trigger_emergency", 10);
-
+    
     //prueba un nuevo publicador
-    example_pub_ = nh.advertise<geometry_msgs::PoseStamped>("/example", 1000);
-
+    nearby_obs_pub_ = nh.advertise<geometry_msgs::PoseStamped>("/nearby_obstacles", 1000);
+    
     //-------------------------------------------------------------------------------------------------
     // Swarm, timer, pub and sub
     drone_state_timer_ = nh.createTimer(ros::Duration(0.04), &MvantExplorationFSM::droneStateTimerCallback, this);
@@ -711,42 +711,57 @@ namespace fast_planner {
     return std::sqrt(std::pow(x - px, 2) + std::pow(y - py, 2) + std::pow(z - pz, 2));
   }
   
-  //Ejemplo sencillo
-  void MvantExplorationFSM::exampleCallback(const geometry_msgs::PoseStamped::ConstPtr& msg){
-
+  /***
+      Entrada k, di
+      Salida Vector con los k cercanos -- talvez su indice
+      --
+      Obtener los obstaculos cercanos respecto a la posicion del VANT
+      debo pasarle el parametro de k
+      regresar los vecinos k vecinos mas cercanos
+      respecto a una distancia
+      - deberia regresar un vector con los vecinos cercanos - los indices -
+      
+      TODO: de la posicion del dron obtener su indice, 
+      la iteración debe ser respecto al indice.
+  ***/
+  void MvantExplorationFSM::nearbyObstaclesCallback(const geometry_msgs::PoseStamped::ConstPtr& msg){
+    
     //mensaje recibido
     ROS_ERROR("VANT %d - Received pose: position(%f, %f, %f) orientation(%f, %f, %f, %f)",getId(),
 	      msg->pose.position.x, msg->pose.position.y, msg->pose.position.z,
 	      msg->pose.orientation.x, msg->pose.orientation.y, msg->pose.orientation.z, msg->pose.orientation.w);
     
     //posicion vant en todo momento
-    ROS_WARN_STREAM("Posicion VANT");
+    ROS_WARN_STREAM("Posicion VANT: " << getId());
     ROS_WARN_STREAM("odom_posx: " << fd_->odom_pos_[0]);
     ROS_WARN_STREAM("odom_posy: " << fd_->odom_pos_[1]);
     ROS_WARN_STREAM("odom_posz: " << fd_->odom_pos_[2]);
     
     // obtener resolucion del mapa
     // se establece en el archivo .yaml 0.15
-    ROS_WARN_STREAM("Map Resolution     : " << expl_manager_->sdf_map_->getResolution());
-    ROS_WARN_STREAM("Map Resolution Inv : " << (1 / expl_manager_->sdf_map_->getResolution()));
-
+    // ROS_WARN_STREAM("Map Resolution     : " << expl_manager_->sdf_map_->getResolution());
+    // ROS_WARN_STREAM("Map Resolution Inv : " << (1 / expl_manager_->sdf_map_->getResolution()));
+    
     //respecto a la posicion del vant y el punto recibido por el mensaje del topico
-    ROS_WARN_STREAM("isPositionReachable : " << (expl_manager_->isPositionReachable(Eigen::Vector3d(fd_->odom_pos_[0],fd_->odom_pos_[1],fd_->odom_pos_[2]), Eigen::Vector3d(msg->pose.position.x,msg->pose.position.y,msg->pose.position.z)) ? "true" : "false"));
+    //ROS_WARN_STREAM("isPositionReachable : " << (expl_manager_->isPositionReachable(Eigen::Vector3d(fd_->odom_pos_[0],fd_->odom_pos_[1],fd_->odom_pos_[2]), Eigen::Vector3d(msg->pose.position.x,msg->pose.position.y,msg->pose.position.z)) ? "true" : "false"));
     
     // Punto central
-    int cx = msg->pose.position.x; //fd_->odom_pos_[0]; //msg->pose.position.x;
-    int cy = msg->pose.position.y; //fd_->odom_pos_[1]; //msg->pose.position.y;
-    int cz = msg->pose.position.z; //fd_->odom_pos_[2]; //msg->pose.position.z;
+    // tomaremos la posicion del VANT
+    int cx = fd_->odom_pos_[0]; //msg->pose.position.x;
+    int cy = fd_->odom_pos_[1]; //msg->pose.position.y;
+    int cz = fd_->odom_pos_[2]; //msg->pose.position.z;
+
+    //TODO: Revisar la continuidad de los indices, si son seguidos ..
     
     //posToIndex
     Eigen::Vector3i index_pos;
     expl_manager_->sdf_map_->posToIndex(Eigen::Vector3d(msg->pose.position.x,msg->pose.position.y,msg->pose.position.z),index_pos);
-
+    
     ROS_WARN_STREAM("posToIndex - index0: " << index_pos(0) << ", index1: " << index_pos(1) << ", index3: " << index_pos(2));
     
     Eigen::Vector3d pos_index;
     expl_manager_->sdf_map_->indexToPos(index_pos,pos_index);
-
+    
     ROS_WARN_STREAM("indexToPos - pos0: " << pos_index(0) << ", pos1: " << pos_index(1) << ". pos3: " << pos_index(2));
     
     // distancia de interes
@@ -790,14 +805,14 @@ namespace fast_planner {
 	  if(expl_manager_->sdf_map_->getOccupancy(Eigen::Vector3d(x,y,z)) == SDFMap::OCCUPANCY::FREE){
 	    
 	    //ROS_WARN_STREAM("LIBRE       - (x: " << x << ", y:" << y << ", z:" << z << ") - " << "[d: " << distancia << "]");
-	    ROS_WARN_STREAM("LIBRE       - (x: " << x << ", y:" << y << ", z:" << z << ")");
+	    //ROS_WARN_STREAM("LIBRE       - (x: " << x << ", y:" << y << ", z:" << z << ")");
 	    
 	  }
 
 	  //2 - OCUPADO
 	  if(expl_manager_->sdf_map_->getOccupancy(Eigen::Vector3d(x,y,z)) == SDFMap::OCCUPANCY::OCCUPIED){
 	    
-	    ROS_WARN_STREAM("OCUPADO     - (x: " << x << ", y:" << y << ", z:" << z << ")");
+	    //ROS_WARN_STREAM("OCUPADO     - (x: " << x << ", y:" << y << ", z:" << z << ")");
 	    
 	  }
 	}

@@ -87,7 +87,7 @@ private:
   void odometryCallback(const nav_msgs::OdometryConstPtr& msg);
 
   /* Ejemplos */
-  void exampleCallback(const geometry_msgs::PoseStamped::ConstPtr& msg);
+  void nearbyObstaclesCallback(const geometry_msgs::PoseStamped::ConstPtr& msg);
   double getDistance(double x, double y, double z, double px, double py, double pz);
   
   // Swarm
@@ -115,11 +115,11 @@ private:
   ros::Subscriber trigger_sub_, odom_sub_;
   ros::Publisher replan_pub_, new_pub_, bspline_pub_;
 
-  //Example
-  ros::Subscriber example_sub_;
+  //nearby obstacles
+  ros::Subscriber nearby_obs_sub_;
 
-  //Example
-  ros::Publisher example_pub_;
+  //nearby obstacles
+  ros::Publisher nearby_obs_pub_;
   
   // Logging
   ros::Timer heartbit_timer_;
