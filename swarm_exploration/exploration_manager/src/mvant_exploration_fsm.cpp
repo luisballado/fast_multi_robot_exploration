@@ -727,59 +727,59 @@ namespace fast_planner {
   void MvantExplorationFSM::nearbyObstaclesCallback(const geometry_msgs::PoseStamped::ConstPtr& msg){
     
     //mensaje recibido
-    ROS_ERROR("VANT %d - Received pose: position(%f, %f, %f) orientation(%f, %f, %f, %f)",getId(),
+    ROS_ERROR("Mesaje recibido - VANT %d - Received pose: position(%f, %f, %f) orientation(%f, %f, %f, %f)",getId(),
 	      msg->pose.position.x, msg->pose.position.y, msg->pose.position.z,
 	      msg->pose.orientation.x, msg->pose.orientation.y, msg->pose.orientation.z, msg->pose.orientation.w);
     
     //posicion vant en todo momento
-    ROS_WARN_STREAM("Posicion VANT: " << getId());
-    ROS_WARN_STREAM("odom_posx: " << fd_->odom_pos_[0]);
-    ROS_WARN_STREAM("odom_posy: " << fd_->odom_pos_[1]);
-    ROS_WARN_STREAM("odom_posz: " << fd_->odom_pos_[2]);
+    //ROS_WARN_STREAM("Posicion VANT: " << getId());
+    //ROS_WARN_STREAM("odom_posx: " << fd_->odom_pos_[0]);
+    //ROS_WARN_STREAM("odom_posy: " << fd_->odom_pos_[1]);
+    //ROS_WARN_STREAM("odom_posz: " << fd_->odom_pos_[2]);
     
     // obtener resolucion del mapa
     // se establece en el archivo .yaml 0.15
-    // ROS_WARN_STREAM("Map Resolution     : " << expl_manager_->sdf_map_->getResolution());
-    // ROS_WARN_STREAM("Map Resolution Inv : " << (1 / expl_manager_->sdf_map_->getResolution()));
+    ROS_WARN_STREAM("Map Resolution     : " << expl_manager_->sdf_map_->getResolution());
+    ROS_WARN_STREAM("Map Resolution Inv : " << (1 / expl_manager_->sdf_map_->getResolution()));
     
     //respecto a la posicion del vant y el punto recibido por el mensaje del topico
     //ROS_WARN_STREAM("isPositionReachable : " << (expl_manager_->isPositionReachable(Eigen::Vector3d(fd_->odom_pos_[0],fd_->odom_pos_[1],fd_->odom_pos_[2]), Eigen::Vector3d(msg->pose.position.x,msg->pose.position.y,msg->pose.position.z)) ? "true" : "false"));
     
     // Punto central
-    // tomaremos la posicion del VANT
-    int cx = fd_->odom_pos_[0]; //msg->pose.position.x;
-    int cy = fd_->odom_pos_[1]; //msg->pose.position.y;
-    int cz = fd_->odom_pos_[2]; //msg->pose.position.z;
+    // tomaremos la posicion compartida en el msg
+    int cx = msg->pose.position.x; //fd_->odom_pos_[0];
+    int cy = msg->pose.position.y; //fd_->odom_pos_[1];
+    int cz = msg->pose.position.z; //fd_->odom_pos_[2];
 
-    //TODO: Revisar la continuidad de los indices, si son seguidos ..
-    
+    // Los indices si son seguidos
+    // ix,iy,iz -> aumentan con incrementos de la resolucion (0.15)
+        
     //posToIndex
     Eigen::Vector3i index_pos;
     expl_manager_->sdf_map_->posToIndex(Eigen::Vector3d(msg->pose.position.x,msg->pose.position.y,msg->pose.position.z),index_pos);
     
     ROS_WARN_STREAM("posToIndex - index0: " << index_pos(0) << ", index1: " << index_pos(1) << ", index3: " << index_pos(2));
     
-    Eigen::Vector3d pos_index;
-    expl_manager_->sdf_map_->indexToPos(index_pos,pos_index);
-    
-    ROS_WARN_STREAM("indexToPos - pos0: " << pos_index(0) << ", pos1: " << pos_index(1) << ". pos3: " << pos_index(2));
+    //Eigen::Vector3d pos_index;
+    //expl_manager_->sdf_map_->indexToPos(index_pos,pos_index);
+    //ROS_WARN_STREAM("indexToPos - pos0: " << pos_index(0) << ", pos1: " << pos_index(1) << ". pos3: " << pos_index(2));
     
     // distancia de interes
-    //de esto, posToIndex
+    // de esto, posToIndex
     // distancia de interes
-    // cada voxel en realidad es el valor getResolution()
+    // cada voxel en realidad es el valor getResolution() - 0.15
     // que viene del archivo del mapa yaml
     // di * mp_->resolution_inv
     double di = 4.0 * (1 / expl_manager_->sdf_map_->getResolution());
     ROS_WARN_STREAM("di:: " << di);
-
+    
     // posToIndex
     // Definir los limites del cubo
     // TODO: revisar que no salga del limite del mundo
-    double minX = cx-di, maxX = cx+di;
-    double minY = cy-di, maxY = cy+di;
-    double minZ = cz-1 , maxZ = cz+2;
-
+    double minX = index_pos(0)-di, maxX = index_pos(0)+di;
+    double minY = index_pos(1)-di, maxY = index_pos(1)+di;
+    double minZ = index_pos(2)-1 , maxZ = index_pos(2)+2;
+    
     ROS_WARN_STREAM("minX:: " << minX << " - maxX:: " << maxX);
     ROS_WARN_STREAM("minY:: " << minY << " - maxY:: " << maxY);
     ROS_WARN_STREAM("minZ:: " << minZ << " - maxZ:: " << maxZ);
@@ -788,31 +788,31 @@ namespace fast_planner {
     double distancia;
     
     // Iterar sobre el cubo 3D con los valores del voxel, entonces la sumatoria debe ser la resolucion del mapa
-    for (int x = minX; x <= maxX; ++x) {
-      for (int y = minY; y <= maxY; ++y) {
-	for (int z = minZ; z <= maxZ; ++z) {
+    for (int x = minX; x < maxX; ++x) {
+      for (int y = minY; y < maxY; ++y) {
+	for (int z = minZ; z < maxZ; ++z) {
 	  
 	  //0 - DESCONOCIDO
-	  if(expl_manager_->sdf_map_->getOccupancy(Eigen::Vector3d(x,y,z)) == SDFMap::OCCUPANCY::UNKNOWN){
+	  if(expl_manager_->sdf_map_->getOccupancy(Eigen::Vector3i(x,y,z)) == SDFMap::OCCUPANCY::UNKNOWN){
 	    
-	    //ROS_WARN_STREAM("DESCONOCIDO - (x: " << x << ", y:" << y << ", z:" << z << ")");
+	    ROS_WARN_STREAM("DESCONOCIDO - (x: " << x << ", y:" << y << ", z:" << z << ")");
 	    
 	  }
 	  
 	  //solo me interesan los ocupados
 	  //distancia = getDistance(x,y,z,cx,cy,cz);
 	  //1 - LIBRE
-	  if(expl_manager_->sdf_map_->getOccupancy(Eigen::Vector3d(x,y,z)) == SDFMap::OCCUPANCY::FREE){
+	  if(expl_manager_->sdf_map_->getOccupancy(Eigen::Vector3i(x,y,z)) == SDFMap::OCCUPANCY::FREE){
 	    
 	    //ROS_WARN_STREAM("LIBRE       - (x: " << x << ", y:" << y << ", z:" << z << ") - " << "[d: " << distancia << "]");
-	    //ROS_WARN_STREAM("LIBRE       - (x: " << x << ", y:" << y << ", z:" << z << ")");
+	    ROS_WARN_STREAM("LIBRE       - (x: " << x << ", y:" << y << ", z:" << z << ")");
 	    
 	  }
 
 	  //2 - OCUPADO
-	  if(expl_manager_->sdf_map_->getOccupancy(Eigen::Vector3d(x,y,z)) == SDFMap::OCCUPANCY::OCCUPIED){
+	  if(expl_manager_->sdf_map_->getOccupancy(Eigen::Vector3i(x,y,z)) == SDFMap::OCCUPANCY::OCCUPIED){
 	    
-	    //ROS_WARN_STREAM("OCUPADO     - (x: " << x << ", y:" << y << ", z:" << z << ")");
+	    ROS_WARN_STREAM("OCUPADO     - (x: " << x << ", y:" << y << ", z:" << z << ")");
 	    
 	  }
 	}
