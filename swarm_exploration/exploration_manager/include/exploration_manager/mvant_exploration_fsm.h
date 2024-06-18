@@ -42,7 +42,7 @@ enum EXPL_STATE { INIT, WAIT_TRIGGER, PLAN_TRAJ, PUB_TRAJ, EXEC_TRAJ, FINISH, ID
 inline Eigen::Vector3d geometryMsgToEigen(const geometry_msgs::Point& point_msg) {
   return Eigen::Vector3d(point_msg.x, point_msg.y, point_msg.z);
 }
-
+  
 inline geometry_msgs::Point eigenToGeometryMsg(const Eigen::Vector3d& point) {
   geometry_msgs::Point point_msg;
   point_msg.x = point.x();
@@ -88,7 +88,7 @@ private:
 
   /* Ejemplos */
   void nearbyObstaclesCallback(const geometry_msgs::PoseStamped::ConstPtr& msg);
-  double getDistance(double x, double y, double z, double px, double py, double pz);
+  double getDistance(Eigen::Vector3d& cloud_point, Eigen::Vector3d& point);
   
   // Swarm
   void droneStateTimerCallback(const ros::TimerEvent& e);

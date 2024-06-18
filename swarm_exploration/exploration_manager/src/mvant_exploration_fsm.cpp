@@ -707,8 +707,8 @@ namespace fast_planner {
   }
   
   // Función para calcular la distancia euclidiana en 3D
-  double MvantExplorationFSM::getDistance(double x, double y, double z, double px, double py, double pz) {
-    return std::sqrt(std::pow(x - px, 2) + std::pow(y - py, 2) + std::pow(z - pz, 2));
+  double MvantExplorationFSM::getDistance(Eigen::Vector3d& cloud_point, Eigen::Vector3d& point) {
+    return std::sqrt(std::pow(cloud_point(0) - point(0), 2) + std::pow(cloud_point(1) - point(1), 2) + std::pow(cloud_point(2) - point(2), 2));
   }
   
   /***
@@ -747,16 +747,19 @@ namespace fast_planner {
     
     // Punto central
     // tomaremos la posicion compartida en el msg
-    int cx = msg->pose.position.x; //fd_->odom_pos_[0];
-    int cy = msg->pose.position.y; //fd_->odom_pos_[1];
-    int cz = msg->pose.position.z; //fd_->odom_pos_[2];
-
+    // para tomar la posicion del dron
+    // fd_->odom_pos_[0];
+    // fd_->odom_pos_[1];
+    // fd_->odom_pos_[2];
+    Eigen::Vector3d central_point;
+    central_point << msg->pose.position.x, msg->pose.position.y, msg->pose.position.z;
+    
     // Los indices si son seguidos
     // ix,iy,iz -> aumentan con incrementos de la resolucion (0.15)
-        
+    
     //posToIndex
     Eigen::Vector3i index_pos;
-    expl_manager_->sdf_map_->posToIndex(Eigen::Vector3d(msg->pose.position.x,msg->pose.position.y,msg->pose.position.z),index_pos);
+    expl_manager_->sdf_map_->posToIndex(central_point,index_pos);
     
     ROS_WARN_STREAM("posToIndex - index0: " << index_pos(0) << ", index1: " << index_pos(1) << ", index3: " << index_pos(2));
     
@@ -770,7 +773,7 @@ namespace fast_planner {
     // cada voxel en realidad es el valor getResolution() - 0.15
     // que viene del archivo del mapa yaml
     // di * mp_->resolution_inv
-    double di = 4.0 * (1 / expl_manager_->sdf_map_->getResolution());
+    double di = 2.0 * (1 / expl_manager_->sdf_map_->getResolution());
     ROS_WARN_STREAM("di:: " << di);
     
     // posToIndex
@@ -780,9 +783,9 @@ namespace fast_planner {
     double minY = index_pos(1)-di, maxY = index_pos(1)+di;
     double minZ = index_pos(2)-1 , maxZ = index_pos(2)+2;
     
-    ROS_WARN_STREAM("minX:: " << minX << " - maxX:: " << maxX);
-    ROS_WARN_STREAM("minY:: " << minY << " - maxY:: " << maxY);
-    ROS_WARN_STREAM("minZ:: " << minZ << " - maxZ:: " << maxZ);
+    //ROS_WARN_STREAM("minX:: " << minX << " - maxX:: " << maxX);
+    //ROS_WARN_STREAM("minY:: " << minY << " - maxY:: " << maxY);
+    //ROS_WARN_STREAM("minZ:: " << minZ << " - maxZ:: " << maxZ);
     
     // guardar distancia
     double distancia;
@@ -792,28 +795,30 @@ namespace fast_planner {
       for (int y = minY; y < maxY; ++y) {
 	for (int z = minZ; z < maxZ; ++z) {
 	  
+	  // Calcular la distancia de todos y guardar datos en un vector
+	  // en el vector guardar x,y,z ; distancia ; occupancy
+
+	  //distancia = getDistance(Eigen::Vector3d(x,y,z),Eigen::Vector3d());
+	  
 	  //0 - DESCONOCIDO
+	  //1 - LIBRE
+	  //2 - OCUPADO
 	  if(expl_manager_->sdf_map_->getOccupancy(Eigen::Vector3i(x,y,z)) == SDFMap::OCCUPANCY::UNKNOWN){
-	    
 	    ROS_WARN_STREAM("DESCONOCIDO - (x: " << x << ", y:" << y << ", z:" << z << ")");
-	    
 	  }
 	  
-	  //solo me interesan los ocupados
-	  //distancia = getDistance(x,y,z,cx,cy,cz);
-	  //1 - LIBRE
-	  if(expl_manager_->sdf_map_->getOccupancy(Eigen::Vector3i(x,y,z)) == SDFMap::OCCUPANCY::FREE){
+	  
+	  
+	  //if(expl_manager_->sdf_map_->getOccupancy(Eigen::Vector3i(x,y,z)) == SDFMap::OCCUPANCY::FREE){
 	    
 	    //ROS_WARN_STREAM("LIBRE       - (x: " << x << ", y:" << y << ", z:" << z << ") - " << "[d: " << distancia << "]");
-	    ROS_WARN_STREAM("LIBRE       - (x: " << x << ", y:" << y << ", z:" << z << ")");
+	    //ROS_WARN_STREAM("LIBRE       - (x: " << x << ", y:" << y << ", z:" << z << ")");
 	    
-	  }
-
-	  //2 - OCUPADO
+	  //}
+	  
+	  
 	  if(expl_manager_->sdf_map_->getOccupancy(Eigen::Vector3i(x,y,z)) == SDFMap::OCCUPANCY::OCCUPIED){
-	    
 	    ROS_WARN_STREAM("OCUPADO     - (x: " << x << ", y:" << y << ", z:" << z << ")");
-	    
 	  }
 	}
       }
