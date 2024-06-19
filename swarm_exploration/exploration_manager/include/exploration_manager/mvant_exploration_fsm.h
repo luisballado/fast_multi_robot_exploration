@@ -11,7 +11,7 @@
 #include <nav_msgs/Odometry.h>
 #include <visualization_msgs/Marker.h>
 #include <exploration_manager/DroneState.h>
-#include <exploration_manager/nearbyObstacle.h>
+#include <exploration_manager/SearchObstacle.h>
 #include <exploration_manager/PairOpt.h>
 #include <exploration_manager/PairOptResponse.h>
 #include <exploration_manager/collaboration_assigner.h>
@@ -88,7 +88,7 @@ private:
   void odometryCallback(const nav_msgs::OdometryConstPtr& msg);
 
   /* Ejemplos */
-  void nearbyObstaclesCallback(const exploration_manager::nearbyObstacle& msg);
+  void nearbyObstaclesCallback(const exploration_manager::SearchObstacle::ConstPtr& msg);
   double getDistance(Eigen::Vector3d& cloud_point, Eigen::Vector3d& point);
   
   // Swarm

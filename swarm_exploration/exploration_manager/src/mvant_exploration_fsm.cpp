@@ -99,7 +99,7 @@ namespace fast_planner {
     emergency_handler_pub_ = nh.advertise<std_msgs::Bool>("/trigger_emergency", 10);
     
     //prueba un nuevo publicador
-    nearby_obs_pub_ = nh.advertise<exploration_manager::nearbyObstacle>("/nearby_obstacles", 1000);
+    nearby_obs_pub_ = nh.advertise<exploration_manager::SearchObstacle>("/nearby_obstacles", 1000);
     
     //-------------------------------------------------------------------------------------------------
     // Swarm, timer, pub and sub
@@ -725,20 +725,16 @@ namespace fast_planner {
       la iteración debe ser respecto al indice.
   ***/
   
-  void MvantExplorationFSM::nearbyObstaclesCallback(const exploration_manager::nearbyObstacle& msg) {
-
-    ROS_ERROR("Mensaje recibido:: k:: %d", msg->k);
+  
+  void MvantExplorationFSM::nearbyObstaclesCallback(const exploration_manager::SearchObstacle::ConstPtr& msg) {
     
-    return;
+    ROS_ERROR("Mesaje recibido - VANT %d - Received pose: position(%f, %f, %f)",
+	      getId(), msg->central_pos.x, msg->central_pos.y, msg->central_pos.z);
     
-    /**
-       //mensaje recibido
-    ROS_ERROR("Mesaje recibido - VANT %d - Received pose: position(%f, %f, %f) orientation(%f, %f, %f, %f)",getId(),
-	      msg->central_pos.pose.position.x, msg->central_pos.pose.position.y, msg->central_pos.pose.position.z,
-	      msg->central_pos.pose.orientation.x, msg->central_pos.pose.orientation.y, msg->central_pos.pose.orientation.z, msg->central_pos.pose.orientation.w);
+    //mensaje recibido
     
     int _di_ = msg->di;
-    int  k   = msg->k;
+    int _k_  = msg->k;
     
     //ROS_WARN_STREAM("isPositionReachable : " << (expl_manager_->isPositionReachable(Eigen::Vector3d(fd_->odom_pos_[0],fd_->odom_pos_[1],fd_->odom_pos_[2]), Eigen::Vector3d(msg->pose.position.x,msg->pose.position.y,msg->pose.position.z)) ? "true" : "false"));
     
@@ -752,7 +748,7 @@ namespace fast_planner {
     // Punto central
     // tomaremos la posicion compartida en el msg
     Eigen::Vector3d central_point;
-    central_point << msg->pose.position.x, msg->pose.position.y, msg->pose.position.z;
+    central_point << msg->central_pos.x, msg->central_pos.y, msg->central_pos.z;
     
     // Los indices si son seguidos
     // ix,iy,iz -> aumentan con incrementos de la resolucion (0.15)
@@ -810,7 +806,7 @@ namespace fast_planner {
 
     int count = 0;
         
-    for (auto it = neighborhood.begin(); it != neighborhood.end() && count < k; ++it, ++count) {
+    for (auto it = neighborhood.begin(); it != neighborhood.end() && count < _k_; ++it, ++count) {
       
       double magnitud = it->first;
       Eigen::Vector3d vector = it->second;
@@ -818,9 +814,6 @@ namespace fast_planner {
       ROS_WARN_STREAM("Magnitud: " << magnitud << ", Vector: (" << vector.x() << ", " << vector.y() << ", " << vector.z() << ")");
       
     }
-     */
-    
-    
   }
   
   void MvantExplorationFSM::heartbitCallback(const ros::TimerEvent& e) {
