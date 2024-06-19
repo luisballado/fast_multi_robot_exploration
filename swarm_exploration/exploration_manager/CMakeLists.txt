@@ -35,6 +35,7 @@ add_message_files(
   PairOptResponse.msg
   HGrid.msg
   GridTour.msg
+  nearbyObstacle.msg
 )
 
 generate_messages(

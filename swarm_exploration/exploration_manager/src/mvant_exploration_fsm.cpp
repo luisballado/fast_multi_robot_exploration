@@ -99,7 +99,7 @@ namespace fast_planner {
     emergency_handler_pub_ = nh.advertise<std_msgs::Bool>("/trigger_emergency", 10);
     
     //prueba un nuevo publicador
-    nearby_obs_pub_ = nh.advertise<geometry_msgs::PoseStamped>("/nearby_obstacles", 1000);
+    nearby_obs_pub_ = nh.advertise<exploration_manager::nearbyObstacle>("/nearby_obstacles", 1000);
     
     //-------------------------------------------------------------------------------------------------
     // Swarm, timer, pub and sub
@@ -724,33 +724,33 @@ namespace fast_planner {
       TODO: de la posicion del dron obtener su indice, 
       la iteración debe ser respecto al indice.
   ***/
-  void MvantExplorationFSM::nearbyObstaclesCallback(const geometry_msgs::PoseStamped::ConstPtr& msg){
+  
+  void MvantExplorationFSM::nearbyObstaclesCallback(const exploration_manager::nearbyObstacle& msg) {
+
+    ROS_ERROR("Mensaje recibido:: k:: %d", msg->k);
     
-    //mensaje recibido
+    return;
+    
+    /**
+       //mensaje recibido
     ROS_ERROR("Mesaje recibido - VANT %d - Received pose: position(%f, %f, %f) orientation(%f, %f, %f, %f)",getId(),
-	      msg->pose.position.x, msg->pose.position.y, msg->pose.position.z,
-	      msg->pose.orientation.x, msg->pose.orientation.y, msg->pose.orientation.z, msg->pose.orientation.w);
+	      msg->central_pos.pose.position.x, msg->central_pos.pose.position.y, msg->central_pos.pose.position.z,
+	      msg->central_pos.pose.orientation.x, msg->central_pos.pose.orientation.y, msg->central_pos.pose.orientation.z, msg->central_pos.pose.orientation.w);
     
-    //posicion vant en todo momento
-    //ROS_WARN_STREAM("Posicion VANT: " << getId());
-    //ROS_WARN_STREAM("odom_posx: " << fd_->odom_pos_[0]);
-    //ROS_WARN_STREAM("odom_posy: " << fd_->odom_pos_[1]);
-    //ROS_WARN_STREAM("odom_posz: " << fd_->odom_pos_[2]);
+    int _di_ = msg->di;
+    int  k   = msg->k;
     
-    // obtener resolucion del mapa
-    // se establece en el archivo .yaml 0.15
-    ROS_WARN_STREAM("Map Resolution     : " << expl_manager_->sdf_map_->getResolution());
-    ROS_WARN_STREAM("Map Resolution Inv : " << (1 / expl_manager_->sdf_map_->getResolution()));
-    
-    //respecto a la posicion del vant y el punto recibido por el mensaje del topico
     //ROS_WARN_STREAM("isPositionReachable : " << (expl_manager_->isPositionReachable(Eigen::Vector3d(fd_->odom_pos_[0],fd_->odom_pos_[1],fd_->odom_pos_[2]), Eigen::Vector3d(msg->pose.position.x,msg->pose.position.y,msg->pose.position.z)) ? "true" : "false"));
     
-    // Punto central
-    // tomaremos la posicion compartida en el msg
+    // ----------------------------------------------
     // para tomar la posicion del dron
     // fd_->odom_pos_[0];
     // fd_->odom_pos_[1];
     // fd_->odom_pos_[2];
+    // ----------------------------------------------
+
+    // Punto central
+    // tomaremos la posicion compartida en el msg
     Eigen::Vector3d central_point;
     central_point << msg->pose.position.x, msg->pose.position.y, msg->pose.position.z;
     
@@ -760,36 +760,25 @@ namespace fast_planner {
     //posToIndex
     Eigen::Vector3i index_pos;
     expl_manager_->sdf_map_->posToIndex(central_point,index_pos);
-    
-    ROS_WARN_STREAM("posToIndex - index0: " << index_pos(0) << ", index1: " << index_pos(1) << ", index3: " << index_pos(2));
-    
-    //Eigen::Vector3d pos_index;
-    //expl_manager_->sdf_map_->indexToPos(index_pos,pos_index);
-    //ROS_WARN_STREAM("indexToPos - pos0: " << pos_index(0) << ", pos1: " << pos_index(1) << ". pos3: " << pos_index(2));
-    
+    //ROS_WARN_STREAM("posToIndex - index0: " << index_pos(0) << ", index1: " << index_pos(1) << ", index3: " << index_pos(2));
+        
     // distancia de interes
-    // de esto, posToIndex
-    // distancia de interes
-    // cada voxel en realidad es el valor getResolution() - 0.15
-    // que viene del archivo del mapa yaml
-    // di * mp_->resolution_inv
-    double di = 2.0 * (1 / expl_manager_->sdf_map_->getResolution());
-    ROS_WARN_STREAM("di:: " << di);
+    double di = _di_ * (1 / expl_manager_->sdf_map_->getResolution());
+    //ROS_WARN_STREAM("di:: " << di);
     
-    // posToIndex
     // Definir los limites del cubo
-    // TODO: revisar que no salga del limite del mundo
     double minX = index_pos(0)-di, maxX = index_pos(0)+di;
     double minY = index_pos(1)-di, maxY = index_pos(1)+di;
     double minZ = index_pos(2)-1 , maxZ = index_pos(2)+2;
     
-    //ROS_WARN_STREAM("minX:: " << minX << " - maxX:: " << maxX);
-    //ROS_WARN_STREAM("minY:: " << minY << " - maxY:: " << maxY);
-    //ROS_WARN_STREAM("minZ:: " << minZ << " - maxZ:: " << maxZ);
-    
     // guardar distancia
     double distancia;
     
+    Eigen::Vector3d cloud_points;
+    
+    int state;
+    
+    std::multimap<double,Eigen::Vector3d> neighborhood; 
     // Iterar sobre el cubo 3D con los valores del voxel, entonces la sumatoria debe ser la resolucion del mapa
     for (int x = minX; x < maxX; ++x) {
       for (int y = minY; y < maxY; ++y) {
@@ -797,32 +786,41 @@ namespace fast_planner {
 	  
 	  // Calcular la distancia de todos y guardar datos en un vector
 	  // en el vector guardar x,y,z ; distancia ; occupancy
-
-	  //distancia = getDistance(Eigen::Vector3d(x,y,z),Eigen::Vector3d());
 	  
+	  cloud_points << x,y,z; 
+	  
+	  distancia = getDistance(cloud_points,central_point);
+	  
+	  //ROS_WARN_STREAM("Distancia:: " << distancia);
+
 	  //0 - DESCONOCIDO
 	  //1 - LIBRE
 	  //2 - OCUPADO
-	  if(expl_manager_->sdf_map_->getOccupancy(Eigen::Vector3i(x,y,z)) == SDFMap::OCCUPANCY::UNKNOWN){
-	    ROS_WARN_STREAM("DESCONOCIDO - (x: " << x << ", y:" << y << ", z:" << z << ")");
-	  }
+	  state = expl_manager_->sdf_map_->getOccupancy(Eigen::Vector3i(x,y,z));
+
+	  //guardar en vector
+	  //distancia | x,y.z
+	  neighborhood.emplace(distancia,cloud_points);
 	  
+	  //ROS_WARN_STREAM("Estado" << state);
 	  
-	  
-	  //if(expl_manager_->sdf_map_->getOccupancy(Eigen::Vector3i(x,y,z)) == SDFMap::OCCUPANCY::FREE){
-	    
-	    //ROS_WARN_STREAM("LIBRE       - (x: " << x << ", y:" << y << ", z:" << z << ") - " << "[d: " << distancia << "]");
-	    //ROS_WARN_STREAM("LIBRE       - (x: " << x << ", y:" << y << ", z:" << z << ")");
-	    
-	  //}
-	  
-	  
-	  if(expl_manager_->sdf_map_->getOccupancy(Eigen::Vector3i(x,y,z)) == SDFMap::OCCUPANCY::OCCUPIED){
-	    ROS_WARN_STREAM("OCUPADO     - (x: " << x << ", y:" << y << ", z:" << z << ")");
-	  }
 	}
       }
     }
+
+    int count = 0;
+        
+    for (auto it = neighborhood.begin(); it != neighborhood.end() && count < k; ++it, ++count) {
+      
+      double magnitud = it->first;
+      Eigen::Vector3d vector = it->second;
+      
+      ROS_WARN_STREAM("Magnitud: " << magnitud << ", Vector: (" << vector.x() << ", " << vector.y() << ", " << vector.z() << ")");
+      
+    }
+     */
+    
+    
   }
   
   void MvantExplorationFSM::heartbitCallback(const ros::TimerEvent& e) {
