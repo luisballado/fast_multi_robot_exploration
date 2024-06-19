@@ -774,7 +774,8 @@ namespace fast_planner {
     
     int state;
     
-    std::multimap<double,Eigen::Vector3d> neighborhood; 
+    std::multimap<double, std::pair<Eigen::Vector3d, int>> neighborhood; 
+    
     // Iterar sobre el cubo 3D con los valores del voxel, entonces la sumatoria debe ser la resolucion del mapa
     for (int x = minX; x < maxX; ++x) {
       for (int y = minY; y < maxY; ++y) {
@@ -796,7 +797,7 @@ namespace fast_planner {
 
 	  //guardar en vector
 	  //distancia | x,y.z
-	  neighborhood.emplace(distancia,cloud_points);
+	  neighborhood.emplace(distancia,std::make_pair(cloud_points,state));
 	  
 	  //ROS_WARN_STREAM("Estado" << state);
 	  
@@ -805,13 +806,15 @@ namespace fast_planner {
     }
 
     int count = 0;
-        
+
+    //tienen que ser los cercanos ocupados
     for (auto it = neighborhood.begin(); it != neighborhood.end() && count < _k_; ++it, ++count) {
       
       double magnitud = it->first;
-      Eigen::Vector3d vector = it->second;
+      Eigen::Vector3d vector = it->second.first;
+      int _estado_ = it->second.second;
       
-      ROS_WARN_STREAM("Magnitud: " << magnitud << ", Vector: (" << vector.x() << ", " << vector.y() << ", " << vector.z() << ")");
+      ROS_WARN_STREAM("Magnitud: " << magnitud << ", Vector: (" << vector.x() << "," << vector.y() << "," << vector.z() << " - " << _estado_ << ")");
       
     }
   }
