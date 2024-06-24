@@ -756,7 +756,7 @@ namespace fast_planner {
     //posToIndex
     Eigen::Vector3i index_pos;
     expl_manager_->sdf_map_->posToIndex(central_point,index_pos);
-    //ROS_WARN_STREAM("posToIndex - index0: " << index_pos(0) << ", index1: " << index_pos(1) << ", index3: " << index_pos(2));
+    ROS_WARN_STREAM("posToIndex - index0: " << index_pos(0) << ", index1: " << index_pos(1) << ", index3: " << index_pos(2));
         
     // distancia de interes
     double di = _di_ * (1 / expl_manager_->sdf_map_->getResolution());
@@ -783,8 +783,9 @@ namespace fast_planner {
 	  
 	  // Calcular la distancia de todos y guardar datos en un vector
 	  // en el vector guardar x,y,z ; distancia ; occupancy
+	  //son los puntos en la iter
 	  
-	  cloud_points << x,y,z; 
+	  expl_manager_->sdf_map_->indexToPos(Eigen::Vector3i(x,y,z),cloud_points);
 	  
 	  distancia = getDistance(cloud_points,central_point);
 	  
@@ -797,6 +798,8 @@ namespace fast_planner {
 
 	  //guardar en vector
 	  //distancia | x,y.z
+	  
+	  //neighborhood.emplace(distancia,std::make_pair(cloud_points,state));
 	  neighborhood.emplace(distancia,std::make_pair(cloud_points,state));
 	  
 	  //ROS_WARN_STREAM("Estado" << state);
@@ -808,13 +811,24 @@ namespace fast_planner {
     int count = 0;
 
     //tienen que ser los cercanos ocupados
-    for (auto it = neighborhood.begin(); it != neighborhood.end() && count < _k_; ++it, ++count) {
+    //el multimap los ordena ascendente
+    for (auto it = neighborhood.begin(); it != neighborhood.end() && count < _k_; ++it) {
+
+      //si no esta ocupada saltarlo
       
       double magnitud = it->first;
       Eigen::Vector3d vector = it->second.first;
       int _estado_ = it->second.second;
+
+      if(_estado_==2){
+
+	ROS_WARN_STREAM("Magnitud: " << magnitud << ", Vector: (" << vector.x() << "," << vector.y() << "," << vector.z() << " - " << _estado_ << ")");
+	
+	++count;
+	
+      }
       
-      ROS_WARN_STREAM("Magnitud: " << magnitud << ", Vector: (" << vector.x() << "," << vector.y() << "," << vector.z() << " - " << _estado_ << ")");
+      
       
     }
   }

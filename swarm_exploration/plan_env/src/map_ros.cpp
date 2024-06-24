@@ -364,7 +364,7 @@ void MapROS::publishMapLocal() {
   Eigen::Vector3i max_cut = map_->md_->local_bound_max_;
   map_->boundIndex(min_cut);
   map_->boundIndex(max_cut);
-
+  
   // for (int z = min_cut(2); z <= max_cut(2); ++z)
   for (int x = min_cut(0); x <= max_cut(0); ++x)
     for (int y = min_cut(1); y <= max_cut(1); ++y)
