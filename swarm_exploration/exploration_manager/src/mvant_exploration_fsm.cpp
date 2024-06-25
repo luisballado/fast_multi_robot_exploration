@@ -88,7 +88,7 @@ namespace fast_planner {
     odom_sub_    = nh.subscribe("/odom_world", 1, &MvantExplorationFSM::odometryCallback, this);
     
     //subscriber llevarlo a nuevo archivo
-    nearby_obs_sub_ = nh.subscribe("/nearby_obstacles", 1000, &MvantExplorationFSM::nearbyObstaclesCallback, this);
+    //nearby_obs_sub_ = nh.subscribe("/nearby_obstacles", 1000, &MvantExplorationFSM::nearbyObstaclesCallback, this);
     //-------------------------------------------------------------------------------------------------
     replan_pub_   = nh.advertise<std_msgs::Empty>("/planning/replan", 10);
     new_pub_      = nh.advertise<std_msgs::Empty>("/planning/new", 10);
@@ -102,6 +102,8 @@ namespace fast_planner {
     //nearby_obs_pub_ = nh.advertise<exploration_manager::SearchObstacle>("/nearby_obstacles", 10);
     
     nb_obs_pub_ = nh.advertise<sensor_msgs::PointCloud2>("/sdf_map/obs", 10);
+
+    prueba_nb = nh.createTimer(ros::Duration(1), &MvantExplorationFSM::nearbyObstaclesCallback, this);
     
     //-------------------------------------------------------------------------------------------------
     // Swarm, timer, pub and sub
@@ -723,23 +725,20 @@ namespace fast_planner {
       respecto a una distancia
       - deberia regresar un vector con los vecinos cercanos - los indices -
       
-      TODO: de la posicion del dron obtener su indice, 
-      la iteración debe ser respecto al indice.
   ***/
   
   
-  void MvantExplorationFSM::nearbyObstaclesCallback(const exploration_manager::SearchObstacle::ConstPtr& msg) {
+  void MvantExplorationFSM::nearbyObstaclesCallback(const ros::TimerEvent& e) {//(const exploration_manager::SearchObstacle::ConstPtr& msg) {
 
     pcl::PointXYZ pt;
     pcl::PointCloud<pcl::PointXYZ> cloud;
     
-    ROS_ERROR("Mesaje recibido - VANT %d - Received pose: position(%f, %f, %f)",
-	      getId(), msg->central_pos.x, msg->central_pos.y, msg->central_pos.z);
+    //ROS_ERROR("Mesaje recibido - VANT %d - Received pose: position(%f, %f, %f)", getId(), msg->central_pos.x, msg->central_pos.y, msg->central_pos.z);
     
     //mensaje recibido
     
-    int _di_ = msg->di;
-    int _k_  = msg->k;
+    int _di_ = 10; //msg->di;
+    int _k_  = 20; //msg->k;
     
     //ROS_WARN_STREAM("isPositionReachable : " << (expl_manager_->isPositionReachable(Eigen::Vector3d(fd_->odom_pos_[0],fd_->odom_pos_[1],fd_->odom_pos_[2]), Eigen::Vector3d(msg->pose.position.x,msg->pose.position.y,msg->pose.position.z)) ? "true" : "false"));
     
@@ -753,7 +752,8 @@ namespace fast_planner {
     // Punto central
     // tomaremos la posicion compartida en el msg
     Eigen::Vector3d central_point;
-    central_point << msg->central_pos.x, msg->central_pos.y, msg->central_pos.z;
+    //central_point << msg->central_pos.x, msg->central_pos.y, msg->central_pos.z;
+    central_point << fd_->odom_pos_[0], fd_->odom_pos_[1], fd_->odom_pos_[2];
     
     // Los indices si son seguidos
     // ix,iy,iz -> aumentan con incrementos de la resolucion (0.15)
@@ -795,7 +795,7 @@ namespace fast_planner {
 	  distancia = getDistance(cloud_points,central_point);
 	  
 	  //ROS_WARN_STREAM("Distancia:: " << distancia);
-
+	  
 	  //0 - DESCONOCIDO
 	  //1 - LIBRE
 	  //2 - OCUPADO
@@ -818,17 +818,19 @@ namespace fast_planner {
     //tienen que ser los cercanos ocupados
     //el multimap los ordena ascendente
     for (auto it = neighborhood.begin(); it != neighborhood.end() && count < _k_; ++it) {
-
+      
       //si no esta ocupada saltarlo
       
       double magnitud = it->first;
       Eigen::Vector3d vector = it->second.first;
       int _estado_ = it->second.second;
 
+      ROS_WARN_STREAM("Estado" << _estado_);
+      
       if(_estado_==2){
-
+	
 	ROS_WARN_STREAM("Magnitud: " << magnitud << ", Vector: (" << vector.x() << "," << vector.y() << "," << vector.z() << " - " << _estado_ << ")");
-
+	
 	pt.x = vector.x();
 	pt.y = vector.y();
 	pt.z = vector.z();
@@ -844,6 +846,7 @@ namespace fast_planner {
     cloud.height = 1;
     cloud.is_dense = true;
     cloud.header.frame_id = "world";
+    cloud.header.stamp = ros::Time::now().toNSec() / 1e3;
     sensor_msgs::PointCloud2 cloud_msg;
     pcl::toROSMsg(cloud,cloud_msg);
     nb_obs_pub_.publish(cloud_msg);
@@ -867,19 +870,19 @@ namespace fast_planner {
     // // Debug traj planner
     //----------------------------------------------
     /**
-       Eigen::Vector3d pos;
-       pos << msg->pose.position.x, msg->pose.position.y, 1;
-       expl_manager_->ed_->next_pos_ = pos;
+    Eigen::Vector3d pos;
+    pos << msg->pose.position.x, msg->pose.position.y, 1;
+    expl_manager_->ed_->next_pos_ = pos;
+    
+    Eigen::Vector3d dir = pos - fd_->odom_pos_;
+    
+    expl_manager_->ed_->next_yaw_ = atan2(dir[1], dir[0]);
+    fd_->go_back_ = true;
        
-       Eigen::Vector3d dir = pos - fd_->odom_pos_;
-       
-       expl_manager_->ed_->next_yaw_ = atan2(dir[1], dir[0]);
-       fd_->go_back_ = true;
-       
-       ROS_WARN_STREAM("Start expl pos: " << fd_->odom_pos_);
-       
-       transitState(PLAN_TRAJ, "triggerCallback");
-       return;
+    ROS_WARN_STREAM("Start expl pos: " << fd_->odom_pos_);
+    
+    transitState(PLAN_TRAJ, "triggerCallback");
+    return;
     **/
     //----------------------------------------------
   

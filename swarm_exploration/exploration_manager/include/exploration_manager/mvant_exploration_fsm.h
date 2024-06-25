@@ -88,7 +88,7 @@ private:
   void odometryCallback(const nav_msgs::OdometryConstPtr& msg);
 
   /* Ejemplos */
-  void nearbyObstaclesCallback(const exploration_manager::SearchObstacle::ConstPtr& msg);
+  void nearbyObstaclesCallback(const ros::TimerEvent& e);//(const exploration_manager::SearchObstacle::ConstPtr& msg);
   double getDistance(Eigen::Vector3d& cloud_point, Eigen::Vector3d& point);
   
   // Swarm
@@ -136,6 +136,7 @@ private:
       hgrid_pub_;
   ros::Subscriber drone_state_sub_, opt_sub_, opt_res_sub_, swarm_traj_sub_;
   ros::Timer drone_state_timer_, opt_timer_, swarm_traj_timer_;
+  ros::Timer prueba_nb;
 };
 
 }  // namespace fast_planner
