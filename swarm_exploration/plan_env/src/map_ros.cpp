@@ -65,8 +65,7 @@ void MapROS::init() {
    **/
   map_all_pub_ = node_.advertise<sensor_msgs::PointCloud2>("/sdf_map/occupancy_all", 10);
   map_local_pub_ = node_.advertise<sensor_msgs::PointCloud2>("/sdf_map/occupancy_local", 10);
-  map_local_inflate_pub_ =
-      node_.advertise<sensor_msgs::PointCloud2>("/sdf_map/occupancy_local_inflate", 10);
+  map_local_inflate_pub_ = node_.advertise<sensor_msgs::PointCloud2>("/sdf_map/occupancy_local_inflate", 10);
   free_pub_ = node_.advertise<sensor_msgs::PointCloud2>("/sdf_map/free", 1);
   unknown_pub_ = node_.advertise<sensor_msgs::PointCloud2>("/sdf_map/unknown", 1);
   esdf_pub_ = node_.advertise<sensor_msgs::PointCloud2>("/sdf_map/esdf", 10);
@@ -76,11 +75,9 @@ void MapROS::init() {
   // basecoor_sub_ = node_.subscribe("/sdf_map/basecoor", 10, &MapROS::basecoorCallback, this);
 
   depth_sub_.reset(new message_filters::Subscriber<sensor_msgs::Image>(node_, "/map_ros/depth", 1));
-  cloud_sub_.reset(
-      new message_filters::Subscriber<sensor_msgs::PointCloud2>(node_, "/map_ros/cloud", 1));
-  pose_sub_.reset(
-      new message_filters::Subscriber<geometry_msgs::PoseStamped>(node_, "/map_ros/pose", 1));
-
+  cloud_sub_.reset(new message_filters::Subscriber<sensor_msgs::PointCloud2>(node_, "/map_ros/cloud", 1));
+  pose_sub_.reset(new message_filters::Subscriber<geometry_msgs::PoseStamped>(node_, "/map_ros/pose", 1));
+  
   sync_image_pose_.reset(new message_filters::Synchronizer<MapROS::SyncPolicyImagePose>(
       MapROS::SyncPolicyImagePose(2), *depth_sub_, *pose_sub_));
   sync_image_pose_->registerCallback(boost::bind(&MapROS::depthPoseCallback, this, _1, _2));
@@ -337,7 +334,7 @@ void MapROS::publishMapAll() {
   sensor_msgs::PointCloud2 cloud_msg;
   pcl::toROSMsg(cloud1, cloud_msg);
   map_all_pub_.publish(cloud_msg);
-
+  
   // // Output time and known volumn
   // double time_now = (ros::Time::now() - map_start_time_).toSec();
   // double known_volumn = 0;

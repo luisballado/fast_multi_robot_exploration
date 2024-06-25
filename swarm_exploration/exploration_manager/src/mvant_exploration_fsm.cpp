@@ -99,7 +99,9 @@ namespace fast_planner {
     emergency_handler_pub_ = nh.advertise<std_msgs::Bool>("/trigger_emergency", 10);
     
     //prueba un nuevo publicador
-    nearby_obs_pub_ = nh.advertise<exploration_manager::SearchObstacle>("/nearby_obstacles", 1000);
+    //nearby_obs_pub_ = nh.advertise<exploration_manager::SearchObstacle>("/nearby_obstacles", 10);
+    
+    nb_obs_pub_ = nh.advertise<sensor_msgs::PointCloud2>("/sdf_map/obs",10);
     
     //-------------------------------------------------------------------------------------------------
     // Swarm, timer, pub and sub
@@ -727,6 +729,9 @@ namespace fast_planner {
   
   
   void MvantExplorationFSM::nearbyObstaclesCallback(const exploration_manager::SearchObstacle::ConstPtr& msg) {
+
+    pcl::PointXYZ pt;
+    pcl::PointCloud<pcl::PointXYZ> cloud;
     
     ROS_ERROR("Mesaje recibido - VANT %d - Received pose: position(%f, %f, %f)",
 	      getId(), msg->central_pos.x, msg->central_pos.y, msg->central_pos.z);
@@ -801,6 +806,12 @@ namespace fast_planner {
 	  
 	  //neighborhood.emplace(distancia,std::make_pair(cloud_points,state));
 	  neighborhood.emplace(distancia,std::make_pair(cloud_points,state));
+
+	  pt.x = cloud_points(0);
+	  pt.y = cloud_points(0);
+	  pt.z = cloud_points(0);
+
+	  cloud.push_back(pt);
 	  
 	  //ROS_WARN_STREAM("Estado" << state);
 	  
@@ -808,6 +819,13 @@ namespace fast_planner {
       }
     }
 
+    cloud.width = cloud.points.size();
+    cloud.height = 1;
+    cloud.is_dense = true;
+    sensor_msgs::PointCloud2 cloud_msg;
+    pcl::toROSMsg(cloud,cloud_msg);
+    nb_obs_pub_.publish(cloud_msg);
+    
     int count = 0;
 
     //tienen que ser los cercanos ocupados
