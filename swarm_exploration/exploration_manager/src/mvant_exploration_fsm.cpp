@@ -101,7 +101,7 @@ namespace fast_planner {
     //prueba un nuevo publicador
     //nearby_obs_pub_ = nh.advertise<exploration_manager::SearchObstacle>("/nearby_obstacles", 10);
     
-    nb_obs_pub_ = nh.advertise<sensor_msgs::PointCloud2>("/sdf_map/obs",10);
+    nb_obs_pub_ = nh.advertise<sensor_msgs::PointCloud2>("/sdf_map/obs", 10);
     
     //-------------------------------------------------------------------------------------------------
     // Swarm, timer, pub and sub
@@ -807,24 +807,11 @@ namespace fast_planner {
 	  //neighborhood.emplace(distancia,std::make_pair(cloud_points,state));
 	  neighborhood.emplace(distancia,std::make_pair(cloud_points,state));
 
-	  pt.x = cloud_points(0);
-	  pt.y = cloud_points(0);
-	  pt.z = cloud_points(0);
-
-	  cloud.push_back(pt);
-	  
 	  //ROS_WARN_STREAM("Estado" << state);
 	  
 	}
       }
     }
-
-    cloud.width = cloud.points.size();
-    cloud.height = 1;
-    cloud.is_dense = true;
-    sensor_msgs::PointCloud2 cloud_msg;
-    pcl::toROSMsg(cloud,cloud_msg);
-    nb_obs_pub_.publish(cloud_msg);
     
     int count = 0;
 
@@ -841,14 +828,26 @@ namespace fast_planner {
       if(_estado_==2){
 
 	ROS_WARN_STREAM("Magnitud: " << magnitud << ", Vector: (" << vector.x() << "," << vector.y() << "," << vector.z() << " - " << _estado_ << ")");
+
+	pt.x = vector.x();
+	pt.y = vector.y();
+	pt.z = vector.z();
+	
+	cloud.push_back(pt);
 	
 	++count;
 	
       }
-      
-      
-      
     }
+
+    cloud.width = cloud.points.size();
+    cloud.height = 1;
+    cloud.is_dense = true;
+    cloud.header.frame_id = "world";
+    sensor_msgs::PointCloud2 cloud_msg;
+    pcl::toROSMsg(cloud,cloud_msg);
+    nb_obs_pub_.publish(cloud_msg);
+    
   }
   
   void MvantExplorationFSM::heartbitCallback(const ros::TimerEvent& e) {

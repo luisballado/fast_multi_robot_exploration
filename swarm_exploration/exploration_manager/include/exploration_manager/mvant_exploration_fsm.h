@@ -120,7 +120,8 @@ private:
   ros::Subscriber nearby_obs_sub_;
 
   //nearby obstacles
-  ros::Publisher nearby_obs_pub_;
+  //ros::Publisher nearby_obs_pub_;
+  ros::Publisher nb_obs_pub_;
   
   // Logging
   ros::Timer heartbit_timer_;
