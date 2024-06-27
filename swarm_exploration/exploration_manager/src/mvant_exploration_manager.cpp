@@ -595,7 +595,7 @@ bool MvantExplorationManager::closestGreedyFrontier(const Vector3d& pos, const V
         if (force_different && (vp.pos_ - ed_->next_pos_).norm() < kMinDistGoals) {
           continue;
         }
-
+	
         // Update flag
         found_ftr = true;
         // Target
@@ -605,7 +605,7 @@ bool MvantExplorationManager::closestGreedyFrontier(const Vector3d& pos, const V
       }
     }
   }
-
+  
   return found_ftr;
 }
 
@@ -1324,7 +1324,7 @@ bool MvantExplorationManager::findTourOfTrails(const Vector3d& cur_pos,
 
   // Create par file
   const int drone_num = 1;
-
+  
   file.open(ep_->mtsp_dir_ + "/amtsp_" + to_string(ep_->drone_id_) + ".par");
   file << "SPECIAL\n";
   file << "PROBLEM_FILE = " + ep_->mtsp_dir_ + "/amtsp_" + to_string(ep_->drone_id_) + ".atsp\n";

@@ -86,6 +86,9 @@ namespace fast_planner {
     //geometry_msgs/PoseStamped '{header: {stamp: now, frame_id: "map"}, pose: {position: {x: 1.0, y: 0.0, z: 0.0}, orientation: {w: 1.0}}}'
     trigger_sub_ = nh.subscribe("/move_base_simple/goal", 1, &MvantExplorationFSM::triggerCallback, this);
     odom_sub_    = nh.subscribe("/odom_world", 1, &MvantExplorationFSM::odometryCallback, this);
+
+    //funcion que se suscribe de prueba
+    test_sub_ = nh.subscribe("/pruebas", 1, &MvantExplorationFSM::pruebasCallback, this);
     
     //subscriber llevarlo a nuevo archivo
     //nearby_obs_sub_ = nh.subscribe("/nearby_obstacles", 1000, &MvantExplorationFSM::nearbyObstaclesCallback, this);
@@ -100,6 +103,9 @@ namespace fast_planner {
     
     //prueba un nuevo publicador
     //nearby_obs_pub_ = nh.advertise<exploration_manager::SearchObstacle>("/nearby_obstacles", 10);
+
+    //prueba de fronteras
+    test_fronteras = nh.advertise<std_msgs::Empty>("/pruebas", 100);
     
     nb_obs_pub_ = nh.advertise<sensor_msgs::PointCloud2>("/sdf_map/obs", 10);
 
@@ -659,7 +665,7 @@ namespace fast_planner {
       // ft->getFrontierBoxes(ed->frontier_boxes_);
       
       expl_manager_->updateFrontierStruct(fd_->odom_pos_, fd_->odom_yaw_, fd_->odom_vel_);
-      
+
       // cout << "odom: " << fd_->odom_pos_.transpose() << endl;
       // vector<int> tmp_id1;
       // vector<vector<int>> tmp_id2;
@@ -713,6 +719,50 @@ namespace fast_planner {
   // Función para calcular la distancia euclidiana en 3D
   double MvantExplorationFSM::getDistance(Eigen::Vector3d& cloud_point, Eigen::Vector3d& point) {
     return std::sqrt(std::pow(cloud_point(0) - point(0), 2) + std::pow(cloud_point(1) - point(1), 2) + std::pow(cloud_point(2) - point(2), 2));
+  }
+
+  void MvantExplorationFSM::pruebasCallback(const std_msgs::Empty::ConstPtr& msg){
+    
+    ROS_ERROR("Es una prueba que debe imprimir");
+    
+    auto ft = expl_manager_->frontier_finder_;
+    auto ed = expl_manager_->ed_;
+    
+    auto getColorVal = [&](const int& id, const int& num, const int& drone_id) {
+			 double a = (drone_id - 1) / double(num + 1);
+			 double b = 1 / double(num + 1);
+			 return a + b * double(id) / ed->frontiers_.size();
+		       };
+    
+    // ft->searchFrontiers();
+    // ft->computeFrontiersToVisit();
+    // ft->updateFrontierCostMatrix();
+    
+    // ft->getFrontiers(ed->frontiers_);
+    // ft->getFrontierBoxes(ed->frontier_boxes_);
+    
+    expl_manager_->updateFrontierStruct(fd_->odom_pos_, fd_->odom_yaw_, fd_->odom_vel_);
+    
+    // cout << "odom: " << fd_->odom_pos_.transpose() << endl;
+    // vector<int> tmp_id1;
+    // vector<vector<int>> tmp_id2;
+    // bool status = expl_manager_->findGlobalTourOfGrid(
+    //     { fd_->odom_pos_ }, { fd_->odom_vel_ }, tmp_id1, tmp_id2, true);
+    
+    // Draw frontier and bounding box
+    auto res = expl_manager_->sdf_map_->getResolution();
+    for (int i = 0; i < ed->frontiers_.size(); ++i) {
+      auto color = visualization_->getColor(double(i) / ed->frontiers_.size(), 0.4);
+      visualization_->drawCubes(ed->frontiers_[i], res, color, "frontier", i, 4);
+      
+      //imprimir las fronteras
+      ROS_WARN_STREAM("Num::" << ed->frontiers_.size());
+      // getColorVal(i, expl_manager_->ep_->drone_num_, expl_manager_->ep_->drone_id_)
+      // double(i) / ed->frontiers_.size()
+      // visualization_->drawBox(ed->frontier_boxes_[i].first, ed->frontier_boxes_[i].second,
+      //   color, "frontier_boxes", i, 4);
+    }
+    
   }
   
   /***
@@ -824,12 +874,11 @@ namespace fast_planner {
       double magnitud = it->first;
       Eigen::Vector3d vector = it->second.first;
       int _estado_ = it->second.second;
-
-      ROS_WARN_STREAM("Estado" << _estado_);
       
+            
       if(_estado_==2){
 	
-	ROS_WARN_STREAM("Magnitud: " << magnitud << ", Vector: (" << vector.x() << "," << vector.y() << "," << vector.z() << " - " << _estado_ << ")");
+	//ROS_WARN_STREAM("Magnitud: " << magnitud << ", Vector: (" << vector.x() << "," << vector.y() << "," << vector.z() << " - " << _estado_ << ")");
 	
 	pt.x = vector.x();
 	pt.y = vector.y();
