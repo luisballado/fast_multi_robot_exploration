@@ -106,10 +106,12 @@ namespace fast_planner {
 
     //prueba de fronteras
     test_fronteras = nh.advertise<std_msgs::Empty>("/pruebas", 100);
-    
-    nb_obs_pub_ = nh.advertise<sensor_msgs::PointCloud2>("/sdf_map/obs", 10);
 
-    prueba_nb = nh.createTimer(ros::Duration(1), &MvantExplorationFSM::nearbyObstaclesCallback, this);
+    //creo que ya no se utiliza
+    nb_obs_pub_ = nh.advertise<sensor_msgs::PointCloud2>("/sdf_map/obs", 10);
+    
+    //se ejecuta cada segundo
+    prueba_nb = nh.createTimer(ros::Duration(0.4), &MvantExplorationFSM::nearbyObstaclesCallback, this);
     
     //-------------------------------------------------------------------------------------------------
     // Swarm, timer, pub and sub
@@ -740,8 +742,10 @@ namespace fast_planner {
     
     // ft->getFrontiers(ed->frontiers_);
     // ft->getFrontierBoxes(ed->frontier_boxes_);
-    
-    expl_manager_->updateFrontierStruct(fd_->odom_pos_, fd_->odom_yaw_, fd_->odom_vel_);
+
+    for (int i = 0; i < ed->frontiers_.size(); ++i){
+      ROS_WARN_STREAM("x::" << ed->frontiers_[i][0](0));
+    }
     
     // cout << "odom: " << fd_->odom_pos_.transpose() << endl;
     // vector<int> tmp_id1;
@@ -778,31 +782,19 @@ namespace fast_planner {
   ***/
   
   
-  void MvantExplorationFSM::nearbyObstaclesCallback(const ros::TimerEvent& e) {//(const exploration_manager::SearchObstacle::ConstPtr& msg) {
+  void MvantExplorationFSM::nearbyObstaclesCallback(const ros::TimerEvent& e) {
+    //si tuviera un msg
+    //(const exploration_manager::SearchObstacle::ConstPtr& msg) {
 
     pcl::PointXYZ pt;
     pcl::PointCloud<pcl::PointXYZ> cloud;
     
-    //ROS_ERROR("Mesaje recibido - VANT %d - Received pose: position(%f, %f, %f)", getId(), msg->central_pos.x, msg->central_pos.y, msg->central_pos.z);
-    
-    //mensaje recibido
-    
-    int _di_ = 10; //msg->di;
-    int _k_  = 20; //msg->k;
+    int _di_ = 10;
+    int _k_  = 20;
     
     //ROS_WARN_STREAM("isPositionReachable : " << (expl_manager_->isPositionReachable(Eigen::Vector3d(fd_->odom_pos_[0],fd_->odom_pos_[1],fd_->odom_pos_[2]), Eigen::Vector3d(msg->pose.position.x,msg->pose.position.y,msg->pose.position.z)) ? "true" : "false"));
     
-    // ----------------------------------------------
-    // para tomar la posicion del dron
-    // fd_->odom_pos_[0];
-    // fd_->odom_pos_[1];
-    // fd_->odom_pos_[2];
-    // ----------------------------------------------
-
-    // Punto central
-    // tomaremos la posicion compartida en el msg
     Eigen::Vector3d central_point;
-    //central_point << msg->central_pos.x, msg->central_pos.y, msg->central_pos.z;
     central_point << fd_->odom_pos_[0], fd_->odom_pos_[1], fd_->odom_pos_[2];
     
     // Los indices si son seguidos
@@ -811,7 +803,7 @@ namespace fast_planner {
     //posToIndex
     Eigen::Vector3i index_pos;
     expl_manager_->sdf_map_->posToIndex(central_point,index_pos);
-    ROS_WARN_STREAM("posToIndex - index0: " << index_pos(0) << ", index1: " << index_pos(1) << ", index3: " << index_pos(2));
+    //ROS_WARN_STREAM("posToIndex - index0: " << index_pos(0) << ", index1: " << index_pos(1) << ", index3: " << index_pos(2));
         
     // distancia de interes
     double di = _di_ * (1 / expl_manager_->sdf_map_->getResolution());
@@ -846,17 +838,15 @@ namespace fast_planner {
 	  
 	  //ROS_WARN_STREAM("Distancia:: " << distancia);
 	  
-	  //0 - DESCONOCIDO
-	  //1 - LIBRE
-	  //2 - OCUPADO
+	  //0 - DESCONOCIDO | 1 - LIBRE | 2 - OCUPADO
 	  state = expl_manager_->sdf_map_->getOccupancy(Eigen::Vector3i(x,y,z));
-
+	  
 	  //guardar en vector
 	  //distancia | x,y.z
 	  
 	  //neighborhood.emplace(distancia,std::make_pair(cloud_points,state));
 	  neighborhood.emplace(distancia,std::make_pair(cloud_points,state));
-
+	  
 	  //ROS_WARN_STREAM("Estado" << state);
 	  
 	}
@@ -866,7 +856,7 @@ namespace fast_planner {
     int count = 0;
 
     //tienen que ser los cercanos ocupados
-    //el multimap los ordena ascendente
+    //multimap los ordena ascendente
     for (auto it = neighborhood.begin(); it != neighborhood.end() && count < _k_; ++it) {
       
       //si no esta ocupada saltarlo
@@ -875,7 +865,6 @@ namespace fast_planner {
       Eigen::Vector3d vector = it->second.first;
       int _estado_ = it->second.second;
       
-            
       if(_estado_==2){
 	
 	//ROS_WARN_STREAM("Magnitud: " << magnitud << ", Vector: (" << vector.x() << "," << vector.y() << "," << vector.z() << " - " << _estado_ << ")");
@@ -903,7 +892,6 @@ namespace fast_planner {
   }
   
   void MvantExplorationFSM::heartbitCallback(const ros::TimerEvent& e) {
-    //ROS_ERROR("HEART-BIT-BIT");
     heartbit_pub_.publish(std_msgs::Empty());
   }
   
