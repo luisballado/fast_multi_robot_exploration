@@ -55,7 +55,7 @@ FrontierFinder::~FrontierFinder() {
 void FrontierFinder::searchFrontiers() {
   ros::Time t1 = ros::Time::now();
   tmp_frontiers_.clear();
-
+  
   // Bounding box of updated region
   Vector3d update_min, update_max;
   edt_env_->sdf_map_->getUpdatedBox(update_min, update_max, false);
@@ -246,7 +246,7 @@ bool FrontierFinder::splitHorizontally(const Frontier& frontier, list<Frontier>&
   }
   computeFrontierInfo(ftr1);
   computeFrontierInfo(ftr2);
-
+  
   // Recursive call to split frontier that is still too large
   list<Frontier> splits2;
   if (splitHorizontally(ftr1, splits2)) {
@@ -827,7 +827,7 @@ void FrontierFinder::getSwarmCostMatrix(const vector<Vector3d>& positions,
     vector<double> yaws;
     getTopViewpointsInfo(positions[0], points, yaws, tmps);
     Eigen::Vector3d next_grid = grid_pos[0];
-
+    
     for (int i = 0; i < ftr_num; ++i) {
       double cost = ViewNode::computeCost(
           next_grid, points[ftr_ids[i]], 0, 0, Eigen::Vector3d(0, 0, 0), 0, tmps);

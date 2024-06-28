@@ -90,6 +90,8 @@ private:
   /* Ejemplos */
   void nearbyObstaclesCallback(const ros::TimerEvent& e);//(const exploration_manager::SearchObstacle::ConstPtr& msg);
   double getDistance(Eigen::Vector3d& cloud_point, Eigen::Vector3d& point);
+  void pruebasCallback(const std_msgs::Empty::ConstPtr& msg);
+  
   
   // Swarm
   void droneStateTimerCallback(const ros::TimerEvent& e);
@@ -122,6 +124,10 @@ private:
   //nearby obstacles
   //ros::Publisher nearby_obs_pub_;
   ros::Publisher nb_obs_pub_;
+
+  //pruebas
+  ros::Publisher test_fronteras;
+  ros::Subscriber test_sub_;
   
   // Logging
   ros::Timer heartbit_timer_;
