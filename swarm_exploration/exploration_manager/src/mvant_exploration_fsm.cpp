@@ -226,9 +226,6 @@ namespace fast_planner {
 	//ROS_WARN_STREAM("odom_posy: " << fd_->odom_pos_[1]);
 	//ROS_WARN_STREAM("odom_posz: " << fd_->odom_pos_[2]);
 	
-	//listar los voxels
-	//obtener los voxel a la redonda en base a la distancia de influencia
-	
 	//ROS_WARN_STREAM("getOccupancy");
 	//ROS_WARN_STREAM("occupancy: " << planner_manager_->edt_environment_->sdf_map_->getOccupancy(Eigen::Vector3d(3, 0, 1))); 
 	
@@ -238,7 +235,6 @@ namespace fast_planner {
 	
 	//ROS_WARN_STREAM("isInMap: " << expl_manager_->sdf_map_->isInBox(Eigen::Vector3d(3, 0, 1)));
 	
-	//expl_manager_->sdf_map_->setOccupied(Eigen::Vector3d(0, 0, 1),1);
 	//expl_manager_->sdf_map_->setOccupied(Eigen::Vector3d(1, 1, 1),2);
 	
 	ros::Duration(1).sleep();
@@ -742,9 +738,12 @@ namespace fast_planner {
     
     // ft->getFrontiers(ed->frontiers_);
     // ft->getFrontierBoxes(ed->frontier_boxes_);
-
+    
     for (int i = 0; i < ed->frontiers_.size(); ++i){
-      ROS_WARN_STREAM("x::" << ed->frontiers_[i][0](0));
+      for (int j = 0; j < ed->frontiers_[i].size(); ++j){
+	ROS_WARN_STREAM(" " << ed->frontiers_[i].size());
+	ROS_WARN_STREAM("x::" << ed->frontiers_[i][j](0) << " y::" << ed->frontiers_[i][j](1) << " z::" << ed->frontiers_[i][j](2));
+      }
     }
     
     // cout << "odom: " << fd_->odom_pos_.transpose() << endl;
