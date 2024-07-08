@@ -120,7 +120,7 @@ void FrontierFinder::searchFrontiers() {
     edt_env_->sdf_map_->posToIndex(search_mins[i], min_ids[i]);
     edt_env_->sdf_map_->posToIndex(search_maxs[i], max_ids[i]);
   }
-
+  
   for (int i = 0; i < min_ids.size(); ++i) {
     auto min_id = min_ids[i];
     auto max_id = max_ids[i];
@@ -167,7 +167,7 @@ void FrontierFinder::expandFrontier(
       if (frontier_flag_[adr] == 1 || !edt_env_->sdf_map_->isInBox(nbr) ||
           !(knownfree(nbr) && isNeighborUnknown(nbr)))
         continue;
-
+      
       edt_env_->sdf_map_->indexToPos(nbr, pos);
       if (pos[2] < 0.2) continue;  // Remove noise close to ground
       expanded.push_back({ UNLABELED, pos });
@@ -218,7 +218,7 @@ bool FrontierFinder::splitHorizontally(const Frontier& frontier, list<Frontier>&
     cov += diff * diff.transpose();
   }
   cov /= double(frontier.filtered_cells_.size());
-
+  
   // Find eigenvector corresponds to maximal eigenvector
   Eigen::EigenSolver<Eigen::Matrix2d> es(cov);
   auto values = es.eigenvalues().real();
@@ -373,7 +373,7 @@ bool FrontierFinder::canBeMerged(const Frontier& ftr1, const Frontier& ftr2) {
   }
   return true;
 }
-
+  
 bool FrontierFinder::haveOverlap(
     const Vector3d& min1, const Vector3d& max1, const Vector3d& min2, const Vector3d& max2) {
   // Check if two box have overlap part

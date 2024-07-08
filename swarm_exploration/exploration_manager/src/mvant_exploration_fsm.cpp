@@ -110,8 +110,8 @@ namespace fast_planner {
     //creo que ya no se utiliza
     nb_obs_pub_ = nh.advertise<sensor_msgs::PointCloud2>("/sdf_map/obs", 10);
     
-    //se ejecuta cada segundo
-    prueba_nb = nh.createTimer(ros::Duration(0.4), &MvantExplorationFSM::nearbyObstaclesCallback, this);
+    //se ejecuta cada medio segundo
+    prueba_nb = nh.createTimer(ros::Duration(0.5), &MvantExplorationFSM::nearbyObstaclesCallback, this);
     
     //-------------------------------------------------------------------------------------------------
     // Swarm, timer, pub and sub
@@ -163,7 +163,6 @@ namespace fast_planner {
   /*FINIT STATE CALLBACK*/
   void MvantExplorationFSM::FSMCallback(const ros::TimerEvent& e) {
     
-    //ROS_WARN_STREAM_THROTTLE(1.0, "Hola mundo cruel");
     //ROS_WARN_STREAM_THROTTLE(1.0, "[FSM]: Drone " << getId() << " state: " << fd_->state_str_[int(state_)]);
     
     switch (state_) {
@@ -921,7 +920,7 @@ namespace fast_planner {
     return;
     **/
     //----------------------------------------------
-  
+    
     //Solo se hace cuando el estado es WAIT_TRIGGER
     if (state_ != WAIT_TRIGGER) return;
     
@@ -934,7 +933,7 @@ namespace fast_planner {
     fd_->start_pos_ = fd_->odom_pos_;
     
     ROS_WARN_STREAM("Start expl pos: " << fd_->start_pos_.transpose());
-
+    
     if (expl_manager_->updateFrontierStruct(fd_->odom_pos_, fd_->odom_yaw_, fd_->odom_vel_) != 0) {
       transitState(PLAN_TRAJ, "triggerCallback");
     } else

@@ -54,7 +54,7 @@ struct Frontier {
   // Type of frontier
   LABEL label_{ UNLABELED };
 };
-
+  
 class FrontierFinder {
 public:
   FrontierFinder(const shared_ptr<EDTEnvironment>& edt, ros::NodeHandle& nh);
@@ -62,7 +62,7 @@ public:
 
   void searchFrontiers();
   void computeFrontiersToVisit();
-
+  
   inline list<Frontier> getFrontiers() const {
     return frontiers_;
   }
@@ -144,7 +144,7 @@ private:
   bool isInBoxes(const vector<pair<Vector3d, Vector3d>>& boxes, const Eigen::Vector3i& idx);
   bool canBeMerged(const Frontier& ftr1, const Frontier& ftr2);
   void findViewpoints(const Vector3d& sample, const Vector3d& ftr_avg, vector<Viewpoint>& vps);
-
+  
   // Data
   vector<char> frontier_flag_;
   list<Frontier> frontiers_, dormant_frontiers_, tmp_frontiers_, infront_frontiers_;

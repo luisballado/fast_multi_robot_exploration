@@ -20,7 +20,7 @@ int Astar::search(Eigen::Vector3d start_pt, Eigen::Vector3d end_pt, bool optimis
   cur_node->position = start_pt;
   cur_node->index = posToIndex(start_pt);
   cur_node->g_score = 0.0;
-
+  
   Eigen::Vector3i end_index;
   double time_to_goal;
 
