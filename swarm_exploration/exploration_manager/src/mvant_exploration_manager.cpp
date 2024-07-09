@@ -374,7 +374,7 @@ int MvantExplorationManager::updateFrontierStruct(
   double total_time = frontier_time + view_time + mat_time;
   ROS_INFO("Drone %d: frontier t: %lf, viewpoint t: %lf, mat: %lf", ep_->drone_id_, frontier_time,
       view_time, mat_time);
-
+  
   ROS_INFO("Total t: %lf", (ros::Time::now() - t2).toSec());
   return ed_->frontiers_.size();
 }
@@ -442,13 +442,13 @@ bool MvantExplorationManager::explorerPlan(const Vector3d& pos, const Vector3d& 
     std::vector<Vector3d> path;
     return explorer_params_->w_distance * ViewNode::searchPath(pos, target_pos, path);
   };
-
+  
   auto angularCost = [&](const Vector3d& target_pos) {
     Vector3d direction(target_pos - pos);
     return explorer_params_->w_direction *
            vel.head(2).normalized().dot(direction.head(2).normalized());
   };
-
+  
   auto labelCost = [&](LABEL label) {
     if (role_ == ROLE::EXPLORER && label == LABEL::TRAIL)
       return explorer_params_->label_penalty;

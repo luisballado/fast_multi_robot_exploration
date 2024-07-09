@@ -106,8 +106,10 @@ namespace fast_planner {
 
     //prueba de fronteras
     test_fronteras = nh.advertise<std_msgs::Empty>("/pruebas", 100);
-
-    //creo que ya no se utiliza
+    
+    // si lo utilizo para la evaluacion de los K-vecinos respecto al VANT
+    // el topico se renombra haciendo un remap dentro del archivo
+    // single_drone_planner_mvant.xml
     nb_obs_pub_ = nh.advertise<sensor_msgs::PointCloud2>("/sdf_map/obs", 10);
     
     //se ejecuta cada medio segundo
@@ -738,15 +740,14 @@ namespace fast_planner {
     // ft->getFrontiers(ed->frontiers_);
     // ft->getFrontierBoxes(ed->frontier_boxes_);
 
-    /**
+    
     for (int i = 0; i < ed->frontiers_.size(); ++i){
       for (int j = 0; j < ed->frontiers_[i].size(); ++j){
 	ROS_WARN_STREAM(" " << ed->frontiers_[i].size());
 	ROS_WARN_STREAM("x::" << ed->frontiers_[i][j](0) << " y::" << ed->frontiers_[i][j](1) << " z::" << ed->frontiers_[i][j](2));
       }
     }
-    **/
-
+    
     // cout << "odom: " << fd_->odom_pos_.transpose() << endl;
     // vector<int> tmp_id1;
     // vector<vector<int>> tmp_id2;
@@ -755,6 +756,7 @@ namespace fast_planner {
     
     // Draw frontier and bounding box
     auto res = expl_manager_->sdf_map_->getResolution();
+
     for (int i = 0; i < ed->frontiers_.size(); ++i) {
       //auto color = visualization_->getColor(double(i) / ed->frontiers_.size(), 0.4);
       auto color = Eigen::Vector4d(1, 1, 0, 1); //YELLOW

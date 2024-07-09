@@ -56,6 +56,10 @@
     <remap from="/planning/replan" to="/planning/replan_$(arg drone_id)" />
     <remap from="/planning/new" to="/planning/new_$(arg drone_id)" />
     <remap from="/planning/bspline" to="/planning/bspline_$(arg drone_id)" />
+
+    <!-- k-nn vecinos -->
+    <remap from="/sdf_map/obs" to="/sdf_map/obs_$(arg drone_id)"/>
+    
     <remap from="/stop" to="/stop_$(arg drone_id)"/>
     <remap from="/heartbit" to="/heartbit_$(arg drone_id)"/>
     <remap from="/trigger_emergency" to="/trigger_emergency_$(arg drone_id)"/>
