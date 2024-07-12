@@ -286,7 +286,7 @@ namespace fast_planner {
       }
       // Inform traj_server the replanning
       replan_pub_.publish(std_msgs::Empty());
-
+      
       int res = callExplorationPlanner();
       
       if (res == SUCCEED) {
@@ -908,7 +908,7 @@ namespace fast_planner {
     //----------------------------------------------
     // // Debug traj planner
     //----------------------------------------------
-    /**
+    /*
     Eigen::Vector3d pos;
     pos << msg->pose.position.x, msg->pose.position.y, 1;
     expl_manager_->ed_->next_pos_ = pos;
@@ -922,7 +922,7 @@ namespace fast_planner {
     
     transitState(PLAN_TRAJ, "triggerCallback");
     return;
-    **/
+    */
     //----------------------------------------------
     
     //Solo se hace cuando el estado es WAIT_TRIGGER
