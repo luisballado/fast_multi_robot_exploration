@@ -647,7 +647,9 @@ void PlanningVisualization::drawFrontier(const vector<vector<Eigen::Vector3d>>& 
   for (int i = 0; i < frontiers.size(); ++i) {
     //displayCubeList(frontiers[i], 0.1, getColor(double(i) / frontiers.size(),
     //						0.4), i, 4);
-    drawCubes(frontiers[i], 0.1, getColor(double(i) / frontiers.size(), 0.8), "frontier", i, 4);
+    //prueba cambio de color
+    auto color = Eigen::Vector4d(1,1,0,1);
+    drawCubes(frontiers[i], 0.1, color, "frontier", i, 4);
   }
 
   vector<Eigen::Vector3d> frontier;

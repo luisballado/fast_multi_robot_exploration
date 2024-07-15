@@ -268,6 +268,7 @@ namespace fast_planner {
     }
       
     case PLAN_TRAJ: {
+      
       if (fd_->static_state_) {
         // Plan from static state (hover)
         fd_->start_pt_ = fd_->odom_pos_;
@@ -286,9 +287,11 @@ namespace fast_planner {
         fd_->start_yaw_(1) = info->yawdot_traj_.evaluateDeBoorT(t_r)[0];
         fd_->start_yaw_(2) = info->yawdotdot_traj_.evaluateDeBoorT(t_r)[0];
       }
+
       // Inform traj_server the replanning
       replan_pub_.publish(std_msgs::Empty());
-      
+
+      //llamar a planificador
       int res = callExplorationPlanner();
       
       if (res == SUCCEED) {
@@ -318,6 +321,7 @@ namespace fast_planner {
         num_fail_ = 0;
         sendEmergencyMsg(false);
       }
+      
       visualize(1);
       // clearVisMarker();
       break;
@@ -409,13 +413,12 @@ namespace fast_planner {
     int res;
     
     if (fd_->avoid_collision_ || fd_->go_back_) {  // Only replan trajectory
-      res = expl_manager_->planTrajToView(fd_->start_pt_, fd_->start_vel_, fd_->start_acc_,
-					  fd_->start_yaw_, expl_manager_->ed_->next_pos_, expl_manager_->ed_->next_yaw_);
+      res = expl_manager_->planTrajToView(fd_->start_pt_, fd_->start_vel_, fd_->start_acc_, fd_->start_yaw_, expl_manager_->ed_->next_pos_, expl_manager_->ed_->next_yaw_);
       fd_->avoid_collision_ = false;
     } else {  // Do full planning normally
       res = expl_manager_->planExploreMotion(fd_->start_pt_, fd_->start_vel_, fd_->start_acc_, fd_->start_yaw_);
     }
-        
+    
     if (res == SUCCEED) {
       auto info = &planner_manager_->local_data_;
       info->start_time_ = (ros::Time::now() - time_r).toSec() > 0 ? ros::Time::now() : time_r;
@@ -466,6 +469,7 @@ namespace fast_planner {
       static int last_ftr_num = 0;
       for (int i = 0; i < ed_ptr->frontiers_.size(); ++i) {
 	auto color = visualization_->getColor(double(i) / ed_ptr->frontiers_.size(), 0.4);
+
 	visualization_->drawCubes(ed_ptr->frontiers_[i], res, color, "frontier", i, 4);
 
 	// getColorVal(i, expl_manager_->ep_->drone_num_, expl_manager_->ep_->drone_id_)
@@ -721,7 +725,7 @@ namespace fast_planner {
   double MvantExplorationFSM::getDistance(Eigen::Vector3d& cloud_point, Eigen::Vector3d& point) {
     return std::sqrt(std::pow(cloud_point(0) - point(0), 2) + std::pow(cloud_point(1) - point(1), 2) + std::pow(cloud_point(2) - point(2), 2));
   }
-
+  
   void MvantExplorationFSM::pruebasCallback(const std_msgs::Empty::ConstPtr& msg){
     
     ROS_ERROR("Es una prueba que debe imprimir");
@@ -742,13 +746,17 @@ namespace fast_planner {
     // ft->getFrontiers(ed->frontiers_);
     // ft->getFrontierBoxes(ed->frontier_boxes_);
 
+    auto res = expl_manager_->sdf_map_->getResolution();
     
-    for (int i = 0; i < ed->frontiers_.size(); ++i){
-      for (int j = 0; j < ed->frontiers_[i].size(); ++j){
-	ROS_WARN_STREAM(" " << ed->frontiers_[i].size());
-	ROS_WARN_STREAM("x::" << ed->frontiers_[i][j](0) << " y::" << ed->frontiers_[i][j](1) << " z::" << ed->frontiers_[i][j](2));
-      }
-    }
+    //for (int i = 0; i < ed->frontiers_.size(); ++i){
+      //for (int j = 0; j < ed->frontiers_[i].size(); ++j){
+      //auto colors = visualization_->getColor(2 / 20, 1);
+      //visualization_->drawCubes(ed->frontiers_[i], res, colors, "frontier", i, 4);
+      //visualization_->drawGoal(ed->frontiers_[i][j],expl_manager_->sdf_map_->getResolution(),colors,1);
+      //ROS_WARN_STREAM(" " << ed->frontiers_[i].size());
+      //ROS_WARN_STREAM("x::" << ed->frontiers_[i][j](0) << " y::" << ed->frontiers_[i][j](1) << " z::" << ed->frontiers_[i][j](2));
+      //}
+    //}
     
     // cout << "odom: " << fd_->odom_pos_.transpose() << endl;
     // vector<int> tmp_id1;
@@ -757,13 +765,16 @@ namespace fast_planner {
     //     { fd_->odom_pos_ }, { fd_->odom_vel_ }, tmp_id1, tmp_id2, true);
     
     // Draw frontier and bounding box
-    auto res = expl_manager_->sdf_map_->getResolution();
+    //auto res = expl_manager_->sdf_map_->getResolution();
 
     for (int i = 0; i < ed->frontiers_.size(); ++i) {
+
+      
+      
       //auto color = visualization_->getColor(double(i) / ed->frontiers_.size(), 0.4);
       auto color = Eigen::Vector4d(1, 1, 0, 1); //YELLOW
-      visualization_->drawCubes(ed->frontiers_[i], res, color, "frontier", i, 4);
-      
+      visualization_->drawCubes(ed->frontiers_[i], 0.10, color, "frontier", i, 4);
+            
       // getColorVal(i, expl_manager_->ep_->drone_num_, expl_manager_->ep_->drone_id_)
       // double(i) / ed->frontiers_.size()
       // visualization_->drawBox(ed->frontier_boxes_[i].first, ed->frontier_boxes_[i].second,
@@ -919,11 +930,13 @@ namespace fast_planner {
     
     expl_manager_->ed_->next_yaw_ = atan2(dir[1], dir[0]);
     fd_->go_back_ = true;
-       
-    ROS_WARN_STREAM("Start expl pos: " << fd_->odom_pos_);
-
+    
+    ROS_WARN_STREAM("ODOM: " << fd_->odom_pos_.transpose());
+    ROS_WARN_STREAM("atan2: " << atan2(dir[1], dir[0]));
+    
+    //pintar un punto - que es el objetivo
     auto colors = visualization_->getColor(2 / 20, 1);
-    visualization_->drawGoal(pos,expl_manager_->sdf_map_->getResolution(),colors,13);
+    visualization_->drawGoal(pos,expl_manager_->sdf_map_->getResolution(),colors,1);
     
     transitState(PLAN_TRAJ, "triggerCallback");
     return;

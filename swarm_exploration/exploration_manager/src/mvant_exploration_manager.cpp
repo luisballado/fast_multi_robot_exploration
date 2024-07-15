@@ -256,7 +256,7 @@ int MvantExplorationManager::planTrajToView(const Vector3d& pos, const Vector3d&
   
   // Plan trajectory (position and yaw) to the next viewpoint
   auto t1 = ros::Time::now();
-
+  
   // Compute time lower bound of yaw and use in trajectory generation
   double diff0 = next_yaw - yaw[0];
   double diff1 = fabs(diff0);
@@ -325,7 +325,7 @@ int MvantExplorationManager::planTrajToView(const Vector3d& pos, const Vector3d&
   planner_manager_->planYawExplore(yaw, next_yaw, true, ep_->relax_time_);
   double yaw_time = (ros::Time::now() - t1).toSec();
   ROS_INFO("Traj: %lf, yaw: %lf", traj_plan_time, yaw_time);
-
+  
   return SUCCEED;
 }
 
