@@ -505,6 +505,7 @@ void MapROS::publishDepth() {
   depth_pub_.publish(cloud_msg);
 }
 
+  //Actualiza un cubo de zona de influencia donde esta el vant
 void MapROS::publishUpdateRange() {
   Eigen::Vector3d esdf_min_pos, esdf_max_pos, cube_pos, cube_scale;
   visualization_msgs::Marker mk;

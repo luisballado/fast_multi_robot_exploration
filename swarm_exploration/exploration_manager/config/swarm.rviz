@@ -354,7 +354,7 @@ Visualization Manager:
           Selectable: true
           Size (Pixels): 15
           Size (m): 0.125
-          Style: Flat Squares
+          Style: Boxes
           Topic: /sdf_map/occupancy_all_1
           Unreliable: false
           Use Fixed Frame: true
@@ -382,7 +382,7 @@ Visualization Manager:
           Selectable: true
           Size (Pixels): 15
           Size (m): 0.125
-          Style: Flat Squares
+          Style: Boxes
           Topic: /sdf_map/occupancy_all_2
           Unreliable: false
           Use Fixed Frame: true
@@ -410,7 +410,7 @@ Visualization Manager:
           Selectable: true
           Size (Pixels): 15
           Size (m): 0.125
-          Style: Flat Squares
+          Style: Boxes
           Topic: /sdf_map/occupancy_all_3
           Unreliable: false
           Use Fixed Frame: true
@@ -522,7 +522,7 @@ Visualization Manager:
           Selectable: true
           Size (Pixels): 3
           Size (m): 0.10000000149011612
-          Style: Flat Squares
+          Style: Boxes
           Topic: /sdf_map/unknown_1
           Unreliable: false
           Use Fixed Frame: true
@@ -554,7 +554,7 @@ Visualization Manager:
           Selectable: true
           Size (Pixels): 3
           Size (m): 0.10000000149011612
-          Style: Flat Squares
+          Style: Boxes
           Topic: /map_generator/global_cloud
           Unreliable: false
           Use Fixed Frame: true

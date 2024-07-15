@@ -157,6 +157,8 @@ void MvantExplorationManager::initialize(ros::NodeHandle& nh) {
 
 int MvantExplorationManager::planExploreMotion(
     const Vector3d& pos, const Vector3d& vel, const Vector3d& acc, const Vector3d& yaw) {
+
+    
   ros::Time t1 = ros::Time::now();
   auto t2 = t1;
 
@@ -167,11 +169,13 @@ int MvantExplorationManager::planExploreMotion(
   double next_yaw;
 
   auto start_time = chrono::high_resolution_clock::now();
-
+  
   const ROLE updated_role = role_assigner_->assignRole(
       pos, ep_->drone_id_, ed_->swarm_state_, frontier_finder_->getFrontiers());
   updateRoleAndVelocities(updated_role);
 
+  updateVelocities(1.0);
+  
   auto end_time = chrono::high_resolution_clock::now();
   int elapsed_time = chrono::duration_cast<chrono::milliseconds>(end_time - start_time).count();
   ROS_INFO_STREAM("Time to assign role: " << elapsed_time << " ms");
@@ -249,6 +253,7 @@ bool MvantExplorationManager::isPositionReachable(const Vector3d& from, const Ve
 
 int MvantExplorationManager::planTrajToView(const Vector3d& pos, const Vector3d& vel, const Vector3d& acc, const Vector3d& yaw, const Vector3d& next_pos, const double& next_yaw) {
 
+  
   // Plan trajectory (position and yaw) to the next viewpoint
   auto t1 = ros::Time::now();
 
@@ -379,6 +384,29 @@ int MvantExplorationManager::updateFrontierStruct(
   return ed_->frontiers_.size();
 }
 
+void MvantExplorationManager::updateVelocities(const double factor) {
+
+  double velocity_factor = factor;
+  
+  planner_manager_->pp_.max_vel_ *= velocity_factor;
+  double curr_vmax = planner_manager_->getKinodynamicAstarVMax();
+  planner_manager_->setKinodynamicAstarVMax(velocity_factor * curr_vmax);
+  curr_vmax = planner_manager_->getMaxVelBsplineOpt();
+  planner_manager_->setMaxVelBsplineOpt(velocity_factor * curr_vmax);
+  
+  planner_manager_->pp_.max_acc_ *= velocity_factor;
+  double curr_amax = planner_manager_->getKinodynamicAstarAMax();
+  planner_manager_->setKinodynamicAstarAMax(velocity_factor * curr_amax);
+  curr_amax = planner_manager_->getMaxAccBsplineOpt();
+  planner_manager_->setMaxAccBsplineOpt(velocity_factor * curr_amax);
+  
+  planner_manager_->pp_.accept_vel_ = planner_manager_->pp_.max_vel_ + 0.5;
+  planner_manager_->pp_.accept_acc_ = planner_manager_->pp_.max_acc_ + 0.5;
+  
+  ViewNode::vm_ *= velocity_factor;
+  ViewNode::am_ *= velocity_factor;
+}
+  
 void MvantExplorationManager::updateRoleAndVelocities(const ROLE updated_role) {
   // Update velocities
   const double inv_factor = 1. / collector_params_->velocity_factor;

@@ -129,7 +129,10 @@ private:
 
   // Update role and velocities
   void updateRoleAndVelocities(const ROLE updated_role);
-
+  
+  //Actualizar velocitad
+  void updateVelocities(const double factor);
+  
   // Explorer
   bool explorerPlan(const Vector3d& pos, const Vector3d& vel, const Vector3d& yaw,
       Vector3d& next_pos, double& next_yaw);

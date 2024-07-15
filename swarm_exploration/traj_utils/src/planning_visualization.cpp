@@ -2,6 +2,7 @@
 
 using std::cout;
 using std::endl;
+
 namespace fast_planner {
 PlanningVisualization::PlanningVisualization(ros::NodeHandle& nh) {
   node = nh;
@@ -19,7 +20,8 @@ PlanningVisualization::PlanningVisualization(ros::NodeHandle& nh) {
                                                           "visib_constraint",
       100);
   pubs_.push_back(visib_pub_);
-  
+
+  //topico de fronteras
   frontier_pub_ = node.advertise<visualization_msgs::Marker>("/planning_vis/frontier", 10000);
   pubs_.push_back(frontier_pub_);
 
@@ -643,8 +645,8 @@ void PlanningVisualization::drawViewConstraint(const ViewConstraint& vc) {
 
 void PlanningVisualization::drawFrontier(const vector<vector<Eigen::Vector3d>>& frontiers) {
   for (int i = 0; i < frontiers.size(); ++i) {
-    // displayCubeList(frontiers[i], 0.1, getColor(double(i) / frontiers.size(),
-    // 0.4), i, 4);
+    //displayCubeList(frontiers[i], 0.1, getColor(double(i) / frontiers.size(),
+    //						0.4), i, 4);
     drawCubes(frontiers[i], 0.1, getColor(double(i) / frontiers.size(), 0.8), "frontier", i, 4);
   }
 

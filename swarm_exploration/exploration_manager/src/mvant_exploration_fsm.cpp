@@ -85,6 +85,8 @@ namespace fast_planner {
     //rostopic pub /move_base_simple/goal
     //geometry_msgs/PoseStamped '{header: {stamp: now, frame_id: "map"}, pose: {position: {x: 1.0, y: 0.0, z: 0.0}, orientation: {w: 1.0}}}'
     trigger_sub_ = nh.subscribe("/move_base_simple/goal", 1, &MvantExplorationFSM::triggerCallback, this);
+
+    //datos de odometria
     odom_sub_    = nh.subscribe("/odom_world", 1, &MvantExplorationFSM::odometryCallback, this);
     
     //funcion que se suscribe de prueba
@@ -113,7 +115,7 @@ namespace fast_planner {
     nb_obs_pub_ = nh.advertise<sensor_msgs::PointCloud2>("/sdf_map/obs", 10);
     
     //se ejecuta cada medio segundo
-    prueba_nb = nh.createTimer(ros::Duration(0.5), &MvantExplorationFSM::nearbyObstaclesCallback, this);
+    prueba_nb = nh.createTimer(ros::Duration(0.2), &MvantExplorationFSM::nearbyObstaclesCallback, this);
     
     //-------------------------------------------------------------------------------------------------
     // Swarm, timer, pub and sub
@@ -242,7 +244,7 @@ namespace fast_planner {
 	
 	break;
       }
-      
+
       if (check_interval > 100.0) {
         // if (!expl_manager_->updateFrontierStruct(fd_->odom_pos_)) {
         ROS_WARN("Go back to (0,0,1)");
@@ -413,7 +415,7 @@ namespace fast_planner {
     } else {  // Do full planning normally
       res = expl_manager_->planExploreMotion(fd_->start_pt_, fd_->start_vel_, fd_->start_acc_, fd_->start_yaw_);
     }
-    
+        
     if (res == SUCCEED) {
       auto info = &planner_manager_->local_data_;
       info->start_time_ = (ros::Time::now() - time_r).toSec() > 0 ? ros::Time::now() : time_r;
@@ -465,17 +467,17 @@ namespace fast_planner {
       for (int i = 0; i < ed_ptr->frontiers_.size(); ++i) {
 	auto color = visualization_->getColor(double(i) / ed_ptr->frontiers_.size(), 0.4);
 	visualization_->drawCubes(ed_ptr->frontiers_[i], res, color, "frontier", i, 4);
-	
+
 	// getColorVal(i, expl_manager_->ep_->drone_num_, expl_manager_->ep_->drone_id_)
 	// double(i) / ed_ptr->frontiers_.size()
 	
 	// visualization_->drawBox(ed_ptr->frontier_boxes_[i].first,
 	// ed_ptr->frontier_boxes_[i].second,
 	//   color, "frontier_boxes", i, 4);
-	
-	// auto id_str = std::to_string(ed_ptr->fronters_ids_[i]);
-	// visualization_->drawText(ed_ptr->frontiers_[i][0] - Eigen::Vector3d(0., 0., 0.), id_str,
-	// 0.5, Eigen::Vector4d::Ones(), "id", ed_ptr->frontiers_.size() + i, 4);
+
+	//Mostrar el numero de frontera
+	//auto id_str = std::to_string(ed_ptr->fronters_ids_[i]);
+	//visualization_->drawText(ed_ptr->frontiers_[i][0] - Eigen::Vector3d(0., 0., 0.), id_str, 0.5, Eigen::Vector4d::Ones(), "id", ed_ptr->frontiers_.size() + i, 4);
       }
       
       for (int i = ed_ptr->frontiers_.size(); i < last_ftr_num; ++i) {
@@ -903,12 +905,12 @@ namespace fast_planner {
   **/
   void MvantExplorationFSM::triggerCallback(const geometry_msgs::PoseStampedConstPtr& msg) {
     
-    ROS_WARN("CALLBACK triggerCallback");
+    ROS_WARN("CALLBACKtriggerCallback");
     
     //----------------------------------------------
     // // Debug traj planner
     //----------------------------------------------
-    /*
+    
     Eigen::Vector3d pos;
     pos << msg->pose.position.x, msg->pose.position.y, 1;
     expl_manager_->ed_->next_pos_ = pos;
@@ -919,10 +921,13 @@ namespace fast_planner {
     fd_->go_back_ = true;
        
     ROS_WARN_STREAM("Start expl pos: " << fd_->odom_pos_);
+
+    auto colors = visualization_->getColor(2 / 20, 1);
+    visualization_->drawGoal(pos,expl_manager_->sdf_map_->getResolution(),colors,13);
     
     transitState(PLAN_TRAJ, "triggerCallback");
     return;
-    */
+    
     //----------------------------------------------
     
     //Solo se hace cuando el estado es WAIT_TRIGGER

@@ -41,6 +41,9 @@
   <!-- Logging -->
   <arg name="log_folder"/>
 
+  <!-- Coordintation type (MVANT only)-->
+  <arg name="coordination_type" default="branchandbound"/>
+  
   <!-- main node -->
   <node pkg="exploration_manager" name="exploration_node_$(arg drone_id)" type="fame_node" output="log" launch-prefix="$(arg launch_prefix)">
     <remap from ="/odom_world" to="$(arg odometry_topic)"/>
