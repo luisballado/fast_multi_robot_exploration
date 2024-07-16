@@ -78,8 +78,11 @@ namespace fast_planner {
     
     exec_timer_     = nh.createTimer(ros::Duration(0.01), &MvantExplorationFSM::FSMCallback, this);
     safety_timer_   = nh.createTimer(ros::Duration(0.05), &MvantExplorationFSM::safetyCallback, this);
-    frontier_timer_ = nh.createTimer(ros::Duration(0.1), &MvantExplorationFSM::frontierCallback, this);
+    //frontier_timer_ = nh.createTimer(ros::Duration(0.1), &MvantExplorationFSM::frontierCallback, this);
     heartbit_timer_ = nh.createTimer(ros::Duration(1.0), &MvantExplorationFSM::heartbitCallback, this);
+
+    //prueba de ir actualizando las fronteras amarillas
+    frontier_timer_ = nh.createTimer(ros::Duration(0.1), &MvantExplorationFSM::pruebasCallback, this);
     
     //Se puede invocar desde terminal
     //rostopic pub /move_base_simple/goal
@@ -90,7 +93,7 @@ namespace fast_planner {
     odom_sub_    = nh.subscribe("/odom_world", 1, &MvantExplorationFSM::odometryCallback, this);
     
     //funcion que se suscribe de prueba
-    test_sub_ = nh.subscribe("/pruebas", 1, &MvantExplorationFSM::pruebasCallback, this);
+    //test_sub_ = nh.subscribe("/pruebas", 1, &MvantExplorationFSM::pruebasCallback, this);
     
     //subscriber llevarlo a nuevo archivo
     //nearby_obs_sub_ = nh.subscribe("/nearby_obstacles", 1000, &MvantExplorationFSM::nearbyObstaclesCallback, this);
@@ -107,7 +110,7 @@ namespace fast_planner {
     //nearby_obs_pub_ = nh.advertise<exploration_manager::SearchObstacle>("/nearby_obstacles", 10);
 
     //prueba de fronteras
-    test_fronteras = nh.advertise<std_msgs::Empty>("/pruebas", 100);
+    //test_fronteras = nh.advertise<std_msgs::Empty>("/pruebas", 100);
     
     // si lo utilizo para la evaluacion de los K-vecinos respecto al VANT
     // el topico se renombra haciendo un remap dentro del archivo
@@ -451,6 +454,7 @@ namespace fast_planner {
   }
   
   void MvantExplorationFSM::visualize(int content) {
+    
     // content 1: frontier; 2 paths & trajs
     auto info = &planner_manager_->local_data_;
     auto plan_data = &planner_manager_->plan_data_;
@@ -467,10 +471,12 @@ namespace fast_planner {
       // Draw frontier
       auto res = expl_manager_->sdf_map_->getResolution();
       static int last_ftr_num = 0;
-      for (int i = 0; i < ed_ptr->frontiers_.size(); ++i) {
-	auto color = visualization_->getColor(double(i) / ed_ptr->frontiers_.size(), 0.4);
 
-	visualization_->drawCubes(ed_ptr->frontiers_[i], res, color, "frontier", i, 4);
+      for (int i = 0; i < ed_ptr->frontiers_.size(); ++i) {
+
+	auto color = visualization_->getColor(double(i) / ed_ptr->frontiers_.size(), 1);
+
+	visualization_->drawCubes(ed_ptr->frontiers_[i], res, color, "frontier", i, 0.9);
 
 	// getColorVal(i, expl_manager_->ep_->drone_num_, expl_manager_->ep_->drone_id_)
 	// double(i) / ed_ptr->frontiers_.size()
@@ -479,9 +485,29 @@ namespace fast_planner {
 	// ed_ptr->frontier_boxes_[i].second,
 	//   color, "frontier_boxes", i, 4);
 
+	//obtener centroide
+	//puntos
+       	Vector3d centroid(0.0, 0.0, 0.0);
+	int count = 0;
+	
+	vector<Vector3d> points = ed_ptr->frontiers_[i];
+	
+	for (const auto& point : points) {
+	  centroid += point;
+	  count++;
+	}
+	
+	if (count > 0) {
+	  centroid /= count;
+	}
+	
 	//Mostrar el numero de frontera
-	//auto id_str = std::to_string(ed_ptr->fronters_ids_[i]);
+	auto id_str = std::to_string(ed_ptr->fronters_ids_[i]);
+	ROS_WARN_STREAM("Frontera:: " << id_str);
+	//ROS_WARN_STREAM("Frontera:: " << ed_ptr->frontiers_[i][0]);
+	ROS_WARN_STREAM("Frontera:: " << centroid.transpose());
 	//visualization_->drawText(ed_ptr->frontiers_[i][0] - Eigen::Vector3d(0., 0., 0.), id_str, 0.5, Eigen::Vector4d::Ones(), "id", ed_ptr->frontiers_.size() + i, 4);
+	visualization_->drawText(centroid - Eigen::Vector3d(0., 0., 0.), id_str, 0.5, Eigen::Vector4d::Ones(), "id", ed_ptr->frontiers_.size() + i, 4);
       }
       
       for (int i = ed_ptr->frontiers_.size(); i < last_ftr_num; ++i) {
@@ -726,18 +752,13 @@ namespace fast_planner {
     return std::sqrt(std::pow(cloud_point(0) - point(0), 2) + std::pow(cloud_point(1) - point(1), 2) + std::pow(cloud_point(2) - point(2), 2));
   }
   
-  void MvantExplorationFSM::pruebasCallback(const std_msgs::Empty::ConstPtr& msg){
+  void MvantExplorationFSM::pruebasCallback(const ros::TimerEvent& e) {
+					    //const std_msgs::Empty::ConstPtr& msg){
     
-    ROS_ERROR("Es una prueba que debe imprimir");
+    //ROS_ERROR("Es una prueba que debe imprimir");
     
     auto ft = expl_manager_->frontier_finder_;
     auto ed = expl_manager_->ed_;
-    
-    auto getColorVal = [&](const int& id, const int& num, const int& drone_id) {
-			 double a = (drone_id - 1) / double(num + 1);
-			 double b = 1 / double(num + 1);
-			 return a + b * double(id) / ed->frontiers_.size();
-		       };
     
     // ft->searchFrontiers();
     // ft->computeFrontiersToVisit();
@@ -746,6 +767,10 @@ namespace fast_planner {
     // ft->getFrontiers(ed->frontiers_);
     // ft->getFrontierBoxes(ed->frontier_boxes_);
 
+    // Actualizar fonteras
+    expl_manager_->updateFrontierStruct(fd_->odom_pos_, fd_->odom_yaw_, fd_->odom_vel_);
+
+    // Draw frontier and bounding box
     auto res = expl_manager_->sdf_map_->getResolution();
     
     //for (int i = 0; i < ed->frontiers_.size(); ++i){
@@ -763,18 +788,39 @@ namespace fast_planner {
     // vector<vector<int>> tmp_id2;
     // bool status = expl_manager_->findGlobalTourOfGrid(
     //     { fd_->odom_pos_ }, { fd_->odom_vel_ }, tmp_id1, tmp_id2, true);
+
+    auto color = visualization_->getColor(double(i) / ed->frontiers_.size(), 0.4);
     
-    // Draw frontier and bounding box
-    //auto res = expl_manager_->sdf_map_->getResolution();
-
     for (int i = 0; i < ed->frontiers_.size(); ++i) {
-
       
+      visualization_->drawCubes(ed->frontiers_[i], 0.10, color, "frontier", i, 1);
       
-      //auto color = visualization_->getColor(double(i) / ed->frontiers_.size(), 0.4);
-      auto color = Eigen::Vector4d(1, 1, 0, 1); //YELLOW
-      visualization_->drawCubes(ed->frontiers_[i], 0.10, color, "frontier", i, 4);
-            
+      /*###########################################*/
+      //obtener centroide
+      //puntos
+      Vector3d centroid(0.0, 0.0, 0.0);
+      int count = 0;
+      
+      vector<Vector3d> points = ed->frontiers_[i];
+      
+      for (const auto& point : points) {
+	centroid += point;
+	count++;
+      }
+      
+      if (count > 0) {
+	centroid /= count;
+      }
+      
+      //Mostrar el numero de frontera
+      auto id_str = std::to_string(ed->fronters_ids_[i]);
+      ROS_WARN_STREAM("Frontera:: " << id_str);
+      //ROS_WARN_STREAM("Frontera:: " << ed_ptr->frontiers_[i][0]);
+      ROS_WARN_STREAM("Frontera:: " << centroid.transpose());
+      //visualization_->drawText(ed_ptr->frontiers_[i][0] - Eigen::Vector3d(0., 0., 0.), id_str, 0.5, Eigen::Vector4d::Ones(), "id", ed_ptr->frontiers_.size() + i, 4);
+      visualization_->drawText(centroid - Eigen::Vector3d(0., 0., 0.), id_str, 0.5, Eigen::Vector4d::Ones(), "id", ed->frontiers_.size() + i, 4);
+      /*###########################################*/
+	
       // getColorVal(i, expl_manager_->ep_->drone_num_, expl_manager_->ep_->drone_id_)
       // double(i) / ed->frontiers_.size()
       // visualization_->drawBox(ed->frontier_boxes_[i].first, ed->frontier_boxes_[i].second,
@@ -783,7 +829,7 @@ namespace fast_planner {
 
     //imprimir las fronteras
     ROS_WARN_STREAM("Num::" << ed->frontiers_.size());
-    visualize(1);
+    //visualize(1);
   }
   
   /***

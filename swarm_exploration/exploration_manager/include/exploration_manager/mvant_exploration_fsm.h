@@ -90,7 +90,8 @@ private:
   /* Ejemplos */
   void nearbyObstaclesCallback(const ros::TimerEvent& e);//(const exploration_manager::SearchObstacle::ConstPtr& msg);
   double getDistance(Eigen::Vector3d& cloud_point, Eigen::Vector3d& point);
-  void pruebasCallback(const std_msgs::Empty::ConstPtr& msg);
+  //void pruebasCallback(const std_msgs::Empty::ConstPtr& msg);
+  void pruebasCallback(const ros::TimerEvent& e);
   
   
   // Swarm
