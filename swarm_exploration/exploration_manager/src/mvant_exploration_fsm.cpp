@@ -82,7 +82,7 @@ namespace fast_planner {
     heartbit_timer_ = nh.createTimer(ros::Duration(1.0), &MvantExplorationFSM::heartbitCallback, this);
 
     //prueba de ir actualizando las fronteras amarillas
-    //frontier_timer_ = nh.createTimer(ros::Duration(0.1), &MvantExplorationFSM::pruebasCallback, this);
+    frontier_timer_ = nh.createTimer(ros::Duration(0.5), &MvantExplorationFSM::pruebasCallback, this);
     
     //Se puede invocar desde terminal
     //rostopic pub /move_base_simple/goal
@@ -93,7 +93,7 @@ namespace fast_planner {
     odom_sub_    = nh.subscribe("/odom_world", 1, &MvantExplorationFSM::odometryCallback, this);
     
     //funcion que se suscribe de prueba
-    test_sub_ = nh.subscribe("/pruebas", 1, &MvantExplorationFSM::pruebasCallback, this);
+    //test_sub_ = nh.subscribe("/pruebas", 1, &MvantExplorationFSM::pruebasCallback, this);
     
     //subscriber llevarlo a nuevo archivo
     //nearby_obs_sub_ = nh.subscribe("/nearby_obstacles", 1000, &MvantExplorationFSM::nearbyObstaclesCallback, this);
@@ -752,8 +752,9 @@ namespace fast_planner {
     return std::sqrt(std::pow(cloud_point(0) - point(0), 2) + std::pow(cloud_point(1) - point(1), 2) + std::pow(cloud_point(2) - point(2), 2));
   }
   
-  void MvantExplorationFSM::pruebasCallback(const std_msgs::Empty::ConstPtr& msg){
-    //const ros::TimerEvent& e) {
+  void MvantExplorationFSM::pruebasCallback(const ros::TimerEvent& e) {
+					    //const std_msgs::Empty::ConstPtr& msg){
+    
 					   
 
     //if (state_ != WAIT_TRIGGER) return;
