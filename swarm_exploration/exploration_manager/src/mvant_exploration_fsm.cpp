@@ -822,10 +822,14 @@ namespace fast_planner {
       visualization_->drawGoal(pos,0.30,_col_,1);
       //ROS_ERROR("PLANIFICANDO-PRUEBASCALLBACK");
 
-      transitState(PLAN_TRAJ, "pruebasCallback");
+      //exploro para quedarme con la primera o la que quiera aqui
       
     }
 
+    //calcular pos y yaw de la posicion a la que quiero ir
+    // ed->next_pos_ =
+    
+    transitState(PLAN_TRAJ, "pruebasCallback");
     //imprimir las fronteras
     ROS_WARN_STREAM("Num::" << ed->frontiers_.size());
     //visualize(1);
