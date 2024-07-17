@@ -82,7 +82,7 @@ namespace fast_planner {
     heartbit_timer_ = nh.createTimer(ros::Duration(1.0), &MvantExplorationFSM::heartbitCallback, this);
 
     //prueba de ir actualizando las fronteras amarillas
-    frontier_timer_ = nh.createTimer(ros::Duration(0.5), &MvantExplorationFSM::pruebasCallback, this);
+    frontier_timer_ = nh.createTimer(ros::Duration(1.5), &MvantExplorationFSM::pruebasCallback, this);
     
     //Se puede invocar desde terminal
     //rostopic pub /move_base_simple/goal
@@ -818,12 +818,11 @@ namespace fast_planner {
       Eigen::Vector3d dir = pos - fd_->odom_pos_;
       
       ed->next_yaw_ = atan2(dir[1], dir[0]);
-      fd_->go_back_ = true;
-            
+                  
       //pintar un punto - que es el objetivo
       auto _col_ = visualization_->getColor(2 / 20, 1);
       visualization_->drawGoal(pos,0.30,_col_,1);
-      ROS_ERROR("PLANIFICANDO-PRUEBASCALLBACK");
+      //ROS_ERROR("PLANIFICANDO-PRUEBASCALLBACK");
 
       transitState(PLAN_TRAJ, "pruebasCallback");
       
