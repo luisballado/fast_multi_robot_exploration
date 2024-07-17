@@ -755,9 +755,7 @@ namespace fast_planner {
   void MvantExplorationFSM::pruebasCallback(const ros::TimerEvent& e) {
 					    //const std_msgs::Empty::ConstPtr& msg){
     
-					   
-
-    //if (state_ != WAIT_TRIGGER) return;
+    if (state_ == WAIT_TRIGGER || state_ == INIT) return;
         
     auto ft = expl_manager_->frontier_finder_;
     auto ed = expl_manager_->ed_;
