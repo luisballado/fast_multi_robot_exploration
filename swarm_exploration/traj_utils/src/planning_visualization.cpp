@@ -193,8 +193,7 @@ void PlanningVisualization::drawCubes(const vector<Eigen::Vector3d>& list, const
   if (pubs_[pub_id].getNumSubscribers() == 0) return;
 
   visualization_msgs::Marker mk;
-  fillBasicInfo(mk, Eigen::Vector3d(scale, scale, scale), color, ns, id,
-      visualization_msgs::Marker::CUBE_LIST);
+  fillBasicInfo(mk, Eigen::Vector3d(scale, scale, scale), color, ns, id, visualization_msgs::Marker::CUBE_LIST);
 
   // clean old marker
   mk.action = visualization_msgs::Marker::DELETE;

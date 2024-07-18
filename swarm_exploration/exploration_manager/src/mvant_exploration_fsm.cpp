@@ -82,7 +82,7 @@ namespace fast_planner {
     heartbit_timer_ = nh.createTimer(ros::Duration(1.0), &MvantExplorationFSM::heartbitCallback, this);
 
     //prueba de ir actualizando las fronteras amarillas
-    frontier_timer_ = nh.createTimer(ros::Duration(1.5), &MvantExplorationFSM::pruebasCallback, this);
+    frontier_timer_ = nh.createTimer(ros::Duration(1.0), &MvantExplorationFSM::pruebasCallback, this);
     
     //Se puede invocar desde terminal
     //rostopic pub /move_base_simple/goal
@@ -371,8 +371,8 @@ namespace fast_planner {
         if (need_replan) {
           if (expl_manager_->updateFrontierStruct(fd_->odom_pos_, fd_->odom_yaw_, fd_->odom_vel_) != 0) {
             // Update frontier and plan new motion
-            thread vis_thread(&MvantExplorationFSM::visualize, this, 1);
-            vis_thread.detach();
+            //thread vis_thread(&MvantExplorationFSM::visualize, this, 1);
+            //vis_thread.detach();
             transitState(PLAN_TRAJ, "FSM");
           } else {
             // No frontier detected, finish exploration
@@ -399,8 +399,8 @@ namespace fast_planner {
           // Replan for going back
           replan_pub_.publish(std_msgs::Empty());
           transitState(PLAN_TRAJ, "FSM");
-          thread vis_thread(&MvantExplorationFSM::visualize, this, 1);
-          vis_thread.detach();
+          //thread vis_thread(&MvantExplorationFSM::visualize, this, 1);
+          //vis_thread.detach();
         }
       }
       
@@ -755,84 +755,89 @@ namespace fast_planner {
   void MvantExplorationFSM::pruebasCallback(const ros::TimerEvent& e) {
 					    //const std_msgs::Empty::ConstPtr& msg){
     
-    if (state_ == WAIT_TRIGGER || state_ == INIT) return;
-        
+    if (state_ == EXEC_TRAJ || state_ == WAIT_TRIGGER || state_ == INIT) return;
+    
     auto ft = expl_manager_->frontier_finder_;
     auto ed = expl_manager_->ed_;
     
     // Actualizar fonteras
     auto fronteras_num = expl_manager_->updateFrontierStruct(fd_->odom_pos_, fd_->odom_yaw_, fd_->odom_vel_);
 
-    if (fronteras_num == 0) {
-      transitState(IDLE, "pruebasCallback");
-    }
-    
-    // Draw frontier and bounding box
+    // Resolucion de los voxels (0.15)
     auto res = expl_manager_->sdf_map_->getResolution();
 
-    auto colors = Eigen::Vector4d(1, 1, 0, 1); //YELLOW
-
-    
+    // almacenar distancias
+    std::multimap<double,Eigen::Vector3d> distancias;
     
     for (int i = 0; i < ed->frontiers_.size(); ++i) {
 
-      //color respecto a la frontera
+      // obtener un tono de color para pintar frontera
       auto color = visualization_->getColor(double(i) / ed->frontiers_.size(), 0.4);
-
-      //dibujar los cubos
-      visualization_->drawCubes(ed->frontiers_[i], 0.10, color, "frontier", i, 0.5);
       
-      /*###########################################*/
-      //obtener centroide
-      //puntos
+      // dibujar voxel respecto a una lista de puntos
+      visualization_->drawCubes(ed->frontiers_[i], res, color, "frontier", i, 0.5);
+      
+      /* ########################################### */
+      // obtener centroide para cada frontera
       Vector3d centroid(0.0, 0.0, 0.0);
       int count = 0;
       
-      vector<Vector3d> points = ed->frontiers_[i];
-      
-      for (const auto& point : points) {
-	centroid += point;
+      vector<Vector3d> puntos = ed->frontiers_[i];
+
+      // calcular centroide para cada lista de puntos de una frontera
+      for (const auto& punto : puntos) {
+	centroid += punto;
 	count++;
       }
       
       if (count > 0) {
-	centroid /= count;
+	centroid /= count; // promedio
       }
       
-      //Mostrar el numero de frontera
+      // mostrar el numero de frontera
       auto id_str = std::to_string(ed->fronters_ids_[i]);
       ROS_WARN_STREAM("Frontera:: " << id_str);
       ROS_WARN_STREAM("Frontera:: " << centroid.transpose());
       
       visualization_->drawText(centroid - Eigen::Vector3d(0., 0., 0.), id_str, 0.8, Eigen::Vector4d::Ones(), "id", ed->frontiers_.size() + i, 4);
-      /*###########################################*/
-
-      //Aqui debo de iterar para hacer la exploracion
       
-      Eigen::Vector3d pos;
-      pos << centroid(0), centroid(1), 1;
-      ed->next_pos_ = pos;
-      
-      Eigen::Vector3d dir = pos - fd_->odom_pos_;
-      
-      ed->next_yaw_ = atan2(dir[1], dir[0]);
-                  
-      //pintar un punto - que es el objetivo
-      auto _col_ = visualization_->getColor(2 / 20, 1);
-      visualization_->drawGoal(pos,0.30,_col_,1);
-      //ROS_ERROR("PLANIFICANDO-PRUEBASCALLBACK");
-
-      //exploro para quedarme con la primera o la que quiera aqui
-      
+      // calcular distancia y meterlo a un arreglo
+      double _distancia_ = getDistance(fd_->odom_pos_,centroid);
+      distancias.emplace(_distancia_,centroid);
+            
     }
 
-    //calcular pos y yaw de la posicion a la que quiero ir
-    // ed->next_pos_ =
+    auto it = distancias.begin();
+    
+    if (distancias.size() > 2) {
+      advance(it, 1); // mover el iterador al segundo elemento
+    }
+    
+    // multimap los ordena ascendente
+    Eigen::Vector3d posicion = it->second;
+
+    Eigen::Vector3d pos;
+    pos << posicion(0), posicion(1), 1;
+    ed->next_pos_ = pos;
+    
+    Eigen::Vector3d dir = pos - fd_->odom_pos_;
+    ed->next_yaw_ = atan2(dir[1], dir[0]);
+    
+    //pintar un punto - que es el objetivo
+    auto _col_ = visualization_->getColor(2 / 20, 1);
+    visualization_->drawGoal(pos,0.30,_col_,1);
     
     transitState(PLAN_TRAJ, "pruebasCallback");
-    //imprimir las fronteras
+    
+    // imprimir num de fronteras
     ROS_WARN_STREAM("Num::" << ed->frontiers_.size());
     //visualize(1);
+
+    // transitar a IDLE cuando no existan mas fronteras por descubrir
+    if (ed->frontiers_.size() == 0) {
+      transitState(IDLE, "pruebasCallback");
+    }
+    
   }
   
   /***
