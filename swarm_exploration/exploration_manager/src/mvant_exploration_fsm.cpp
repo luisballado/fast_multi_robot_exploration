@@ -747,11 +747,16 @@ namespace fast_planner {
     
   }
   
-  // Función para calcular la distancia euclidiana en 3D
+  /**
+     Función para calcular la distancia euclidiana en 3D
+  **/
   double MvantExplorationFSM::getDistance(Eigen::Vector3d& cloud_point, Eigen::Vector3d& point) {
     return std::sqrt(std::pow(cloud_point(0) - point(0), 2) + std::pow(cloud_point(1) - point(1), 2) + std::pow(cloud_point(2) - point(2), 2));
   }
-  
+
+  /**
+     Dummy Explorarcion
+   **/
   void MvantExplorationFSM::pruebasCallback(const ros::TimerEvent& e) {
 					    //const std_msgs::Empty::ConstPtr& msg){
     
@@ -793,11 +798,12 @@ namespace fast_planner {
       if (count > 0) {
 	centroid /= count; // promedio
       }
+      /* ########################################### */
       
       // mostrar el numero de frontera
       auto id_str = std::to_string(ed->fronters_ids_[i]);
-      ROS_WARN_STREAM("Frontera:: " << id_str);
-      ROS_WARN_STREAM("Frontera:: " << centroid.transpose());
+      //ROS_WARN_STREAM("Frontera:: " << id_str);
+      //ROS_WARN_STREAM("Frontera:: " << centroid.transpose());
       
       visualization_->drawText(centroid - Eigen::Vector3d(0., 0., 0.), id_str, 0.8, Eigen::Vector4d::Ones(), "id", ed->frontiers_.size() + i, 4);
       
@@ -818,13 +824,14 @@ namespace fast_planner {
 
     Eigen::Vector3d pos;
     pos << posicion(0), posicion(1), 1;
-    ed->next_pos_ = pos;
-    
+
     Eigen::Vector3d dir = pos - fd_->odom_pos_;
-    ed->next_yaw_ = atan2(dir[1], dir[0]);
     
+    ed->next_pos_ = pos;
+    ed->next_yaw_ = atan2(dir[1], dir[0]);
+        
     //pintar un punto - que es el objetivo
-    auto _col_ = visualization_->getColor(2 / 20, 1);
+    auto _col_ = visualization_->getColor(2 / 20, 1); //RED
     visualization_->drawGoal(pos,0.30,_col_,1);
     
     transitState(PLAN_TRAJ, "pruebasCallback");
