@@ -25,10 +25,14 @@ int main(int argc, char** argv) {
   expl_mvant.init(nh);
   
   ros::Duration(1.0).sleep();
+
+  // Usar 4 hilos para manejar callbacks
+  // no es necesario
+  // ros::MultiThreadedSpinner spinner(4); 
   
   //processes callbacks and will not
   //return until the node has been shutdown 
   ros::spin();
-  
+
   return 0;
 }

@@ -2,11 +2,14 @@
 //FSM
 
 #include <plan_manage/planner_manager.h>
-#include <exploration_manager/mvant_exploration_manager.h>
+
 #include <traj_utils/planning_visualization.h>
 
+//exploration_manager/include
+#include <exploration_manager/mvant_exploration_manager.h>
 #include <exploration_manager/mvant_exploration_fsm.h>
 #include <exploration_manager/expl_data.h>
+
 #include <exploration_manager/HGrid.h>
 #include <exploration_manager/GridTour.h>
 
@@ -42,9 +45,10 @@ namespace fast_planner {
     nh.param("fsm/pair_opt_interval", fp_->pair_opt_interval_, 1.0);
     nh.param("fsm/repeat_send_num", fp_->repeat_send_num_, 10);
     nh.param("fsm/communication_range", fp_->communication_range_, std::numeric_limits<double>::max());
-    
-    //ejemplo paso de un parametro
-    //para la coordination
+
+    // *****************************************************
+    // ******** PASO DE PARAM, DEFINIR COORDINACION ******** 
+    // *****************************************************
     nh.param("exploration/coordination/type", fp_->coordination_type, string("null"));
     
     /* Initialize main modules */
@@ -56,7 +60,7 @@ namespace fast_planner {
     
     planner_manager_ = expl_manager_->planner_manager_;
     
-    state_ = EXPL_STATE::INIT;
+    state_ = EXPL_STATE::INIT; //estado inicial
     
     fd_->have_odom_ = false;
     
@@ -80,16 +84,22 @@ namespace fast_planner {
     safety_timer_   = nh.createTimer(ros::Duration(0.05), &MvantExplorationFSM::safetyCallback, this);
     //frontier_timer_ = nh.createTimer(ros::Duration(0.1), &MvantExplorationFSM::frontierCallback, this);
     heartbit_timer_ = nh.createTimer(ros::Duration(1.0), &MvantExplorationFSM::heartbitCallback, this);
-
-    //prueba de ir actualizando las fronteras amarillas
-    frontier_timer_ = nh.createTimer(ros::Duration(1.0), &MvantExplorationFSM::pruebasCallback, this);
     
-    //Se puede invocar desde terminal
-    //rostopic pub /move_base_simple/goal
-    //geometry_msgs/PoseStamped '{header: {stamp: now, frame_id: "map"}, pose: {position: {x: 1.0, y: 0.0, z: 0.0}, orientation: {w: 1.0}}}'
+    // ******************************************************
+    // *************** Actualizar fronteras *****************
+    // ******************************************************
+    frontier_timer_ = nh.createTimer(ros::Duration(1.0), &MvantExplorationFSM::pruebasCallback, this);
+
+    // ******************************************************
+    // ************ Trigger para lanzar FSM *****************
+    // ******************************************************
+    // Se puede invocar desde terminal
+    // rostopic pub /move_base_simple/goal geometry_msgs/PoseStamped '{header: {stamp: now, frame_id: "map"}, pose: {position: {x: 1.0, y: 0.0, z: 0.0}, orientation: {w: 1.0}}}'
     trigger_sub_ = nh.subscribe("/move_base_simple/goal", 1, &MvantExplorationFSM::triggerCallback, this);
 
-    //datos de odometria
+    // ******************************************************
+    // **************** Datos de odometria ******************
+    // ******************************************************
     odom_sub_    = nh.subscribe("/odom_world", 1, &MvantExplorationFSM::odometryCallback, this);
     
     //funcion que se suscribe de prueba
@@ -98,8 +108,11 @@ namespace fast_planner {
     //subscriber llevarlo a nuevo archivo
     //nearby_obs_sub_ = nh.subscribe("/nearby_obstacles", 1000, &MvantExplorationFSM::nearbyObstaclesCallback, this);
     //-------------------------------------------------------------------------------------------------
-    replan_pub_   = nh.advertise<std_msgs::Empty>("/planning/replan", 10);
-    new_pub_      = nh.advertise<std_msgs::Empty>("/planning/new", 10);
+    // ******************************************************
+    // ****************** TOPICOS  **************************
+    // ******************************************************
+    replan_pub_   = nh.advertise<std_msgs::Empty>("/planning/replan", 10);  // Replanear trayectoria
+    new_pub_      = nh.advertise<std_msgs::Empty>("/planning/new", 10);     // Publicar
     bspline_pub_  = nh.advertise<bspline::Bspline>("/planning/bspline", 10);
     stop_pub_     = nh.advertise<std_msgs::Int32>("/stop", 1000);
     heartbit_pub_ = nh.advertise<std_msgs::Empty>("/heartbit", 100);
@@ -111,6 +124,10 @@ namespace fast_planner {
 
     //prueba de fronteras
     //test_fronteras = nh.advertise<std_msgs::Empty>("/pruebas", 100);
+
+    //prueba de topico dummy
+    test_topico = nh.advertise<std_msgs::Empty>("/test_topic", 10);
+    topico_sub_ = nh.subscribe("/test_topic", 10, &MvantExplorationFSM::pruebaTopicoCallback, this);
     
     // si lo utilizo para la evaluacion de los K-vecinos respecto al VANT
     // el topico se renombra haciendo un remap dentro del archivo
@@ -755,6 +772,14 @@ namespace fast_planner {
   }
 
   /**
+   * Ejemplo de un topico
+   */
+
+  void MvantExplorationFSM::pruebaTopicoCallback(const std_msgs::Empty::ConstPtr& msg){
+    ROS_WARN_ONCE("Tipo coordinacion: %s", fp_->coordination_type.c_str());
+  }
+  
+  /**
      Dummy Explorarcion
    **/
   void MvantExplorationFSM::pruebasCallback(const ros::TimerEvent& e) {
@@ -882,7 +907,7 @@ namespace fast_planner {
     Eigen::Vector3i index_pos;
     expl_manager_->sdf_map_->posToIndex(central_point,index_pos);
     //ROS_WARN_STREAM("posToIndex - index0: " << index_pos(0) << ", index1: " << index_pos(1) << ", index3: " << index_pos(2));
-        
+    
     // distancia de interes
     double di = _di_ * (1 / expl_manager_->sdf_map_->getResolution());
     //ROS_WARN_STREAM("di:: " << di);
@@ -1031,7 +1056,7 @@ namespace fast_planner {
       if (!safe) {
 	// ROS_WARN("Replan: collision detected==================================");
 	fd_->avoid_collision_ = true;
-      transitState(PLAN_TRAJ, "safetyCallback");
+	transitState(PLAN_TRAJ, "safetyCallback");
       }
       
       static auto time_check = ros::Time::now();
@@ -1080,10 +1105,12 @@ namespace fast_planner {
   }
   
   void MvantExplorationFSM::droneStateTimerCallback(const ros::TimerEvent& e) {
-  // Broadcast own state periodically
+    // Broadcast own state periodically
     exploration_manager::DroneState msg;
     msg.drone_id = getId();
-    
+
+    //modificar el vector que almacena la estructura de datos tipo DroneState
+    // por que es -1?? --> creo por ser cero basado
     auto& state = expl_manager_->ed_->swarm_state_[msg.drone_id - 1];
     
     if (fd_->static_state_) {
@@ -1093,14 +1120,15 @@ namespace fast_planner {
     } else {
       LocalTrajData* info = &planner_manager_->local_data_;
       double t_r = (ros::Time::now() - info->start_time_).toSec();
-    state.pos_ = info->position_traj_.evaluateDeBoorT(t_r);
-    state.vel_ = info->velocity_traj_.evaluateDeBoorT(t_r);
-    state.yaw_ = info->yaw_traj_.evaluateDeBoorT(t_r)[0];
+      state.pos_ = info->position_traj_.evaluateDeBoorT(t_r);
+      state.vel_ = info->velocity_traj_.evaluateDeBoorT(t_r);
+      state.yaw_ = info->yaw_traj_.evaluateDeBoorT(t_r)[0];
     }
     state.stamp_ = ros::Time::now().toSec();
     msg.pos = { float(state.pos_[0]), float(state.pos_[1]), float(state.pos_[2]) };
     msg.vel = { float(state.vel_[0]), float(state.vel_[1]), float(state.vel_[2]) };
     msg.yaw = state.yaw_;
+    //creo que aqui plancha el mapa
     for (auto id : state.grid_ids_) msg.grid_ids.push_back(id);
     msg.recent_attempt_time = state.recent_attempt_time_;
     msg.stamp = state.stamp_;
@@ -1109,7 +1137,8 @@ namespace fast_planner {
     
     drone_state_pub_.publish(msg);
   }
-  
+
+  //recibo un mensaje DroneState con la informacion de un Drone
   void MvantExplorationFSM::droneStateMsgCallback(const exploration_manager::DroneStateConstPtr& msg) {
     
     // Update other drones' states
@@ -1139,6 +1168,7 @@ namespace fast_planner {
     
     //std::cout << "Drone " << getId() << " get drone " << int(msg->drone_id) << "'s state" <<
     //std::endl; std::cout << drone_state.pos_.transpose() << std::endl;
+    //ROS_WARN_STREAM_THROTTLE(1.0, "Drone " << getId() << " get drone " << int(msg->drone_id) << "'s state" << drone_state.pos_.transpose());
   }
   
   void MvantExplorationFSM::optTimerCallback(const ros::TimerEvent& e) {

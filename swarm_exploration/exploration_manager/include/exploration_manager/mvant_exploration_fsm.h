@@ -66,6 +66,7 @@ public:
 
 private:
 
+  //calcular distancia euclideana
   double calcularDistancia(double x, double y, double z,
 			   double cx, double cy, double cz);
   
@@ -92,6 +93,8 @@ private:
   double getDistance(Eigen::Vector3d& cloud_point, Eigen::Vector3d& point);
   //void pruebasCallback(const std_msgs::Empty::ConstPtr& msg);
   void pruebasCallback(const ros::TimerEvent& e);
+
+  void pruebaTopicoCallback(const std_msgs::Empty::ConstPtr& msg);
   
   
   // Swarm
@@ -102,7 +105,7 @@ private:
   void optResMsgCallback(const exploration_manager::PairOptResponseConstPtr& msg);
   void swarmTrajCallback(const bspline::BsplineConstPtr& msg);
   void swarmTrajTimerCallback(const ros::TimerEvent& e);
-
+  
   /* planning utils */
   shared_ptr<FastPlannerManager> planner_manager_;
   shared_ptr<MvantExplorationManager> expl_manager_;
@@ -119,12 +122,17 @@ private:
   ros::Subscriber trigger_sub_, odom_sub_;
   ros::Publisher replan_pub_, new_pub_, bspline_pub_;
 
-  //nearby obstacles
+  // ******************************
+  // *****  nearby obstacles ******
+  // ******************************
   ros::Subscriber nearby_obs_sub_;
-
-  //nearby obstacles
-  //ros::Publisher nearby_obs_pub_;
   ros::Publisher nb_obs_pub_;
+  // ******************************
+  // ***** Pruebas Dummy **********
+  // ******************************
+  ros::Publisher test_topico;
+  ros::Subscriber topico_sub_;
+  // ******************************
 
   //pruebas
   ros::Publisher test_fronteras;
