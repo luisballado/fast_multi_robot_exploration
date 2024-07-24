@@ -88,7 +88,7 @@ namespace fast_planner {
     // ******************************************************
     // *************** Actualizar fronteras *****************
     // ******************************************************
-    frontier_timer_ = nh.createTimer(ros::Duration(1.0), &MvantExplorationFSM::pruebasCallback, this);
+    frontier_timer_ = nh.createTimer(ros::Duration(0.5), &MvantExplorationFSM::pruebasCallback, this);
 
     // ******************************************************
     // ************ Trigger para lanzar FSM *****************
@@ -310,7 +310,7 @@ namespace fast_planner {
 
       // Inform traj_server the replanning
       replan_pub_.publish(std_msgs::Empty());
-
+      
       //llamar a planificador
       int res = callExplorationPlanner();
       
@@ -343,7 +343,7 @@ namespace fast_planner {
       }
       
       //visualize(1);
-      // clearVisMarker();
+      clearVisMarker();
       break;
     }
       
@@ -400,7 +400,7 @@ namespace fast_planner {
             replan_pub_.publish(std_msgs::Empty());
             sendStopMsg(1);
           }
-          // clearVisMarker();
+          clearVisMarker();
           //visualize(1);
         }
       } else {
@@ -785,17 +785,18 @@ namespace fast_planner {
   void MvantExplorationFSM::pruebasCallback(const ros::TimerEvent& e) {
 					    //const std_msgs::Empty::ConstPtr& msg){
     
-    if (state_ == EXEC_TRAJ || state_ == WAIT_TRIGGER || state_ == INIT) return;
+    if (state_ == EXEC_TRAJ || state_ == WAIT_TRIGGER || state_ == INIT || state_ == PUB_TRAJ) return;
     
     auto ft = expl_manager_->frontier_finder_;
     auto ed = expl_manager_->ed_;
     
     // Actualizar fonteras
+    // poder explicar lo que hace updateFrontierStruct
     auto fronteras_num = expl_manager_->updateFrontierStruct(fd_->odom_pos_, fd_->odom_yaw_, fd_->odom_vel_);
-
+    
     // Resolucion de los voxels (0.15)
     auto res = expl_manager_->sdf_map_->getResolution();
-
+    
     // almacenar distancias
     std::multimap<double,Eigen::Vector3d> distancias;
     
@@ -841,7 +842,7 @@ namespace fast_planner {
     auto it = distancias.begin();
     
     if (distancias.size() > 2) {
-      advance(it, 1); // mover el iterador al segundo elemento
+      advance(it, 1); // mover el iterador
     }
     
     // multimap los ordena ascendente
