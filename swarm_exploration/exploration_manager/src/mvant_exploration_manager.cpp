@@ -44,7 +44,13 @@ void MvantExplorationManager::initialize(ros::NodeHandle& nh) {
   
   edt_environment_ = planner_manager_->edt_environment_;
   sdf_map_ = edt_environment_->sdf_map_;
+
+  //hacer mi propuesta de busqueda de fronteras aqui
+  //conocer aqui el valor de planificador seleccionado
+  //hacer switch
+  //frontier_finder.reset(new FrontierFinderMVANT(edt_environment_,nh));
   frontier_finder_.reset(new FrontierFinder(edt_environment_, nh));
+
   // uniform_grid_.reset(new UniformGrid(edt_environment_, nh));
   hgrid_.reset(new HGrid(edt_environment_, nh));
   role_assigner_.reset(new RoleAssigner(nh));
@@ -362,7 +368,7 @@ int MvantExplorationManager::updateFrontierStruct(
   frontier_finder_->getTopViewpointsInfo(pos, ed_->points_, ed_->yaws_, ed_->averages_);
   for (int i = 0; i < ed_->points_.size(); ++i)
     ed_->views_.push_back(
-        ed_->points_[i] + 2.0 * Vector3d(cos(ed_->yaws_[i]), sin(ed_->yaws_[i]), 0));
+        ed_->points_[i] + 1.0 * Vector3d(cos(ed_->yaws_[i]), sin(ed_->yaws_[i]), 0));
 
   if (ed_->frontiers_.empty()) {
     ROS_WARN("La frontera no puede ser cubierta");
@@ -373,6 +379,8 @@ int MvantExplorationManager::updateFrontierStruct(
   double view_time = (ros::Time::now() - t1).toSec();
   
   t1 = ros::Time::now();
+
+  //hacer mi updateFrontierCostMatrix
   frontier_finder_->updateFrontierCostMatrix();
   
   double mat_time = (ros::Time::now() - t1).toSec();

@@ -667,7 +667,7 @@ namespace fast_planner {
   }
   
   void MvantExplorationFSM::clearVisMarker() {
-
+    
     for (int i = 0; i < 10; ++i) {
       visualization_->drawCubes({}, 0.1, Vector4d(0, 0, 0, 1), "frontier", i, 4);
       //visualization_->drawCubes({}, 0.1, Vector4d(0, 0, 0, 1), "dead_frontier", i, 4);
@@ -676,7 +676,7 @@ namespace fast_planner {
     }
     
     for (int i = 0; i < 10; ++i) {
-      visualization_->drawCubes({}, 0.1, Vector4d(0, 0, 0, 1), "lebeled_frontier", i, 7);
+      visualization_->drawCubes({}, 0.1, Vector4d(0, 0, 0, 1), "labeled_frontier", i, 7);
       // visualization_->drawCubes({}, 0.1, Vector4d(0, 0, 0, 1), "dead_frontier", i, 4);
       // visualization_->drawBox(Vector3d(0, 0, 0), Vector3d(0, 0, 0), Vector4d(1, 0, 0, 0.3),
       //   "frontier_boxes", i, 4);
@@ -812,7 +812,9 @@ namespace fast_planner {
       // obtener centroide para cada frontera
       Vector3d centroid(0.0, 0.0, 0.0);
       int count = 0;
-      
+
+      centroid = ed->views_[i];
+      /*
       vector<Vector3d> puntos = ed->frontiers_[i];
 
       // calcular centroide para cada lista de puntos de una frontera
@@ -824,6 +826,7 @@ namespace fast_planner {
       if (count > 0) {
 	centroid /= count; // promedio
       }
+      */
       /* ########################################### */
       
       // mostrar el numero de frontera
@@ -840,14 +843,17 @@ namespace fast_planner {
     }
 
     auto it = distancias.begin();
-    
+
     if (distancias.size() > 2) {
       advance(it, 1); // mover el iterador
     }
-    
+        
     // multimap los ordena ascendente
-    Eigen::Vector3d posicion = it->second;
+    //la posicion del vector views_[] funciona, pero el punto lo marca atras en ciertas condiciones
+    Eigen::Vector3d posicion = it->second; // ed->views_[0]; // 
 
+    //ROS_WARN_STREAM("VALOR::" << posicion.transpose());
+    
     Eigen::Vector3d pos;
     pos << posicion(0), posicion(1), 1;
 
