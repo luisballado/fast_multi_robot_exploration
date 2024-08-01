@@ -69,7 +69,7 @@ void FrontierFinder::searchFrontiers() {
   mins.insert(mins.end(), chunk_mins.begin(), chunk_mins.end());
   maxs.push_back(update_max);
   maxs.insert(maxs.end(), chunk_maxs.begin(), chunk_maxs.end());
-
+  
   // Removed changed frontiers in updated map
   auto resetFlag = [&](list<Frontier>::iterator& iter, list<Frontier>& frontiers) {
     Eigen::Vector3i idx;
@@ -105,7 +105,7 @@ void FrontierFinder::searchFrontiers() {
   // Search new frontier within box slightly inflated from updated box
   Vector3d box_min, box_max;
   edt_env_->sdf_map_->getBox(box_min, box_max);
-
+  
   vector<Eigen::Vector3d> search_mins, search_maxs;
   for (int i = 0; i < mins.size(); ++i) {
     search_mins.push_back(mins[i] - Vector3d(1, 1, 0.2));
@@ -983,7 +983,7 @@ void FrontierFinder::findViewpoints(
 
 // Sample viewpoints around frontier's average position, check coverage to the frontier cells
 void FrontierFinder::sampleViewpoints(Frontier& frontier) {
-
+  
   // Evaluate sample viewpoints on circles, find ones that cover most cells
   for (double rc = candidate_rmin_, dr = (candidate_rmax_ - candidate_rmin_) / candidate_rnum_;
        rc <= candidate_rmax_ + 1e-3; rc += dr)
@@ -994,7 +994,7 @@ void FrontierFinder::sampleViewpoints(Frontier& frontier) {
       if (!edt_env_->sdf_map_->isInBox(sample_pos) ||
           edt_env_->sdf_map_->getInflateOccupancy(sample_pos) == 1 || isNearUnknown(sample_pos))
         continue;
-
+      
       // Compute average yaw
       auto& cells = frontier.filtered_cells_;
       Eigen::Vector3d ref_dir = (cells.front() - sample_pos).normalized();

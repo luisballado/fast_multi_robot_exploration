@@ -92,7 +92,7 @@ private:
   void nearbyObstaclesCallback(const ros::TimerEvent& e);//(const exploration_manager::SearchObstacle::ConstPtr& msg);
   double getDistance(Eigen::Vector3d& cloud_point, Eigen::Vector3d& point);
   //void pruebasCallback(const std_msgs::Empty::ConstPtr& msg);
-  void pruebasCallback(const ros::TimerEvent& e);
+  void explorationCallback(const ros::TimerEvent& e);
 
   void pruebaTopicoCallback(const std_msgs::Empty::ConstPtr& msg);
   
@@ -118,7 +118,7 @@ private:
 
   /* ROS utils */
   ros::NodeHandle node_;
-  ros::Timer exec_timer_, safety_timer_, vis_timer_, frontier_timer_;
+  ros::Timer exec_timer_, safety_timer_, vis_timer_, frontier_timer_, exploration_timer_;
   ros::Subscriber trigger_sub_, odom_sub_;
   ros::Publisher replan_pub_, new_pub_, bspline_pub_;
 

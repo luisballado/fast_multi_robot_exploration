@@ -82,13 +82,14 @@ namespace fast_planner {
     
     exec_timer_     = nh.createTimer(ros::Duration(0.01), &MvantExplorationFSM::FSMCallback, this);
     safety_timer_   = nh.createTimer(ros::Duration(0.05), &MvantExplorationFSM::safetyCallback, this);
-    //frontier_timer_ = nh.createTimer(ros::Duration(0.1), &MvantExplorationFSM::frontierCallback, this);
+    //actualiza la frontera
+    frontier_timer_ = nh.createTimer(ros::Duration(0.1), &MvantExplorationFSM::frontierCallback, this);
     heartbit_timer_ = nh.createTimer(ros::Duration(1.0), &MvantExplorationFSM::heartbitCallback, this);
     
     // ******************************************************
-    // *************** Actualizar fronteras *****************
+    // ************** Exploración fronteras *****************
     // ******************************************************
-    frontier_timer_ = nh.createTimer(ros::Duration(0.5), &MvantExplorationFSM::pruebasCallback, this);
+    exploration_timer_ = nh.createTimer(ros::Duration(0.05), &MvantExplorationFSM::explorationCallback, this);
 
     // ******************************************************
     // ************ Trigger para lanzar FSM *****************
@@ -729,14 +730,33 @@ namespace fast_planner {
 	// double(i) / ed->frontiers_.size()
 	// visualization_->drawBox(ed->frontier_boxes_[i].first, ed->frontier_boxes_[i].second,
 	//   color, "frontier_boxes", i, 4);
+
+	Vector3d centroid(0.0, 0.0, 0.0);
+	int count = 0;
+	
+	centroid = ed->views_[i];
+	/* ########################################### */
+	
+	// mostrar el numero de frontera
+	auto id_str = std::to_string(ed->fronters_ids_[i]);
+	//ROS_WARN_STREAM("Frontera:: " << id_str);
+	//ROS_WARN_STREAM("Frontera:: " << centroid.transpose());
+	
+	visualization_->drawText(centroid - Eigen::Vector3d(0., 0., 0.), id_str, 0.8, Eigen::Vector4d::Ones(), "id", ed->frontiers_.size() + i, 4);
+	
+	
       }
       for (int i = ed->frontiers_.size(); i < 50; ++i) {
 	visualization_->drawCubes({}, res, Vector4d(0, 0, 0, 1), "frontier", i, 4);
+	visualization_->drawText({}, "", 0.8, Eigen::Vector4d::Ones(), "id", ed->frontiers_.size() + i, 4);
 	// visualization_->drawBox(Vector3d(0, 0, 0), Vector3d(0, 0, 0), Vector4d(1, 0, 0, 0.3),
 	//   "frontier_boxes", i, 4);
+
+	
       }
       
       // Draw labeled frontier
+      /**
       for (size_t i = 0; i < ed->labeled_frontiers_.size(); ++i) {
 	Eigen::Vector4d color(0, 0, 0, 0.5);
 	if (ed->labeled_frontiers_[i].first == LABEL::TRAIL) {
@@ -752,6 +772,7 @@ namespace fast_planner {
       for (int i = ed->frontiers_.size(); i < 50; ++i) {
 	visualization_->drawCubes({}, res, Vector4d(0, 0, 0, 1), "labeled_frontier", i, 7);
       }
+      **/
       
       visualize(2);
       // if (status)
@@ -782,16 +803,16 @@ namespace fast_planner {
   /**
      Dummy Explorarcion
    **/
-  void MvantExplorationFSM::pruebasCallback(const ros::TimerEvent& e) {
+  void MvantExplorationFSM::explorationCallback(const ros::TimerEvent& e) {
 					    //const std_msgs::Empty::ConstPtr& msg){
     
     if (state_ == EXEC_TRAJ || state_ == WAIT_TRIGGER || state_ == INIT || state_ == PUB_TRAJ) return;
     
-    auto ft = expl_manager_->frontier_finder_;
-    auto ed = expl_manager_->ed_;
+    auto ft = expl_manager_->frontier_finder_; //cosas de frontier finder
+    auto ed = expl_manager_->ed_;              //cosas de exploration data
     
     // Actualizar fonteras
-    // poder explicar lo que hace updateFrontierStruct
+    // respecto a la posicion del vant (pos,yaw,vel)
     auto fronteras_num = expl_manager_->updateFrontierStruct(fd_->odom_pos_, fd_->odom_yaw_, fd_->odom_vel_);
     
     // Resolucion de los voxels (0.15)
@@ -801,40 +822,13 @@ namespace fast_planner {
     std::multimap<double,Eigen::Vector3d> distancias;
     
     for (int i = 0; i < ed->frontiers_.size(); ++i) {
-
-      // obtener un tono de color para pintar frontera
-      auto color = visualization_->getColor(double(i) / ed->frontiers_.size(), 0.4);
-      
-      // dibujar voxel respecto a una lista de puntos
-      visualization_->drawCubes(ed->frontiers_[i], res, color, "frontier", i, 0.5);
       
       /* ########################################### */
       // obtener centroide para cada frontera
       Vector3d centroid(0.0, 0.0, 0.0);
-      int count = 0;
-
+      //en views_[] <- viene el centroide de la frontera
       centroid = ed->views_[i];
-      /*
-      vector<Vector3d> puntos = ed->frontiers_[i];
-
-      // calcular centroide para cada lista de puntos de una frontera
-      for (const auto& punto : puntos) {
-	centroid += punto;
-	count++;
-      }
-      
-      if (count > 0) {
-	centroid /= count; // promedio
-      }
-      */
       /* ########################################### */
-      
-      // mostrar el numero de frontera
-      auto id_str = std::to_string(ed->fronters_ids_[i]);
-      //ROS_WARN_STREAM("Frontera:: " << id_str);
-      //ROS_WARN_STREAM("Frontera:: " << centroid.transpose());
-      
-      visualization_->drawText(centroid - Eigen::Vector3d(0., 0., 0.), id_str, 0.8, Eigen::Vector4d::Ones(), "id", ed->frontiers_.size() + i, 4);
       
       // calcular distancia y meterlo a un arreglo
       double _distancia_ = getDistance(fd_->odom_pos_,centroid);
@@ -844,9 +838,9 @@ namespace fast_planner {
 
     auto it = distancias.begin();
 
-    if (distancias.size() > 2) {
-      advance(it, 1); // mover el iterador
-    }
+    //if (distancias.size() > 2) {
+    //  advance(it, 1); // mover el iterador
+    //}
         
     // multimap los ordena ascendente
     //la posicion del vector views_[] funciona, pero el punto lo marca atras en ciertas condiciones
