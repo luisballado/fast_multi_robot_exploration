@@ -742,13 +742,14 @@ namespace fast_planner {
 	//ROS_WARN_STREAM("Frontera:: " << id_str);
 	//ROS_WARN_STREAM("Frontera:: " << centroid.transpose());
 	
-	visualization_->drawText(centroid - Eigen::Vector3d(0., 0., 0.), id_str, 0.8, Eigen::Vector4d::Ones(), "id", ed->frontiers_.size() + i, 4);
+	visualization_->drawText(centroid - Eigen::Vector3d(0., 0., 0.), "F-"+id_str, 0.8, Eigen::Vector4d(0.0, 0.0, 0.0, 1.0), "id", ed->frontiers_.size() + i, 4);
 	
 	
       }
+      
       for (int i = ed->frontiers_.size(); i < 50; ++i) {
 	visualization_->drawCubes({}, res, Vector4d(0, 0, 0, 1), "frontier", i, 4);
-	visualization_->drawText({}, "", 0.8, Eigen::Vector4d::Ones(), "id", ed->frontiers_.size() + i, 4);
+	visualization_->drawText({}, "", 0.8, Eigen::Vector4d(0.0, 0.0, 0.0, 1.0), "id", ed->frontiers_.size() + i, 4);
 	// visualization_->drawBox(Vector3d(0, 0, 0), Vector3d(0, 0, 0), Vector4d(1, 0, 0, 0.3),
 	//   "frontier_boxes", i, 4);
 
