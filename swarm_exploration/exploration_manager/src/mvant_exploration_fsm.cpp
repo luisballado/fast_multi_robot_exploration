@@ -2,7 +2,6 @@
 //FSM
 
 #include <plan_manage/planner_manager.h>
-
 #include <traj_utils/planning_visualization.h>
 
 //exploration_manager/include
@@ -44,6 +43,7 @@ namespace fast_planner {
     nh.param("fsm/attempt_interval", fp_->attempt_interval_, 0.2);
     nh.param("fsm/pair_opt_interval", fp_->pair_opt_interval_, 1.0);
     nh.param("fsm/repeat_send_num", fp_->repeat_send_num_, 10);
+
     nh.param("fsm/communication_range", fp_->communication_range_, std::numeric_limits<double>::max());
 
     // *****************************************************
@@ -82,6 +82,7 @@ namespace fast_planner {
     
     exec_timer_     = nh.createTimer(ros::Duration(0.01), &MvantExplorationFSM::FSMCallback, this);
     safety_timer_   = nh.createTimer(ros::Duration(0.05), &MvantExplorationFSM::safetyCallback, this);
+
     //actualiza la frontera
     frontier_timer_ = nh.createTimer(ros::Duration(0.1), &MvantExplorationFSM::frontierCallback, this);
     heartbit_timer_ = nh.createTimer(ros::Duration(1.0), &MvantExplorationFSM::heartbitCallback, this);
@@ -90,7 +91,7 @@ namespace fast_planner {
     // ************** Exploración fronteras *****************
     // ******************************************************
     exploration_timer_ = nh.createTimer(ros::Duration(0.05), &MvantExplorationFSM::explorationCallback, this);
-
+    
     // ******************************************************
     // ************ Trigger para lanzar FSM *****************
     // ******************************************************
@@ -308,7 +309,7 @@ namespace fast_planner {
         fd_->start_yaw_(1) = info->yawdot_traj_.evaluateDeBoorT(t_r)[0];
         fd_->start_yaw_(2) = info->yawdotdot_traj_.evaluateDeBoorT(t_r)[0];
       }
-
+      
       // Inform traj_server the replanning
       replan_pub_.publish(std_msgs::Empty());
       
@@ -1009,7 +1010,7 @@ namespace fast_planner {
     //----------------------------------------------
     // // Debug traj planner
     //----------------------------------------------
-    
+    /*
     Eigen::Vector3d pos;
     pos << msg->pose.position.x, msg->pose.position.y, 1;
     expl_manager_->ed_->next_pos_ = pos;
@@ -1028,7 +1029,7 @@ namespace fast_planner {
     
     transitState(PLAN_TRAJ, "triggerCallback");
     return;
-    
+    */
     //----------------------------------------------
     
     //Solo se hace cuando el estado es WAIT_TRIGGER
