@@ -192,7 +192,10 @@ namespace fast_planner {
   std::vector<Eigen::Vector3d> Astar::getPath() {
     return path_nodes_;
   }
-  
+
+  //Distancia Diagonal
+  //8 direcciones de movimientos
+  //http://theory.stanford.edu/~amitp/GameProgramming/Heuristics.html#diagonal-distance
   double Astar::getDiagHeu(const Eigen::Vector3d& x1, const Eigen::Vector3d& x2) {
     double dx = fabs(x1(0) - x2(0));
     double dy = fabs(x1(1) - x2(1));
@@ -214,14 +217,17 @@ namespace fast_planner {
     }
     return tie_breaker_ * h;
   }
-  
+
+  //Distancia Manhattan
+  //4 direcciones de movimiento
   double Astar::getManhHeu(const Eigen::Vector3d& x1, const Eigen::Vector3d& x2) {
     double dx = fabs(x1(0) - x2(0));
     double dy = fabs(x1(1) - x2(1));
     double dz = fabs(x1(2) - x2(2));
     return tie_breaker_ * (dx + dy + dz);
   }
-  
+
+  //Distancia Euclideana
   double Astar::getEuclHeu(const Eigen::Vector3d& x1, const Eigen::Vector3d& x2) {
     return tie_breaker_ * (x2 - x1).norm();
   }
