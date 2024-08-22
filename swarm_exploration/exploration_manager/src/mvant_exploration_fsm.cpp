@@ -838,9 +838,11 @@ namespace fast_planner {
 
     auto it = distancias.begin();
 
-    //if (distancias.size() > 2) {
-    //  advance(it, 1); // mover el iterador
-    //}
+    double dis = it->first;
+    ROS_WARN_STREAM("DISTANCIA::" << dis);
+    if (dis < 3.0) {
+      advance(it, 1); // mover el iterador
+    }
         
     // multimap los ordena ascendente
     //la posicion del vector views_[] funciona, pero el punto lo marca atras en ciertas condiciones
