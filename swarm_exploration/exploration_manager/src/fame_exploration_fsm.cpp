@@ -555,7 +555,7 @@ void FameExplorationFSM::frontierCallback(const ros::TimerEvent& e) {
   if (state_ == WAIT_TRIGGER) {
     auto ft = expl_manager_->frontier_finder_;
     auto ed = expl_manager_->ed_;
-
+    
     auto getColorVal = [&](const int& id, const int& num, const int& drone_id) {
       double a = (drone_id - 1) / double(num + 1);
       double b = 1 / double(num + 1);

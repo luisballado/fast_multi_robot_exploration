@@ -43,9 +43,9 @@ namespace fast_planner {
     nh.param("fsm/attempt_interval", fp_->attempt_interval_, 0.2);
     nh.param("fsm/pair_opt_interval", fp_->pair_opt_interval_, 1.0);
     nh.param("fsm/repeat_send_num", fp_->repeat_send_num_, 10);
-
+    
     nh.param("fsm/communication_range", fp_->communication_range_, std::numeric_limits<double>::max());
-
+    
     // *****************************************************
     // ******** PASO DE PARAM, DEFINIR COORDINACION ******** 
     // *****************************************************
@@ -701,11 +701,13 @@ namespace fast_planner {
       auto ft = expl_manager_->frontier_finder_;
       auto ed = expl_manager_->ed_;
       
-      auto getColorVal = [&](const int& id, const int& num, const int& drone_id) {
-			   double a = (drone_id - 1) / double(num + 1);
-			   double b = 1 / double(num + 1);
-			   return a + b * double(id) / ed->frontiers_.size();
-			 };
+      /*
+	auto getColorVal = [&](const int& id, const int& num, const int& drone_id) {
+	double a = (drone_id - 1) / double(num + 1);
+	double b = 1 / double(num + 1);
+	return a + b * double(id) / ed->frontiers_.size();
+	};
+      */
       
       // ft->searchFrontiers();
       // ft->computeFrontiersToVisit();
@@ -715,7 +717,7 @@ namespace fast_planner {
       // ft->getFrontierBoxes(ed->frontier_boxes_);
       
       expl_manager_->updateFrontierStruct(fd_->odom_pos_, fd_->odom_yaw_, fd_->odom_vel_);
-
+      
       // cout << "odom: " << fd_->odom_pos_.transpose() << endl;
       // vector<int> tmp_id1;
       // vector<vector<int>> tmp_id2;
@@ -724,6 +726,7 @@ namespace fast_planner {
       
       // Draw frontier and bounding box
       auto res = expl_manager_->sdf_map_->getResolution();
+
       for (int i = 0; i < ed->frontiers_.size(); ++i) {
 	auto color = visualization_->getColor(double(i) / ed->frontiers_.size(), 0.4);
 	visualization_->drawCubes(ed->frontiers_[i], res, color, "frontier", i, 4);
@@ -806,7 +809,7 @@ namespace fast_planner {
      Dummy Explorarcion
    **/
   void MvantExplorationFSM::explorationCallback(const ros::TimerEvent& e) {
-					    //const std_msgs::Empty::ConstPtr& msg){
+    //const std_msgs::Empty::ConstPtr& msg){
     
     if (state_ == EXEC_TRAJ || state_ == WAIT_TRIGGER || state_ == INIT || state_ == PUB_TRAJ) return;
     
