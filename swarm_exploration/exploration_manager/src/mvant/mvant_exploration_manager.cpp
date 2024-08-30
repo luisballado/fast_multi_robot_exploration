@@ -174,25 +174,29 @@ int MvantExplorationManager::planExploreMotion(
   Vector3d next_pos;
   double next_yaw;
 
-  auto start_time = chrono::high_resolution_clock::now();
-  
-  const ROLE updated_role = role_assigner_->assignRole(
+  /**
+     auto start_time = chrono::high_resolution_clock::now();
+     
+     const ROLE updated_role = role_assigner_->assignRole(
       pos, ep_->drone_id_, ed_->swarm_state_, frontier_finder_->getFrontiers());
   updateRoleAndVelocities(updated_role);
-
+  
   updateVelocities(1.0);
   
   auto end_time = chrono::high_resolution_clock::now();
   int elapsed_time = chrono::duration_cast<chrono::milliseconds>(end_time - start_time).count();
   ROS_INFO_STREAM("Time to assign role: " << elapsed_time << " ms");
   ROS_INFO("Current role: %s", roleToString(role_).c_str());
-
-  bool success;
+  **/
+  bool success = false;
+  /**
+     YO NO USO ESTE ESQUEMA
   if (role_ == ROLE::EXPLORER) {
     success = explorerPlan(pos, vel, yaw, next_pos, next_yaw);
   } else if (role_ == ROLE::GARBAGE_COLLECTOR) {
     success = collectorPlan(pos, vel, yaw, next_pos, next_yaw);
   }
+  **/
 
   // If we haven't found a goal, then get the first viewpoint (this happens
   // when the goal is farther away)
@@ -345,7 +349,7 @@ int MvantExplorationManager::updateFrontierStruct(
   // Search frontiers and group them into clusters
   frontier_finder_->searchFrontiers();
   
-  // timpo para calcular fronteras
+  // tiempo para calcular fronteras
   double frontier_time = (ros::Time::now() - t1).toSec();
   t1 = ros::Time::now();
   

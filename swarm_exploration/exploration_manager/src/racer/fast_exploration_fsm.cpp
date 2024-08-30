@@ -295,7 +295,7 @@ void FastExplorationFSM::FSMCallback(const ros::TimerEvent& e) {
           // ROS_WARN("Replan: periodic call=======================================");
           need_replan = true;
         }
-
+	
         if (need_replan) {
           if (expl_manager_->updateFrontierStruct(fd_->odom_pos_) != 0) {
             // Update frontier and plan new motion

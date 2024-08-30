@@ -90,7 +90,7 @@ namespace fast_planner {
     // ******************************************************
     // ************** Exploración fronteras *****************
     // ******************************************************
-    exploration_timer_ = nh.createTimer(ros::Duration(0.05), &MvantExplorationFSM::explorationCallback, this);
+    //exploration_timer_ = nh.createTimer(ros::Duration(0.005), &MvantExplorationFSM::explorationCallback, this);
     
     // ******************************************************
     // ************ Trigger para lanzar FSM *****************
@@ -216,6 +216,7 @@ namespace fast_planner {
       // Do nothing but wait for trigger
       // Espera el cambio de estado desde el triggerCallback
       ROS_WARN_ONCE(" -- esperando lanzador -- ");
+      ROS_WARN_ONCE("Exploracion: %s", "mvant");
       ROS_WARN_ONCE("Tipo coordinacion: %s", fp_->coordination_type.c_str());
       //ROS_WARN_STREAM_THROTTLE(2.0, getId() << " - Start expl pos: " << fd_->odom_pos_);
       
@@ -350,6 +351,7 @@ namespace fast_planner {
     }
       
     case PUB_TRAJ: {
+      
       double dt = (ros::Time::now() - fd_->newest_traj_.start_time).toSec();
       if (dt > 0) {
         bspline_pub_.publish(fd_->newest_traj_);
@@ -369,8 +371,11 @@ namespace fast_planner {
     case EXEC_TRAJ: {
       auto tn = ros::Time::now();
       // Check whether replan is needed
+      //revisar aqui, si ya llego a la frontera
       LocalTrajData* info = &planner_manager_->local_data_;
       double t_cur = (tn - info->start_time_).toSec();
+
+      //Aqui va si necesita replanificar si la frontera fue cubierta, hacer topico
       
       if (!fd_->go_back_) {
         bool need_replan = false;
@@ -433,6 +438,8 @@ namespace fast_planner {
     ros::Time time_r = ros::Time::now() + ros::Duration(fp_->replan_time_);
     
     int res;
+    
+    //TODO revisar expl_manager_->ed_->next_pos_
     
     if (fd_->avoid_collision_ || fd_->go_back_) {  // Only replan trajectory
       res = expl_manager_->planTrajToView(fd_->start_pt_, fd_->start_vel_, fd_->start_acc_, fd_->start_yaw_, expl_manager_->ed_->next_pos_, expl_manager_->ed_->next_yaw_);

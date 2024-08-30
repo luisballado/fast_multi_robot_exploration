@@ -61,9 +61,9 @@ include_directories(
 
 # RACER nodes
 add_executable(exploration_node
-  src/exploration_node.cpp 
-  src/fast_exploration_fsm.cpp
-  src/fast_exploration_manager.cpp
+  src/racer/exploration_node.cpp 
+  src/racer/fast_exploration_fsm.cpp
+  src/racer/fast_exploration_manager.cpp
   )
 target_link_libraries(exploration_node 
   ${catkin_LIBRARIES}
@@ -72,11 +72,11 @@ target_link_libraries(exploration_node
 
 # FAME node
 add_executable(fame_node
-  src/fame_node.cpp
-  src/fame_exploration_fsm.cpp
-  src/fame_exploration_manager.cpp
-  src/role_assigner.cpp
-  src/collaboration_assigner.cpp
+  src/fame/fame_node.cpp
+  src/fame/fame_exploration_fsm.cpp
+  src/fame/fame_exploration_manager.cpp
+  src/fame/role_assigner.cpp
+  src/fame/collaboration_assigner.cpp
 )
 
 target_link_libraries(fame_node 
@@ -86,11 +86,11 @@ target_link_libraries(fame_node
 
 # MVANT node
 add_executable(mvant_node
-  src/mvant_node.cpp
-  src/mvant_exploration_fsm.cpp
-  src/mvant_exploration_manager.cpp
-  src/role_assigner.cpp
-  src/collaboration_assigner.cpp
+  src/mvant/mvant_node.cpp
+  src/mvant/mvant_exploration_fsm.cpp
+  src/mvant/mvant_exploration_manager.cpp
+  src/mvant/role_assigner.cpp
+  src/mvant/collaboration_assigner.cpp
 )
 
 target_link_libraries(mvant_node 
@@ -101,6 +101,6 @@ target_link_libraries(mvant_node
 # Tests
 catkin_add_gtest(test_collaboration_cost
     test/collaboration_test.cpp
-    src/collaboration_assigner.cpp
+    src/mvant/collaboration_assigner.cpp
 )
 target_link_libraries(test_collaboration_cost ${catkin_LIBRARIES})
