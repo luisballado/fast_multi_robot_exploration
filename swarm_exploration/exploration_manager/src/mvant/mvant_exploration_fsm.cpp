@@ -214,16 +214,159 @@ namespace fast_planner {
       //Esperando el lanzador
     case WAIT_TRIGGER: {
       // Do nothing but wait for trigger
-      // Espera el cambio de estado desde el triggerCallback
       ROS_WARN_ONCE(" -- esperando lanzador -- ");
       ROS_WARN_ONCE("Exploracion: %s", "mvant");
       ROS_WARN_ONCE("Tipo coordinacion: %s", fp_->coordination_type.c_str());
-      //ROS_WARN_STREAM_THROTTLE(2.0, getId() << " - Start expl pos: " << fd_->odom_pos_);
-      
+            
       break;
     }
       
-      //Estado final
+    case PLAN_TRAJ: {
+      
+      if (fd_->static_state_) {
+        // Plan from static state (hover)
+        fd_->start_pt_ = fd_->odom_pos_;
+        fd_->start_vel_ = fd_->odom_vel_;
+        fd_->start_acc_.setZero();
+        fd_->start_yaw_ << fd_->odom_yaw_, 0, 0;
+      } else {
+        // Replan from non-static state, starting from 'replan_time' seconds later
+	//LocalTrajData esta dentro de plan_container.hpp
+        LocalTrajData* info = &planner_manager_->local_data_;
+        double t_r = (ros::Time::now() - info->start_time_).toSec() + fp_->replan_time_;
+        fd_->start_pt_ = info->position_traj_.evaluateDeBoorT(t_r);
+        fd_->start_vel_ = info->velocity_traj_.evaluateDeBoorT(t_r);
+        fd_->start_acc_ = info->acceleration_traj_.evaluateDeBoorT(t_r);
+        fd_->start_yaw_(0) = info->yaw_traj_.evaluateDeBoorT(t_r)[0];
+        fd_->start_yaw_(1) = info->yawdot_traj_.evaluateDeBoorT(t_r)[0];
+        fd_->start_yaw_(2) = info->yawdotdot_traj_.evaluateDeBoorT(t_r)[0];
+      }
+      
+      // Inform traj_server the replanning
+      replan_pub_.publish(std_msgs::Empty());
+      
+      //llamar a planificador original
+      //int res = callExplorationPlanner();
+
+      //poner aqui mi logica
+      //buscar una frontera acudir y su trayectoria hacia ella en el grid
+      int res = callPlannerExploration();
+      
+      if (res == SUCCEED) {
+        transitState(PUB_TRAJ, "FSM");
+        // Emergency
+        num_fail_ = 0;
+        sendEmergencyMsg(false);
+	
+      } else if (res == FAIL) {  // Keep trying to replan
+	fd_->static_state_ = true;
+	ROS_WARN_THROTTLE(1.0, "-- Plan fail (drone %d) --", getId());
+	// Check if we need to send a message
+	if (num_fail_ > 10) {
+          sendEmergencyMsg(true);
+          num_fail_ = 0;
+        } else {
+          ++num_fail_;
+        }
+	
+      } else if (res == NO_GRID) {
+        fd_->static_state_ = true;
+        fd_->last_check_frontier_time_ = ros::Time::now();
+        // ROS_WARN("No grid (drone %d)", getId());
+        transitState(IDLE, "FSM");
+	
+        // Emergency
+        num_fail_ = 0;
+        sendEmergencyMsg(false);
+      }
+      
+      //visualize(1);
+      clearVisMarker();
+      break;
+    }
+      
+    case PUB_TRAJ: {
+      
+      double dt = (ros::Time::now() - fd_->newest_traj_.start_time).toSec();
+      if (dt > 0) {
+        bspline_pub_.publish(fd_->newest_traj_);
+        fd_->static_state_ = false;
+	
+        // fd_->newest_traj_.drone_id = planner_manager_->swarm_traj_data_.drone_id_;
+        fd_->newest_traj_.drone_id = expl_manager_->ep_->drone_id_;
+        swarm_traj_pub_.publish(fd_->newest_traj_);
+	
+        thread vis_thread(&MvantExplorationFSM::visualize, this, 2);
+        vis_thread.detach();
+        transitState(EXEC_TRAJ, "FSM");
+      }
+      break;
+    }
+      
+    case EXEC_TRAJ: {
+      auto tn = ros::Time::now();
+      // Check whether replan is needed
+      //revisar aqui, si ya llego a la frontera
+      LocalTrajData* info = &planner_manager_->local_data_;
+      double t_cur = (tn - info->start_time_).toSec();
+      
+      //Aqui va si necesita replanificar si la frontera fue cubierta, hacer topico
+      
+      if (!fd_->go_back_) {
+        bool need_replan = false;
+        if (t_cur > fp_->replan_thresh2_ && expl_manager_->frontier_finder_->isFrontierCovered()) {
+          // ROS_WARN("Replan: cluster covered=====================================");
+          need_replan = true;
+        } else if (info->duration_ - t_cur < fp_->replan_thresh1_) {
+          // Replan if traj is almost fully executed
+          // ROS_WARN("Replan: traj fully executed=================================");
+          need_replan = true;
+        } else if (t_cur > fp_->replan_thresh3_) {
+          // Replan after some time
+          // ROS_WARN("Replan: periodic call=======================================");
+          need_replan = true;
+        }
+	
+        if (need_replan) {
+          if (expl_manager_->updateFrontierStruct(fd_->odom_pos_, fd_->odom_yaw_, fd_->odom_vel_) != 0) {
+            // Update frontier and plan new motion
+            //thread vis_thread(&MvantExplorationFSM::visualize, this, 1);
+            //vis_thread.detach();
+            transitState(PLAN_TRAJ, "FSM");
+          } else {
+            // No frontier detected, finish exploration
+            fd_->last_check_frontier_time_ = ros::Time::now();
+            transitState(IDLE, "FSM");
+            ROS_WARN_THROTTLE(1., "Idle since no frontier is detected");
+            fd_->static_state_ = true;
+            replan_pub_.publish(std_msgs::Empty());
+            sendStopMsg(1);
+          }
+          clearVisMarker();
+          //visualize(1);
+        }
+      } else {
+        // Check if reach goal
+        auto pos = info->position_traj_.evaluateDeBoorT(t_cur);
+        if ((pos - expl_manager_->ed_->next_pos_).norm() < 1.0) {
+          replan_pub_.publish(std_msgs::Empty());
+          clearVisMarker();
+          transitState(FINISH, "FSM");
+          return;
+        }
+        if (t_cur > fp_->replan_thresh3_ || info->duration_ - t_cur < fp_->replan_thresh1_) {
+          // Replan for going back
+          replan_pub_.publish(std_msgs::Empty());
+          transitState(PLAN_TRAJ, "FSM");
+          //thread vis_thread(&MvantExplorationFSM::visualize, this, 1);
+          //vis_thread.detach();
+        }
+      }
+      
+      break;
+    }
+
+         //Estado final
     case FINISH: {
       sendStopMsg(1);
       ROS_INFO_THROTTLE(1.0, "-- exploracion terminada --");
@@ -290,151 +433,56 @@ namespace fast_planner {
       break;
     }
       
-    case PLAN_TRAJ: {
-      
-      if (fd_->static_state_) {
-        // Plan from static state (hover)
-        fd_->start_pt_ = fd_->odom_pos_;
-        fd_->start_vel_ = fd_->odom_vel_;
-        fd_->start_acc_.setZero();
-        fd_->start_yaw_ << fd_->odom_yaw_, 0, 0;
-      } else {
-        // Replan from non-static state, starting from 'replan_time' seconds later
-	//LocalTrajData esta dentro de plan_container.hpp
-        LocalTrajData* info = &planner_manager_->local_data_;
-        double t_r = (ros::Time::now() - info->start_time_).toSec() + fp_->replan_time_;
-        fd_->start_pt_ = info->position_traj_.evaluateDeBoorT(t_r);
-        fd_->start_vel_ = info->velocity_traj_.evaluateDeBoorT(t_r);
-        fd_->start_acc_ = info->acceleration_traj_.evaluateDeBoorT(t_r);
-        fd_->start_yaw_(0) = info->yaw_traj_.evaluateDeBoorT(t_r)[0];
-        fd_->start_yaw_(1) = info->yawdot_traj_.evaluateDeBoorT(t_r)[0];
-        fd_->start_yaw_(2) = info->yawdotdot_traj_.evaluateDeBoorT(t_r)[0];
-      }
-      
-      // Inform traj_server the replanning
-      replan_pub_.publish(std_msgs::Empty());
-      
-      //llamar a planificador
-      int res = callExplorationPlanner();
-      
-      if (res == SUCCEED) {
-        transitState(PUB_TRAJ, "FSM");
-        // Emergency
-        num_fail_ = 0;
-        sendEmergencyMsg(false);
-	
-      } else if (res == FAIL) {  // Keep trying to replan
-	fd_->static_state_ = true;
-	ROS_WARN_THROTTLE(1.0, "-- Plan fail (drone %d) --", getId());
-	// Check if we need to send a message
-	if (num_fail_ > 10) {
-          sendEmergencyMsg(true);
-          num_fail_ = 0;
-        } else {
-          ++num_fail_;
-        }
-	
-      } else if (res == NO_GRID) {
-        fd_->static_state_ = true;
-        fd_->last_check_frontier_time_ = ros::Time::now();
-        // ROS_WARN("No grid (drone %d)", getId());
-        transitState(IDLE, "FSM");
-	
-        // Emergency
-        num_fail_ = 0;
-        sendEmergencyMsg(false);
-      }
-      
-      //visualize(1);
-      clearVisMarker();
-      break;
-    }
-      
-    case PUB_TRAJ: {
-      
-      double dt = (ros::Time::now() - fd_->newest_traj_.start_time).toSec();
-      if (dt > 0) {
-        bspline_pub_.publish(fd_->newest_traj_);
-        fd_->static_state_ = false;
-	
-        // fd_->newest_traj_.drone_id = planner_manager_->swarm_traj_data_.drone_id_;
-        fd_->newest_traj_.drone_id = expl_manager_->ep_->drone_id_;
-        swarm_traj_pub_.publish(fd_->newest_traj_);
-	
-        thread vis_thread(&MvantExplorationFSM::visualize, this, 2);
-        vis_thread.detach();
-        transitState(EXEC_TRAJ, "FSM");
-      }
-      break;
-    }
-      
-    case EXEC_TRAJ: {
-      auto tn = ros::Time::now();
-      // Check whether replan is needed
-      //revisar aqui, si ya llego a la frontera
-      LocalTrajData* info = &planner_manager_->local_data_;
-      double t_cur = (tn - info->start_time_).toSec();
-
-      //Aqui va si necesita replanificar si la frontera fue cubierta, hacer topico
-      
-      if (!fd_->go_back_) {
-        bool need_replan = false;
-        if (t_cur > fp_->replan_thresh2_ && expl_manager_->frontier_finder_->isFrontierCovered()) {
-          // ROS_WARN("Replan: cluster covered=====================================");
-          need_replan = true;
-        } else if (info->duration_ - t_cur < fp_->replan_thresh1_) {
-          // Replan if traj is almost fully executed
-          // ROS_WARN("Replan: traj fully executed=================================");
-          need_replan = true;
-        } else if (t_cur > fp_->replan_thresh3_) {
-          // Replan after some time
-          // ROS_WARN("Replan: periodic call=======================================");
-          need_replan = true;
-        }
-	
-        if (need_replan) {
-          if (expl_manager_->updateFrontierStruct(fd_->odom_pos_, fd_->odom_yaw_, fd_->odom_vel_) != 0) {
-            // Update frontier and plan new motion
-            //thread vis_thread(&MvantExplorationFSM::visualize, this, 1);
-            //vis_thread.detach();
-            transitState(PLAN_TRAJ, "FSM");
-          } else {
-            // No frontier detected, finish exploration
-            fd_->last_check_frontier_time_ = ros::Time::now();
-            transitState(IDLE, "FSM");
-            ROS_WARN_THROTTLE(1., "Idle since no frontier is detected");
-            fd_->static_state_ = true;
-            replan_pub_.publish(std_msgs::Empty());
-            sendStopMsg(1);
-          }
-          clearVisMarker();
-          //visualize(1);
-        }
-      } else {
-        // Check if reach goal
-        auto pos = info->position_traj_.evaluateDeBoorT(t_cur);
-        if ((pos - expl_manager_->ed_->next_pos_).norm() < 1.0) {
-          replan_pub_.publish(std_msgs::Empty());
-          clearVisMarker();
-          transitState(FINISH, "FSM");
-          return;
-        }
-        if (t_cur > fp_->replan_thresh3_ || info->duration_ - t_cur < fp_->replan_thresh1_) {
-          // Replan for going back
-          replan_pub_.publish(std_msgs::Empty());
-          transitState(PLAN_TRAJ, "FSM");
-          //thread vis_thread(&MvantExplorationFSM::visualize, this, 1);
-          //vis_thread.detach();
-        }
-      }
-      
-      break;
-    }
-      
     }
   }
-  
+
+  /*
   int MvantExplorationFSM::callExplorationPlanner() {
+    ros::Time time_r = ros::Time::now() + ros::Duration(fp_->replan_time_);
+    
+    int res;
+    
+    //TODO revisar expl_manager_->ed_->next_pos_
+    
+    if (fd_->avoid_collision_ || fd_->go_back_) {  // Only replan trajectory
+      res = expl_manager_->planTrajToView(fd_->start_pt_, fd_->start_vel_, fd_->start_acc_, fd_->start_yaw_, expl_manager_->ed_->next_pos_, expl_manager_->ed_->next_yaw_);
+      fd_->avoid_collision_ = false;
+    } else {  // Do full planning normally
+      res = expl_manager_->planExploreMotion(fd_->start_pt_, fd_->start_vel_, fd_->start_acc_, fd_->start_yaw_);
+    }
+    
+    if (res == SUCCEED) {
+      auto info = &planner_manager_->local_data_;
+      info->start_time_ = (ros::Time::now() - time_r).toSec() > 0 ? ros::Time::now() : time_r;
+      
+      bspline::Bspline bspline;
+      bspline.order = planner_manager_->pp_.bspline_degree_;
+      bspline.start_time = info->start_time_;
+      bspline.traj_id = info->traj_id_;
+      Eigen::MatrixXd pos_pts = info->position_traj_.getControlPoint();
+      for (int i = 0; i < pos_pts.rows(); ++i) {
+	geometry_msgs::Point pt;
+	pt.x = pos_pts(i, 0);
+	pt.y = pos_pts(i, 1);
+	pt.z = pos_pts(i, 2);
+	bspline.pos_pts.push_back(pt);
+      }
+      Eigen::VectorXd knots = info->position_traj_.getKnot();
+      for (int i = 0; i < knots.rows(); ++i) {
+	bspline.knots.push_back(knots(i));
+      }
+      Eigen::MatrixXd yaw_pts = info->yaw_traj_.getControlPoint();
+      for (int i = 0; i < yaw_pts.rows(); ++i) {
+	double yaw = yaw_pts(i, 0);
+	bspline.yaw_pts.push_back(yaw);
+      }
+      bspline.yaw_dt = info->yaw_traj_.getKnotSpan();
+      fd_->newest_traj_ = bspline;
+    }
+    return res;
+  }*/
+    
+  int MvantExplorationFSM::callPlannerExploration() {
     ros::Time time_r = ros::Time::now() + ros::Duration(fp_->replan_time_);
     
     int res;
