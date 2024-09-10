@@ -176,24 +176,14 @@ int MvantExplorationManager::planExploreMotion(
   Vector3d next_pos;
   double next_yaw;
 
-  /**
-     auto start_time = chrono::high_resolution_clock::now();
-     
-     const ROLE updated_role = role_assigner_->assignRole(
-      pos, ep_->drone_id_, ed_->swarm_state_, frontier_finder_->getFrontiers());
-  updateRoleAndVelocities(updated_role);
-  
   updateVelocities(1.0);
-  
-  auto end_time = chrono::high_resolution_clock::now();
-  int elapsed_time = chrono::duration_cast<chrono::milliseconds>(end_time - start_time).count();
-  ROS_INFO_STREAM("Time to assign role: " << elapsed_time << " ms");
-  ROS_INFO("Current role: %s", roleToString(role_).c_str());
-  **/
+
   bool success = false;
+
   /**
      YO NO USO ESTE ESQUEMA
-  if (role_ == ROLE::EXPLORER) {
+     Replicar como se hace la funcion de exploracion
+     if (role_ == ROLE::EXPLORER) {
     success = explorerPlan(pos, vel, yaw, next_pos, next_yaw);
   } else if (role_ == ROLE::GARBAGE_COLLECTOR) {
     success = collectorPlan(pos, vel, yaw, next_pos, next_yaw);
@@ -219,7 +209,7 @@ int MvantExplorationManager::planExploreMotion(
       ed_->num_attempts_ = 0;
     }
 
-    const size_t kMaxAttempts = 10;
+    const size_t kMaxAttempts = 3;
     if (ed_->num_attempts_ > kMaxAttempts) {
       bool force_different = true;
       closestGreedyFrontier(pos, yaw, next_pos, next_yaw, force_different);
@@ -229,6 +219,8 @@ int MvantExplorationManager::planExploreMotion(
     ed_->next_yaw_ = next_yaw;
 
   } else {
+
+    //Que valores tiene aqui??
     next_pos = ed_->next_pos_;
     next_yaw = ed_->next_yaw_;
     return FAIL;
@@ -263,9 +255,11 @@ bool MvantExplorationManager::isPositionReachable(const Vector3d& from, const Ve
   }
 }
 
+  //me regresa un camino hacia un siguiente punto siempre que exista
 int MvantExplorationManager::planTrajToView(const Vector3d& pos, const Vector3d& vel, const Vector3d& acc, const Vector3d& yaw, const Vector3d& next_pos, const double& next_yaw) {
 
-  
+
+  updateVelocities(1.0);
   // Plan trajectory (position and yaw) to the next viewpoint
   auto t1 = ros::Time::now();
   
@@ -278,10 +272,12 @@ int MvantExplorationManager::planTrajToView(const Vector3d& pos, const Vector3d&
   bool goal_unknown = (edt_environment_->sdf_map_->getOccupancy(next_pos) == SDFMap::UNKNOWN);
   // bool start_unknown = (edt_environment_->sdf_map_->getOccupancy(pos) == SDFMap::UNKNOWN);
   bool optimistic = ed_->plan_num_ < ep_->init_plan_num_;
+
+  //reseteo de planner
   planner_manager_->path_finder_->reset();
   
 
-  //???
+  //busqueda 
   if (planner_manager_->path_finder_->search(pos, next_pos, optimistic) != Astar::REACH_END) {
     ROS_ERROR("No path to next viewpoint");
     return FAIL;
@@ -293,7 +289,10 @@ int MvantExplorationManager::planTrajToView(const Vector3d& pos, const Vector3d&
 
   const double radius_far = 7.0;
   const double radius_close = 1.5;
+
+  //distancia
   const double len = Astar::pathLength(ed_->path_next_goal_);
+  
   if (len < radius_close || optimistic) {
     // Next viewpoint is very close, no need to search kinodynamic path, just use waypoints-based
     // optimization
@@ -619,6 +618,8 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
   return found_ftr;
 }
 
+  /*Exploracion principal aplicar yamauchi aqui*/
+  
 bool MvantExplorationManager::closestGreedyFrontier(const Vector3d& pos, const Vector3d& yaw,
     Vector3d& next_pos, double& next_yaw, bool force_different) const {
 
