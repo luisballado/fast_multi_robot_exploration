@@ -23,8 +23,7 @@ RoleAssigner::RoleAssigner(const ros::NodeHandle& nh) {
 RoleAssigner::~RoleAssigner() {
 }
 
-ROLE RoleAssigner::assignRoleCloseByFrontiers(
-    const Eigen::Vector3d& position, const list<Frontier>& frontiers) const {
+ROLE RoleAssigner::assignRoleCloseByFrontiers(const Eigen::Vector3d& position, const list<Frontier>& frontiers) const {
 
   // Ablation study
   if (fixed_) {

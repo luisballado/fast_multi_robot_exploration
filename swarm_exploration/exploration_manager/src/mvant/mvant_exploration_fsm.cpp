@@ -66,8 +66,10 @@ namespace fast_planner {
     
     /* Estados VANT FSM*/
     fd_->state_str_ = {
-		       "INIT", "WAIT_TRIGGER", "PLAN_TRAJ",
-		       "PUB_TRAJ", "EXEC_TRAJ", "FINISH","IDLE"
+		       "INIT", "WAIT_TRIGGER",
+		       "PLAN_TRAJ", "PUB_TRAJ",
+		       "EXEC_TRAJ", "FINISH",
+		       "IDLE"
     };
     
     fd_->static_state_ = true;
@@ -82,15 +84,17 @@ namespace fast_planner {
     
     exec_timer_     = nh.createTimer(ros::Duration(0.01), &MvantExplorationFSM::FSMCallback, this);
     safety_timer_   = nh.createTimer(ros::Duration(0.05), &MvantExplorationFSM::safetyCallback, this);
-
+    
     //actualiza la frontera
     frontier_timer_ = nh.createTimer(ros::Duration(0.1), &MvantExplorationFSM::frontierCallback, this);
+
+    //mandar mensaje de vacio estar vivo
     heartbit_timer_ = nh.createTimer(ros::Duration(1.0), &MvantExplorationFSM::heartbitCallback, this);
     
     // ******************************************************
     // ************** Exploración fronteras *****************
     // ******************************************************
-    //exploration_timer_ = nh.createTimer(ros::Duration(0.005), &MvantExplorationFSM::explorationCallback, this);
+    exploration_timer_ = nh.createTimer(ros::Duration(0.005), &MvantExplorationFSM::explorationCallback, this);
     
     // ******************************************************
     // ************ Trigger para lanzar FSM *****************
@@ -109,6 +113,7 @@ namespace fast_planner {
     
     //subscriber llevarlo a nuevo archivo
     //nearby_obs_sub_ = nh.subscribe("/nearby_obstacles", 1000, &MvantExplorationFSM::nearbyObstaclesCallback, this);
+    
     //-------------------------------------------------------------------------------------------------
     // ******************************************************
     // ****************** TOPICOS  **************************

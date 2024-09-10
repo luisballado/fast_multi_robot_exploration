@@ -111,11 +111,13 @@ void MvantExplorationManager::initialize(ros::NodeHandle& nh) {
   ed_->swarm_state_.resize(ep_->drone_num_);
   ed_->pair_opt_stamps_.resize(ep_->drone_num_);
   ed_->pair_opt_res_stamps_.resize(ep_->drone_num_);
+
   for (int i = 0; i < ep_->drone_num_; ++i) {
     ed_->swarm_state_[i].stamp_ = 0.0;
     ed_->pair_opt_stamps_[i] = 0.0;
     ed_->pair_opt_res_stamps_[i] = 0.0;
   }
+
   planner_manager_->swarm_traj_data_.init(ep_->drone_id_, ep_->drone_num_);
 
   nh.param("exploration/vm", ViewNode::vm_, -1.0);
