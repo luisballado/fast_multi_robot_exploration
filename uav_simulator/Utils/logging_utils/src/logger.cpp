@@ -146,7 +146,7 @@ void Logger::run() {
       }
     }
   }
-
+  
   ROS_WARN("[Logger] Shutting down");
 
   // Generate final timings

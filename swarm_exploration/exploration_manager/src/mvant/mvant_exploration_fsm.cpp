@@ -66,8 +66,10 @@ namespace fast_planner {
     
     /* Estados VANT FSM*/
     fd_->state_str_ = {
-		       "INIT", "WAIT_TRIGGER", "PLAN_TRAJ",
-		       "PUB_TRAJ", "EXEC_TRAJ", "FINISH","IDLE"
+		       "INIT", "WAIT_TRIGGER",
+		       "PLAN_TRAJ", "PUB_TRAJ",
+		       "EXEC_TRAJ", "FINISH",
+		       "IDLE"
     };
     
     fd_->static_state_ = true;
@@ -79,18 +81,23 @@ namespace fast_planner {
     
     // PROGRAMAS EN PARALELO CORRIENDO CADA CIERTO TIEMPO
     /* Ros sub, pub and timer */
-    
-    exec_timer_     = nh.createTimer(ros::Duration(0.01), &MvantExplorationFSM::FSMCallback, this);
-    safety_timer_   = nh.createTimer(ros::Duration(0.05), &MvantExplorationFSM::safetyCallback, this);
 
+    //FSM principal
+    exec_timer_     = nh.createTimer(ros::Duration(0.01), &MvantExplorationFSM::FSMCallback, this);
+
+    //revisar colisiones
+    safety_timer_   = nh.createTimer(ros::Duration(0.05), &MvantExplorationFSM::safetyCallback, this);
+    
     //actualiza la frontera
     frontier_timer_ = nh.createTimer(ros::Duration(0.1), &MvantExplorationFSM::frontierCallback, this);
+
+    //mandar mensaje de vacio estar vivo
     heartbit_timer_ = nh.createTimer(ros::Duration(1.0), &MvantExplorationFSM::heartbitCallback, this);
     
     // ******************************************************
     // ************** Exploración fronteras *****************
     // ******************************************************
-    //exploration_timer_ = nh.createTimer(ros::Duration(0.005), &MvantExplorationFSM::explorationCallback, this);
+    // exploration_timer_ = nh.createTimer(ros::Duration(0.005), &MvantExplorationFSM::explorationCallback, this);
     
     // ******************************************************
     // ************ Trigger para lanzar FSM *****************
@@ -109,6 +116,7 @@ namespace fast_planner {
     
     //subscriber llevarlo a nuevo archivo
     //nearby_obs_sub_ = nh.subscribe("/nearby_obstacles", 1000, &MvantExplorationFSM::nearbyObstaclesCallback, this);
+    
     //-------------------------------------------------------------------------------------------------
     // ******************************************************
     // ****************** TOPICOS  **************************
@@ -385,30 +393,12 @@ namespace fast_planner {
 	
 	sendStopMsg(1);
 	
-	//ROS_WARN_STREAM("Velocidad");
-	//ROS_WARN_STREAM("odom_vx: " << fd_->odom_vel_[0]);
-	//ROS_WARN_STREAM("odom_vy: " << fd_->odom_vel_[1]);
-	//ROS_WARN_STREAM("odom_vz: " << fd_->odom_vel_[2]);
-	
-	//ROS_WARN_STREAM("Posicion");
-	//ROS_WARN_STREAM("odom_posx: " << fd_->odom_pos_[0]);
-	//ROS_WARN_STREAM("odom_posy: " << fd_->odom_pos_[1]);
-	//ROS_WARN_STREAM("odom_posz: " << fd_->odom_pos_[2]);
-	
-	//ROS_WARN_STREAM("getOccupancy");
-	//ROS_WARN_STREAM("occupancy: " << planner_manager_->edt_environment_->sdf_map_->getOccupancy(Eigen::Vector3d(3, 0, 1))); 
-	
-	//numero de voxels
-	//ROS_WARN_STREAM("getVoxelNum: " << expl_manager_->sdf_map_->getVoxelNum());
-	//ROS_WARN_STREAM("isInMap: " << expl_manager_->sdf_map_->isInMap(Eigen::Vector3d(3, 0, 1)));
-	
-	//ROS_WARN_STREAM("isInMap: " << expl_manager_->sdf_map_->isInBox(Eigen::Vector3d(3, 0, 1)));
-	
-	//expl_manager_->sdf_map_->setOccupied(Eigen::Vector3d(1, 1, 1),2);
-	
+	//transitState(FINISH, "FSM");
+		
 	ros::Duration(1).sleep();
 	
 	break;
+	
       }
 
       if (check_interval > 100.0) {
@@ -436,7 +426,7 @@ namespace fast_planner {
     }
   }
 
-  /*
+  // original implementation
   int MvantExplorationFSM::callExplorationPlanner() {
     ros::Time time_r = ros::Time::now() + ros::Duration(fp_->replan_time_);
     
@@ -480,7 +470,7 @@ namespace fast_planner {
       fd_->newest_traj_ = bspline;
     }
     return res;
-  }*/
+  }
     
   int MvantExplorationFSM::callPlannerExploration() {
     ros::Time time_r = ros::Time::now() + ros::Duration(fp_->replan_time_);
@@ -489,10 +479,15 @@ namespace fast_planner {
     
     //TODO revisar expl_manager_->ed_->next_pos_
     
+    //que significa el avoid collision ??
+    //que significa el go back         ??
+    
     if (fd_->avoid_collision_ || fd_->go_back_) {  // Only replan trajectory
+      ROS_WARN_STREAM("planTrajToView");
       res = expl_manager_->planTrajToView(fd_->start_pt_, fd_->start_vel_, fd_->start_acc_, fd_->start_yaw_, expl_manager_->ed_->next_pos_, expl_manager_->ed_->next_yaw_);
       fd_->avoid_collision_ = false;
     } else {  // Do full planning normally
+      ROS_WARN_STREAM("planExploreMotion");
       res = expl_manager_->planExploreMotion(fd_->start_pt_, fd_->start_vel_, fd_->start_acc_, fd_->start_yaw_);
     }
     
@@ -1054,7 +1049,8 @@ namespace fast_planner {
     nb_obs_pub_.publish(cloud_msg);
     
   }
-  
+
+  //heartbit que se almacena en algun logger
   void MvantExplorationFSM::heartbitCallback(const ros::TimerEvent& e) {
     heartbit_pub_.publish(std_msgs::Empty());
   }
@@ -1064,9 +1060,7 @@ namespace fast_planner {
      maneja estados para evolucionar el comportamiento del código
   **/
   void MvantExplorationFSM::triggerCallback(const geometry_msgs::PoseStampedConstPtr& msg) {
-    
-    ROS_WARN("CALLBACKtriggerCallback");
-    
+        
     //----------------------------------------------
     // // Debug traj planner
     //----------------------------------------------
@@ -1100,11 +1094,13 @@ namespace fast_planner {
     ROS_WARN_STREAM("Start expl pos transpose: " << fd_->start_pos_.transpose());
     
     fd_->trigger_ = true;
-    cout << "Triggered!" << endl;
+    ROS_WARN_STREAM("Triggered!");
+    //cout << "Triggered!" << endl;
     fd_->start_pos_ = fd_->odom_pos_;
     
     ROS_WARN_STREAM("Start expl pos: " << fd_->start_pos_.transpose());
-    
+
+    //verificar si aun existen fronteras que atender
     if (expl_manager_->updateFrontierStruct(fd_->odom_pos_, fd_->odom_yaw_, fd_->odom_vel_) != 0) {
       transitState(PLAN_TRAJ, "triggerCallback");
     } else
@@ -1116,8 +1112,9 @@ namespace fast_planner {
       // Check safety and trigger replan if necessary
       double dist;
       bool safe = planner_manager_->checkTrajCollision(dist);
+      //si no es seguro
       if (!safe) {
-	// ROS_WARN("Replan: collision detected==================================");
+	ROS_WARN_STREAM("Replan: collision detected=======================");
 	fd_->avoid_collision_ = true;
 	transitState(PLAN_TRAJ, "safetyCallback");
       }
@@ -1156,12 +1153,15 @@ namespace fast_planner {
     }
   }
   
+  /***
+   * Transitar estado FSM
+   **/
   void MvantExplorationFSM::transitState(EXPL_STATE new_state, string pos_call) {
     
     int pre_s = int(state_);
     state_ = new_state;
     
-    ROS_INFO_STREAM("[" + pos_call + "]: Drone "
+    ROS_WARN_STREAM("[" + pos_call + "]: Drone "
 		    << getId()
 		    << " from " + fd_->state_str_[pre_s] + " to " + fd_->state_str_[int(new_state)]);
     
@@ -1201,7 +1201,9 @@ namespace fast_planner {
     drone_state_pub_.publish(msg);
   }
 
-  //recibo un mensaje DroneState con la informacion de un Drone
+  /**
+   *recibo un mensaje DroneState con la informacion de un Drone
+   */
   void MvantExplorationFSM::droneStateMsgCallback(const exploration_manager::DroneStateConstPtr& msg) {
     
     // Update other drones' states
@@ -1383,8 +1385,7 @@ namespace fast_planner {
     for (int i = 0; i < fp_->repeat_send_num_; ++i) opt_res_pub_.publish(response);
   }
   
-  void MvantExplorationFSM::optResMsgCallback(
-					      const exploration_manager::PairOptResponseConstPtr& msg) {
+  void MvantExplorationFSM::optResMsgCallback(const exploration_manager::PairOptResponseConstPtr& msg) {
     if (msg->from_drone_id == getId() || msg->to_drone_id != getId()) return;
     
     // Check stamp to avoid unordered/repeated msg
@@ -1413,7 +1414,11 @@ namespace fast_planner {
       // ROS_WARN("Restart after opt!");
     }
   }
-  
+
+  /**
+   *recibe trajectorias del grupo de drones
+   *
+   */
   void MvantExplorationFSM::swarmTrajCallback(const bspline::BsplineConstPtr& msg) {
     // Get newest trajs from other drones, for inter-drone collision avoidance
     auto& sdat = planner_manager_->swarm_traj_data_;
@@ -1460,6 +1465,7 @@ namespace fast_planner {
       if (!planner_manager_->checkSwarmCollision(msg->drone_id)) {
 	ROS_ERROR("Drone %d collide with drone %d.", sdat.drone_id_, msg->drone_id);
 	fd_->avoid_collision_ = true;
+	//forzar a volver a planear una trajectoria
 	transitState(PLAN_TRAJ, "swarmTrajCallback");
       }
     }
