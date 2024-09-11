@@ -646,6 +646,9 @@ bool MvantExplorationManager::closestGreedyFrontier(const Vector3d& pos, const V
         min_dist = distance;
         next_pos = vp.pos_;
         next_yaw = vp.yaw_;
+
+	//Pintar aqui el punto al que se va dirigir
+	
       }
     }
   }
