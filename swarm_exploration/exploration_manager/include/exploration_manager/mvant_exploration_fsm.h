@@ -71,7 +71,7 @@ private:
 			   double cx, double cy, double cz);
   
   /* helper functions */
-  //int callExplorationPlanner();
+  int callExplorationPlanner(); //original implementation
   int callPlannerExploration();
   void transitState(EXPL_STATE new_state, string pos_call);
   void visualize(int content);

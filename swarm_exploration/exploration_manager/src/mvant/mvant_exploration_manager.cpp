@@ -165,11 +165,10 @@ void MvantExplorationManager::initialize(ros::NodeHandle& nh) {
 
 int MvantExplorationManager::planExploreMotion(
     const Vector3d& pos, const Vector3d& vel, const Vector3d& acc, const Vector3d& yaw) {
-
-    
+  
   ros::Time t1 = ros::Time::now();
   auto t2 = t1;
-
+  
   std::cout << "start pos: " << pos.transpose() << ", vel: " << vel.transpose()
             << ", acc: " << acc.transpose() << std::endl;
 

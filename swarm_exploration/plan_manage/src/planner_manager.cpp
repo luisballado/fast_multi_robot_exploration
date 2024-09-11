@@ -102,7 +102,7 @@ void FastPlannerManager::setGlobalWaypoints(vector<Eigen::Vector3d>& waypoints) 
 
 bool FastPlannerManager::checkTrajCollision(double& distance) {
   double t_now = (ros::Time::now() - local_data_.start_time_).toSec();
-
+  
   Eigen::Vector3d cur_pt = local_data_.position_traj_.evaluateDeBoorT(t_now);
   double radius = 0.0;
   Eigen::Vector3d fut_pt;
@@ -443,7 +443,7 @@ void FastPlannerManager::selectBestTraj(NonUniformBspline& traj) {
       [](NonUniformBspline& tj1, NonUniformBspline& tj2) { return tj1.getJerk() < tj2.getJerk(); });
   traj = trajs[0];
 }
-
+  
 void FastPlannerManager::refineTraj(NonUniformBspline& best_traj) {
   ros::Time t1 = ros::Time::now();
   plan_data_.no_visib_traj_ = best_traj;
