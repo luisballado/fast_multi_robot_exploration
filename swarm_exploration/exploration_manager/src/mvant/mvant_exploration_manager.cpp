@@ -58,7 +58,7 @@ void MvantExplorationManager::initialize(ros::NodeHandle& nh) {
 
   ed_.reset(new ExplorationData);
   ep_.reset(new ExplorationParam);
-
+  
   nh.param("exploration/refine_local", ep_->refine_local_, true);
   nh.param("exploration/refined_num", ep_->refined_num_, -1);
   nh.param("exploration/refined_radius", ep_->refined_radius_, -1.0);
@@ -104,10 +104,11 @@ void MvantExplorationManager::initialize(ros::NodeHandle& nh) {
 
   assert(pf_params_->ka >= 0.);
   assert(pf_params_->kr >= 0.);
-
+  
   // Initial role
   role_ = ROLE::UNKNOWN;
 
+  //ed - exploration data
   ed_->swarm_state_.resize(ep_->drone_num_);
   ed_->pair_opt_stamps_.resize(ep_->drone_num_);
   ed_->pair_opt_res_stamps_.resize(ep_->drone_num_);

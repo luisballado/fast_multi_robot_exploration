@@ -30,6 +30,7 @@ namespace fast_planner {
      INIT
   */
   void MvantExplorationFSM::init(ros::NodeHandle& nh) {
+    
     fp_.reset(new FSMParam); //expl_data.h
     fd_.reset(new FSMData);  //expl_data.h
     
@@ -43,7 +44,6 @@ namespace fast_planner {
     nh.param("fsm/attempt_interval", fp_->attempt_interval_, 0.2);
     nh.param("fsm/pair_opt_interval", fp_->pair_opt_interval_, 1.0);
     nh.param("fsm/repeat_send_num", fp_->repeat_send_num_, 10);
-    
     nh.param("fsm/communication_range", fp_->communication_range_, std::numeric_limits<double>::max());
     
     // *****************************************************
@@ -52,12 +52,13 @@ namespace fast_planner {
     nh.param("exploration/coordination/type", fp_->coordination_type, string("null"));
     
     /* Initialize main modules */
+    // instanciar e inicializar para usar los metodos de exploration manager 
     expl_manager_.reset(new MvantExplorationManager);
     expl_manager_->initialize(nh);
-    
+
     visualization_.reset(new PlanningVisualization(nh));
     coll_assigner_.reset(new CollaborationAssigner(nh));
-    
+
     planner_manager_ = expl_manager_->planner_manager_;
     
     state_ = EXPL_STATE::INIT; //estado inicial
@@ -72,16 +73,16 @@ namespace fast_planner {
 		       "IDLE"
     };
     
-    fd_->static_state_ = true;
-    fd_->trigger_ = false;
+    fd_->static_state_ = true; //comienza de un estado hover inicial
+    fd_->trigger_ = false; //espera el lanzador
+    
     fd_->avoid_collision_ = false;
     fd_->go_back_ = false;
     
     num_fail_ = 0;
     
     // PROGRAMAS EN PARALELO CORRIENDO CADA CIERTO TIEMPO
-    /* Ros sub, pub and timer */
-
+    
     //FSM principal
     exec_timer_     = nh.createTimer(ros::Duration(0.01), &MvantExplorationFSM::FSMCallback, this);
 
@@ -126,8 +127,33 @@ namespace fast_planner {
     bspline_pub_  = nh.advertise<bspline::Bspline>("/planning/bspline", 10);
     stop_pub_     = nh.advertise<std_msgs::Int32>("/stop", 1000);
     heartbit_pub_ = nh.advertise<std_msgs::Empty>("/heartbit", 100);
-    
+
+    //se llama en swarm_exploration/plan_manage/src/traj_server.cpp
     emergency_handler_pub_ = nh.advertise<std_msgs::Bool>("/trigger_emergency", 10);
+    
+    // Swarm, timer, pub and sub
+    //broadcast own state periodically
+    drone_state_timer_ = nh.createTimer(ros::Duration(0.04), &MvantExplorationFSM::droneStateTimerCallback, this);
+    
+    drone_state_pub_   = nh.advertise<exploration_manager::DroneState>("/swarm_expl/drone_state_send", 10);
+    drone_state_sub_   = nh.subscribe("/swarm_expl/drone_state_recv", 10, &MvantExplorationFSM::droneStateMsgCallback, this);
+    
+    opt_timer_ = nh.createTimer(ros::Duration(0.05), &MvantExplorationFSM::optTimerCallback, this);
+    opt_pub_   = nh.advertise<exploration_manager::PairOpt>("/swarm_expl/pair_opt_send", 10);
+    opt_sub_   = nh.subscribe("/swarm_expl/pair_opt_recv", 100, &MvantExplorationFSM::optMsgCallback,
+			    this, ros::TransportHints().tcpNoDelay());
+    
+    opt_res_pub_ = nh.advertise<exploration_manager::PairOptResponse>("/swarm_expl/pair_opt_res_send", 10);
+    opt_res_sub_ = nh.subscribe("/swarm_expl/pair_opt_res_recv", 100, &MvantExplorationFSM::optResMsgCallback, this, ros::TransportHints().tcpNoDelay());
+    
+    swarm_traj_pub_   = nh.advertise<bspline::Bspline>("/planning/swarm_traj_send", 100);
+    swarm_traj_sub_   = nh.subscribe("/planning/swarm_traj_recv", 100, &MvantExplorationFSM::swarmTrajCallback, this);
+    swarm_traj_timer_ = nh.createTimer(ros::Duration(0.1), &MvantExplorationFSM::swarmTrajTimerCallback, this);
+    
+    hgrid_pub_     = nh.advertise<exploration_manager::HGrid>("/swarm_expl/hgrid_send", 10);
+    grid_tour_pub_ = nh.advertise<exploration_manager::GridTour>("/swarm_expl/grid_tour_send", 10);
+    
+    //-------------------------------------------------------------------------------------------------
     
     //prueba un nuevo publicador
     //nearby_obs_pub_ = nh.advertise<exploration_manager::SearchObstacle>("/nearby_obstacles", 10);
@@ -148,25 +174,7 @@ namespace fast_planner {
     prueba_nb = nh.createTimer(ros::Duration(0.2), &MvantExplorationFSM::nearbyObstaclesCallback, this);
     
     //-------------------------------------------------------------------------------------------------
-    // Swarm, timer, pub and sub
-    drone_state_timer_ = nh.createTimer(ros::Duration(0.04), &MvantExplorationFSM::droneStateTimerCallback, this);
-    drone_state_pub_   = nh.advertise<exploration_manager::DroneState>("/swarm_expl/drone_state_send", 10);
-    drone_state_sub_   = nh.subscribe("/swarm_expl/drone_state_recv", 10, &MvantExplorationFSM::droneStateMsgCallback, this);
     
-    opt_timer_ = nh.createTimer(ros::Duration(0.05), &MvantExplorationFSM::optTimerCallback, this);
-    opt_pub_   = nh.advertise<exploration_manager::PairOpt>("/swarm_expl/pair_opt_send", 10);
-    opt_sub_   = nh.subscribe("/swarm_expl/pair_opt_recv", 100, &MvantExplorationFSM::optMsgCallback,
-			    this, ros::TransportHints().tcpNoDelay());
-    
-    opt_res_pub_ = nh.advertise<exploration_manager::PairOptResponse>("/swarm_expl/pair_opt_res_send", 10);
-    opt_res_sub_ = nh.subscribe("/swarm_expl/pair_opt_res_recv", 100, &MvantExplorationFSM::optResMsgCallback, this, ros::TransportHints().tcpNoDelay());
-    
-    swarm_traj_pub_   = nh.advertise<bspline::Bspline>("/planning/swarm_traj_send", 100);
-    swarm_traj_sub_   = nh.subscribe("/planning/swarm_traj_recv", 100, &MvantExplorationFSM::swarmTrajCallback, this);
-    swarm_traj_timer_ = nh.createTimer(ros::Duration(0.1), &MvantExplorationFSM::swarmTrajTimerCallback, this);
-    
-    hgrid_pub_     = nh.advertise<exploration_manager::HGrid>("/swarm_expl/hgrid_send", 10);
-    grid_tour_pub_ = nh.advertise<exploration_manager::GridTour>("/swarm_expl/grid_tour_send", 10);
   }
   
   int MvantExplorationFSM::getId() {
@@ -1106,7 +1114,9 @@ namespace fast_planner {
     } else
       transitState(FINISH, "triggerCallback");
   }
-  
+
+  //Detectar colisiones
+  //replanear trajectoria en caso de colision
   void MvantExplorationFSM::safetyCallback(const ros::TimerEvent& e) {
     if (state_ == EXPL_STATE::EXEC_TRAJ) {
       // Check safety and trigger replan if necessary
@@ -1166,7 +1176,9 @@ namespace fast_planner {
 		    << " from " + fd_->state_str_[pre_s] + " to " + fd_->state_str_[int(new_state)]);
     
   }
-  
+
+
+  //enviar informacion
   void MvantExplorationFSM::droneStateTimerCallback(const ros::TimerEvent& e) {
     // Broadcast own state periodically
     exploration_manager::DroneState msg;
@@ -1175,7 +1187,8 @@ namespace fast_planner {
     //modificar el vector que almacena la estructura de datos tipo DroneState
     // por que es -1?? --> creo por ser cero basado
     auto& state = expl_manager_->ed_->swarm_state_[msg.drone_id - 1];
-    
+
+    //si esta en hover
     if (fd_->static_state_) {
       state.pos_ = fd_->odom_pos_;
       state.vel_ = fd_->odom_vel_;
@@ -1187,36 +1200,41 @@ namespace fast_planner {
       state.vel_ = info->velocity_traj_.evaluateDeBoorT(t_r);
       state.yaw_ = info->yaw_traj_.evaluateDeBoorT(t_r)[0];
     }
+    
     state.stamp_ = ros::Time::now().toSec();
+
     msg.pos = { float(state.pos_[0]), float(state.pos_[1]), float(state.pos_[2]) };
     msg.vel = { float(state.vel_[0]), float(state.vel_[1]), float(state.vel_[2]) };
     msg.yaw = state.yaw_;
+    
     //creo que aqui plancha el mapa
     for (auto id : state.grid_ids_) msg.grid_ids.push_back(id);
     msg.recent_attempt_time = state.recent_attempt_time_;
     msg.stamp = state.stamp_;
     msg.goal_posit = eigenToGeometryMsg(expl_manager_->ed_->next_pos_);
-    msg.role = int(expl_manager_->role_);
+
+    //msg.role = int(expl_manager_->role_); //Quitar, yo no uso este esquema
     
     drone_state_pub_.publish(msg);
   }
 
-  /**
-   *recibo un mensaje DroneState con la informacion de un Drone
-   */
+  
+  //recibo un mensaje DroneState con la informacion de un Drone
   void MvantExplorationFSM::droneStateMsgCallback(const exploration_manager::DroneStateConstPtr& msg) {
-    
-    // Update other drones' states
-    if (msg->drone_id == getId()) return;
-    
-    // Skip update if collaboration is inactive
-    if (!coll_assigner_->isActive()) return;
-    
+
     // Simulate swarm communication loss
+    // si la ubicacion del dron esta lejos de la distancia de comunicacion, no hacer nada
     const Eigen::Vector3d msg_pos(msg->pos[0], msg->pos[1], msg->pos[2]);
     if ((msg_pos - fd_->odom_pos_).norm() > fp_->communication_range_) {
       return;
     }
+    
+    // Update other drones' states
+    if (msg->drone_id == getId()) return;
+    
+    //quitar, yo no uso coll_assigner
+    // Skip update if collaboration is inactive
+    if (!coll_assigner_->isActive()) return;
     
     auto& drone_state = expl_manager_->ed_->swarm_state_[msg->drone_id - 1];
     if (drone_state.stamp_ + 1e-4 >= msg->stamp) return;  // Avoid unordered msg
@@ -1224,8 +1242,11 @@ namespace fast_planner {
     drone_state.pos_ = Eigen::Vector3d(msg->pos[0], msg->pos[1], msg->pos[2]);
     drone_state.vel_ = Eigen::Vector3d(msg->vel[0], msg->vel[1], msg->vel[2]);
     drone_state.yaw_ = msg->yaw;
+    
     drone_state.grid_ids_.clear();
+
     for (auto id : msg->grid_ids) drone_state.grid_ids_.push_back(id);
+
     drone_state.stamp_ = msg->stamp;
     drone_state.recent_attempt_time_ = msg->recent_attempt_time;
     drone_state.goal_pos_ = geometryMsgToEigen(msg->goal_posit);
