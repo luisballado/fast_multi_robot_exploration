@@ -5,9 +5,9 @@
 #include <traj_utils/planning_visualization.h>
 
 //exploration_manager/include
-#include <exploration_manager/mvant_exploration_manager.h>
-#include <exploration_manager/mvant_exploration_fsm.h>
-#include <exploration_manager/expl_data.h>
+#include <exploration_manager/mvant/mvant_exploration_manager.h>
+#include <exploration_manager/mvant/mvant_exploration_fsm.h>
+#include <exploration_manager/mvant/expl_data.h>
 
 #include <exploration_manager/HGrid.h>
 #include <exploration_manager/GridTour.h>
@@ -30,7 +30,8 @@ namespace fast_planner {
      INIT
   */
   void MvantExplorationFSM::init(ros::NodeHandle& nh) {
-    
+
+    // estan declaradas en algun lado
     fp_.reset(new FSMParam); //expl_data.h
     fd_.reset(new FSMData);  //expl_data.h
     
@@ -46,9 +47,7 @@ namespace fast_planner {
     nh.param("fsm/repeat_send_num", fp_->repeat_send_num_, 10);
     nh.param("fsm/communication_range", fp_->communication_range_, std::numeric_limits<double>::max());
     
-    // *****************************************************
     // ******** PASO DE PARAM, DEFINIR COORDINACION ******** 
-    // *****************************************************
     nh.param("exploration/coordination/type", fp_->coordination_type, string("null"));
     
     /* Initialize main modules */

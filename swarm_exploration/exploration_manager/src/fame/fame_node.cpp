@@ -1,5 +1,5 @@
 #include <ros/ros.h>
-#include <exploration_manager/fame_exploration_fsm.h>
+#include <exploration_manager/fame/fame_exploration_fsm.h>
 
 #include <plan_manage/backward.hpp>
 namespace backward {

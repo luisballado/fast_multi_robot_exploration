@@ -1,5 +1,5 @@
 // #include <fstream>
-#include <exploration_manager/fast_exploration_manager.h>
+#include <exploration_manager/racer/fast_exploration_manager.h>
 #include <thread>
 #include <iostream>
 #include <fstream>
@@ -19,7 +19,7 @@
 #include <lkh_tsp_solver/SolveTSP.h>
 #include <lkh_mtsp_solver/SolveMTSP.h>
 
-#include <exploration_manager/expl_data.h>
+#include <exploration_manager/racer/expl_data.h>
 
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>

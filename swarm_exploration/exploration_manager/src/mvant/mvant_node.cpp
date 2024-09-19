@@ -1,7 +1,7 @@
 //mvant_node.cpp
 
 #include <ros/ros.h>
-#include <exploration_manager/mvant_exploration_fsm.h>
+#include <exploration_manager/mvant/mvant_exploration_fsm.h>
 
 #include <plan_manage/backward.hpp> //Backward is a beautiful stack trace pretty printer for C++.
 

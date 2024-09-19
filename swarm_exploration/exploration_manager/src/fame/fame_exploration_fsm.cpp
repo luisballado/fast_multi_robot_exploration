@@ -1,10 +1,10 @@
 
 #include <plan_manage/planner_manager.h>
-#include <exploration_manager/fame_exploration_manager.h>
+#include <exploration_manager/fame/fame_exploration_manager.h>
 #include <traj_utils/planning_visualization.h>
 
-#include <exploration_manager/fame_exploration_fsm.h>
-#include <exploration_manager/expl_data.h>
+#include <exploration_manager/fame/fame_exploration_fsm.h>
+#include <exploration_manager/fame/expl_data.h>
 #include <exploration_manager/HGrid.h>
 #include <exploration_manager/GridTour.h>
 
