@@ -14,7 +14,7 @@
 #include <exploration_manager/SearchObstacle.h>
 #include <exploration_manager/PairOpt.h>
 #include <exploration_manager/PairOptResponse.h>
-#include <exploration_manager/collaboration_assigner.h>
+#include <exploration_manager/mvant/collaboration_assigner.h>
 #include <bspline/Bspline.h>
 
 #include <algorithm>

@@ -1,4 +1,4 @@
-#include <exploration_manager/role_assigner.h>
+#include <exploration_manager/mvant/role_assigner.h>
 
 namespace fast_planner {
 

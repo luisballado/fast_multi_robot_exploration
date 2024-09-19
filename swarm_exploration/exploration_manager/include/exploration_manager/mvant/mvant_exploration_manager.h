@@ -6,7 +6,7 @@
 #include <memory>
 #include <vector>
 
-#include <exploration_manager/role_assigner.h>
+#include <exploration_manager/mvant/role_assigner.h>
 
 using Eigen::Vector3d;
 using std::pair;

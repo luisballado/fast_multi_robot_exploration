@@ -12,7 +12,7 @@
 #include <exploration_manager/DroneState.h>
 #include <exploration_manager/PairOpt.h>
 #include <exploration_manager/PairOptResponse.h>
-#include <exploration_manager/collaboration_assigner.h>
+#include <exploration_manager/fame/collaboration_assigner.h>
 #include <bspline/Bspline.h>
 
 #include <algorithm>

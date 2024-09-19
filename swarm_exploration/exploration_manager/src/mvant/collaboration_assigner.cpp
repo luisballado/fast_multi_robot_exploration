@@ -1,4 +1,4 @@
-#include <exploration_manager/collaboration_assigner.h>
+#include <exploration_manager/mvant/collaboration_assigner.h>
 #include <nlopt.hpp>
 
 namespace fast_planner {
