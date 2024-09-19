@@ -24,6 +24,7 @@
 
 using Eigen::Vector4d;
 
+//namespace por si existen metodos con el mismo nombre
 namespace fast_planner {
   
   /**
@@ -38,6 +39,7 @@ namespace fast_planner {
     /*  Fsm param  */
     // Nodes use the parameter server to store
     // and retrieve parameters at runtime
+    // getting parameters
     nh.param("fsm/thresh_replan1", fp_->replan_thresh1_, -1.0);
     nh.param("fsm/thresh_replan2", fp_->replan_thresh2_, -1.0);
     nh.param("fsm/thresh_replan3", fp_->replan_thresh3_, -1.0);
@@ -56,6 +58,8 @@ namespace fast_planner {
     expl_manager_->initialize(nh);
 
     visualization_.reset(new PlanningVisualization(nh));
+
+    // Quitar, dado a que yo no uso este esquema
     coll_assigner_.reset(new CollaborationAssigner(nh));
 
     planner_manager_ = expl_manager_->planner_manager_;
