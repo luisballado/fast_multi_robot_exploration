@@ -53,7 +53,10 @@ void MvantExplorationManager::initialize(ros::NodeHandle& nh) {
 
   // uniform_grid_.reset(new UniformGrid(edt_environment_, nh));
   hgrid_.reset(new HGrid(edt_environment_, nh));
+
+  //Quitar, dado a que yo no uso este esquema
   role_assigner_.reset(new RoleAssigner(nh));
+  
   // view_finder_.reset(new ViewFinder(edt_environment_, nh));
 
   ed_.reset(new ExplorationData);
@@ -72,6 +75,7 @@ void MvantExplorationManager::initialize(ros::NodeHandle& nh) {
   nh.param("exploration/init_plan_num", ep_->init_plan_num_, 2);
 
   // Explorer Parameters
+  // Quitar, dado a que yo no uso este esquema
   explorer_params_.reset(new ExplorerParams);
   nh.param("explorer/ftr_max_distance", explorer_params_->ftr_max_distance, 15.0);
   nh.param("explorer/max_ang_dist", explorer_params_->max_ang_dist, M_PI / 4.0);
@@ -82,6 +86,7 @@ void MvantExplorationManager::initialize(ros::NodeHandle& nh) {
   nh.param("explorer/w_previous_goal", explorer_params_->w_previous_goal, 1.0);
 
   // Collector Parameters
+  // Quitar, dado a que yo no uso este esquema
   collector_params_.reset(new CollectorParams);
   nh.param("collector/min_vel", collector_params_->min_vel, 1.0);
   nh.param("collector/label_penalty", collector_params_->label_penalty, 15.0);
@@ -106,6 +111,7 @@ void MvantExplorationManager::initialize(ros::NodeHandle& nh) {
   assert(pf_params_->kr >= 0.);
   
   // Initial role
+  // Quitar, dado a que yo no uso este esquema
   role_ = ROLE::UNKNOWN;
 
   //ed - exploration data
@@ -141,17 +147,17 @@ void MvantExplorationManager::initialize(ros::NodeHandle& nh) {
   // planner_manager_->path_finder_->max_search_time_ = 0.05;
   planner_manager_->path_finder_->max_search_time_ = 1.0;
 
-  tsp_client_ =
-      nh.serviceClient<lkh_mtsp_solver::SolveMTSP>("/solve_tsp_" + to_string(ep_->drone_id_), true);
-  acvrp_client_ = nh.serviceClient<lkh_mtsp_solver::SolveMTSP>(
-      "/solve_acvrp_" + to_string(ep_->drone_id_), true);
+  tsp_client_ = nh.serviceClient<lkh_mtsp_solver::SolveMTSP>("/solve_tsp_" + to_string(ep_->drone_id_), true);
 
+  acvrp_client_ = nh.serviceClient<lkh_mtsp_solver::SolveMTSP>("/solve_acvrp_" + to_string(ep_->drone_id_), true);
+  
   // Swarm
   for (auto& state : ed_->swarm_state_) {
     state.stamp_ = 0.0;
     state.recent_interact_time_ = 0.0;
     state.recent_attempt_time_ = 0.0;
   }
+  
   ed_->last_grid_ids_ = {};
   ed_->reallocated_ = true;
   ed_->pair_opt_stamp_ = 0.0;
