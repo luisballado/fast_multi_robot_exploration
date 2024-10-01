@@ -2,19 +2,24 @@
 
 // #include <fstream>
 #include <exploration_manager/mvant/mvant_exploration_manager.h>
+
 #include <thread>
 #include <iostream>
 #include <fstream>
+
 #include <boost/filesystem.hpp>
+
 #include <active_perception/graph_node.h>
 #include <active_perception/graph_search.h>
 #include <active_perception/perception_utils.h>
 #include <active_perception/frontier_finder.h>
 #include <active_perception/hgrid.h>
+
 #include <plan_env/raycast.h>
 #include <plan_env/sdf_map.h>
 #include <plan_env/edt_environment.h>
 #include <plan_manage/planner_manager.h>
+
 #include <lkh_tsp_solver/SolveTSP.h>
 #include <lkh_mtsp_solver/SolveMTSP.h>
 
@@ -385,7 +390,7 @@ int MvantExplorationManager::updateFrontierStruct(
         ed_->points_[i] + 1.0 * Vector3d(cos(ed_->yaws_[i]), sin(ed_->yaws_[i]), 0));
 
   if (ed_->frontiers_.empty()) {
-    ROS_WARN("La frontera no puede ser cubierta");
+    ROS_WARN("no fronteras");
     //ROS_WARN("No coverable frontier.");
     return 0;
   }

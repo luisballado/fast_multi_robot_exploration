@@ -31,7 +31,7 @@ namespace fast_planner {
      INIT
   */
   void MvantExplorationFSM::init(ros::NodeHandle& nh) {
-
+    
     // estan declaradas en algun lado
     fp_.reset(new FSMParam); //expl_data.h
     fd_.reset(new FSMData);  //expl_data.h
@@ -313,7 +313,9 @@ namespace fast_planner {
 	
         // fd_->newest_traj_.drone_id = planner_manager_->swarm_traj_data_.drone_id_;
         fd_->newest_traj_.drone_id = expl_manager_->ep_->drone_id_;
-        swarm_traj_pub_.publish(fd_->newest_traj_);
+
+	//informar a los drones
+	swarm_traj_pub_.publish(fd_->newest_traj_);
 	
         thread vis_thread(&MvantExplorationFSM::visualize, this, 2);
         vis_thread.detach();
@@ -373,7 +375,8 @@ namespace fast_planner {
           transitState(FINISH, "FSM");
           return;
         }
-        if (t_cur > fp_->replan_thresh3_ || info->duration_ - t_cur < fp_->replan_thresh1_) {
+	//replanear si el tiempo se cumple
+	if (t_cur > fp_->replan_thresh3_ || info->duration_ - t_cur < fp_->replan_thresh1_) {
           // Replan for going back
           replan_pub_.publish(std_msgs::Empty());
           transitState(PLAN_TRAJ, "FSM");
@@ -406,7 +409,7 @@ namespace fast_planner {
 	
 	//transitState(FINISH, "FSM");
 		
-	ros::Duration(1).sleep();
+	//ros::Duration(1).sleep();
 	
 	break;
 	
@@ -495,13 +498,19 @@ namespace fast_planner {
     
     if (fd_->avoid_collision_ || fd_->go_back_) {  // Only replan trajectory
       ROS_WARN_STREAM("planTrajToView");
+      
+      //que hace este planificador
       res = expl_manager_->planTrajToView(fd_->start_pt_, fd_->start_vel_, fd_->start_acc_, fd_->start_yaw_, expl_manager_->ed_->next_pos_, expl_manager_->ed_->next_yaw_);
+
       fd_->avoid_collision_ = false;
     } else {  // Do full planning normally
       ROS_WARN_STREAM("planExploreMotion");
+
+      //que hace este planificador
       res = expl_manager_->planExploreMotion(fd_->start_pt_, fd_->start_vel_, fd_->start_acc_, fd_->start_yaw_);
     }
-    
+
+    //si hay un camino
     if (res == SUCCEED) {
       auto info = &planner_manager_->local_data_;
       info->start_time_ = (ros::Time::now() - time_r).toSec() > 0 ? ros::Time::now() : time_r;
@@ -1105,13 +1114,15 @@ namespace fast_planner {
     ROS_WARN_STREAM("Start expl pos transpose: " << fd_->start_pos_.transpose());
     
     fd_->trigger_ = true;
+    
     ROS_WARN_STREAM("Triggered!");
+    
     //cout << "Triggered!" << endl;
     fd_->start_pos_ = fd_->odom_pos_;
     
     ROS_WARN_STREAM("Start expl pos: " << fd_->start_pos_.transpose());
-
-    //verificar si aun existen fronteras que atender
+    
+    //verificar si existen fronteras que atender
     if (expl_manager_->updateFrontierStruct(fd_->odom_pos_, fd_->odom_yaw_, fd_->odom_vel_) != 0) {
       transitState(PLAN_TRAJ, "triggerCallback");
     } else
@@ -1303,9 +1314,11 @@ namespace fast_planner {
     Eigen::Vector3d ego_opt, other_opt;
     const bool res = coll_assigner_->optimizePositions(ego_goal, other_goal, ego_opt, other_opt);
     double alloc_time = (ros::Time::now() - t1).toSec();
+    
     if (!res) {
       ROS_ERROR("Opt failed - keep same assignment");
     }
+    
     
     // Send the result to selected drone and wait for confirmation
     exploration_manager::PairOpt opt;

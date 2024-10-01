@@ -14,6 +14,7 @@ using namespace std;
 namespace fast_planner {
 
   //FinitStateMachineData
+  //informacion del drone
 struct FSMData {
   // FSM data
   bool trigger_, have_odom_, static_state_;
@@ -62,6 +63,7 @@ struct DroneState {
   double stamp_;                // Stamp of pos,vel,yaw
   double recent_attempt_time_;  // Stamp of latest opt attempt with any drone
 
+  //mapa??
   vector<int> grid_ids_;         // Id of grid tour
   double recent_interact_time_;  // Stamp of latest opt with this drone
 
