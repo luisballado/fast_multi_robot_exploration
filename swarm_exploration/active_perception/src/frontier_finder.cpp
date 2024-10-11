@@ -1,6 +1,7 @@
 #include <active_perception/frontier_finder.h>
 #include <plan_env/sdf_map.h>
 #include <plan_env/raycast.h>
+
 // #include <path_searching/astar2.h>
 
 #include <pcl/point_cloud.h>
@@ -147,12 +148,12 @@ void FrontierFinder::expandFrontier(
   queue<Eigen::Vector3i> cell_queue;
   vector<pair<LABEL, Eigen::Vector3d>> expanded;
   Vector3d pos;
-
+  
   edt_env_->sdf_map_->indexToPos(first, pos);
   expanded.push_back({ UNLABELED, pos });
   cell_queue.push(first);
   frontier_flag_[toadr(first)] = 1;
-
+  
   // Search frontier cluster based on region growing (distance clustering)
   while (!cell_queue.empty()) {
     auto cur = cell_queue.front();
@@ -313,8 +314,7 @@ void FrontierFinder::updateFrontierCostMatrix() {
     Viewpoint& vui = it1->viewpoints_.front();
     Viewpoint& vuj = it2->viewpoints_.front();
     vector<Vector3d> path_ij;
-    double cost_ij = ViewNode::computeCost(
-        vui.pos_, vuj.pos_, vui.yaw_, vuj.yaw_, Vector3d(0, 0, 0), 0, path_ij);
+    double cost_ij = ViewNode::computeCost(vui.pos_, vuj.pos_, vui.yaw_, vuj.yaw_, Vector3d(0, 0, 0), 0, path_ij);
     // Insert item for both old and new clusters
     it1->costs_.push_back(cost_ij);
     it1->paths_.push_back(path_ij);

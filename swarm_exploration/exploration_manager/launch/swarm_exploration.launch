@@ -18,6 +18,7 @@
   
   <!-- Renderer (Vulkan) -->
   <arg name="vulkan_renderer" default="false"/>
+  
   <arg name="model" default="forest_50x50_01_200"/>
   
   <!-- Logging -->
@@ -32,7 +33,7 @@
   <arg name="communication_range" default="100000.0"/>
   
   <!-- Map generation -->
-  <node pkg="map_generator" name="map_pub" type="map_pub" output="screen" args="$(find map_generator)/resource/$(arg model).pcd" unless="$(arg vulkan_renderer)"> 
+  <node pkg="map_generator" name="map_pub" type="map_pub" output="screen" args="$(find map_generator)/resource/$(arg model).pcd" unless="$(arg vulkan_renderer)">
   </node>
 
 <include file="$(find exploration_manager)/launch/single_drone_exploration.xml" if="$(eval arg('drone_num') >= 1)">
@@ -50,12 +51,15 @@
     <arg name="model" value="$(arg model)"/>
     <arg name="planner_type" value="$(arg planner_type)"/>
     <arg name="log_folder" value="$(arg log_folder)"/>
+    
     <!-- Ablation study (FAME only) -->
     <arg name="role_assigner_fixed" default="$(arg role_assigner_fixed)"/>
     <arg name="role_assigner_fix_role" default="$(arg role_assigner_fix_role)"/>
     <arg name="active_collaboration" default="$(arg active_collaboration)"/>
+
     <!-- Ablation study (all) -->
     <arg name="communication_range" default="$(arg communication_range)"/>
+
     <!-- Coordination Type (MVANT only)-->
     <arg name="coordination_type" value="$(arg coordination_type)"/>
   </include>

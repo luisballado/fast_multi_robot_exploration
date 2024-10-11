@@ -133,7 +133,7 @@
     <rosparam command="load" file="$(find exploration_manager)/config/maps/$(arg model).yaml" />
     
     <param name="sdf_map/no_drone_1" value="false" type="bool"/>
-
+    
     <param name="map_ros/cx" value="$(arg cx)"/>
     <param name="map_ros/cy" value="$(arg cy)"/>
     <param name="map_ros/fx" value="$(arg fx)"/>
@@ -153,7 +153,7 @@
     
     <!-- Logging -->
     <param name="multi_map_manager/log_folder" value="$(arg log_folder)"/>
-
+    
     <!-- Fsm -->
     <param name="fsm/thresh_replan1" value="0.2" type="double"/>
     <param name="fsm/thresh_replan2" value="0.2" type="double"/>
@@ -180,7 +180,7 @@
     <param name="partitioning/use_swarm_tf" value="true" type="bool"/>;
 
     <!-- Exploration manager -->
-
+    
     <param name="exploration/refine_local" value="true" type="bool"/>
     <param name="exploration/refined_num" value="7" type="int"/>
     <param name="exploration/refined_radius" value="5.0" type="double"/>

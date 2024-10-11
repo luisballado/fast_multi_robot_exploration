@@ -15,11 +15,15 @@
 #include <plan_env/edt_environment.h>
 #include <plan_env/sdf_map.h>
 #include <plan_env/multi_map_manager.h>
+
 #include <active_perception/perception_utils.h>
 #include <active_perception/hgrid.h>
+
 #include <ros/console.h>
+
 #include <std_msgs/Bool.h>
 #include <std_msgs/String.h>
+
 #include <fstream>
 
 using Eigen::Vector4d;
@@ -93,7 +97,7 @@ namespace fast_planner {
     safety_timer_   = nh.createTimer(ros::Duration(0.05), &MvantExplorationFSM::safetyCallback, this);
     
     //actualiza la frontera
-    frontier_timer_ = nh.createTimer(ros::Duration(0.1), &MvantExplorationFSM::frontierCallback, this);
+    frontier_timer_ = nh.createTimer(ros::Duration(0.05), &MvantExplorationFSM::frontierCallback, this);
 
     //mandar mensaje de vacio estar vivo
     heartbit_timer_ = nh.createTimer(ros::Duration(1.0), &MvantExplorationFSM::heartbitCallback, this);
@@ -798,6 +802,7 @@ namespace fast_planner {
       auto res = expl_manager_->sdf_map_->getResolution();
 
       for (int i = 0; i < ed->frontiers_.size(); ++i) {
+
 	auto color = visualization_->getColor(double(i) / ed->frontiers_.size(), 0.4);
 	visualization_->drawCubes(ed->frontiers_[i], res, color, "frontier", i, 4);
 	// getColorVal(i, expl_manager_->ep_->drone_num_, expl_manager_->ep_->drone_id_)
@@ -816,7 +821,7 @@ namespace fast_planner {
 	//ROS_WARN_STREAM("Frontera:: " << id_str);
 	//ROS_WARN_STREAM("Frontera:: " << centroid.transpose());
 	
-	visualization_->drawText(centroid - Eigen::Vector3d(0., 0., 0.), "F-"+id_str, 0.8, Eigen::Vector4d(0.0, 0.0, 0.0, 1.0), "id", ed->frontiers_.size() + i, 4);
+	visualization_->drawText(centroid, "F-"+id_str, 0.8, Eigen::Vector4d(0.0, 0.0, 0.0, 1.0), "id", ed->frontiers_.size() + i, 4);
 	
 	
       }
