@@ -29,6 +29,16 @@
 #include <pcl/point_types.h>
 #include <visualization_msgs/Marker.h>
 
+//Leer
+//https://arxiv.org/pdf/2209.10775
+//https://arxiv.org/pdf/2409.16972
+//https://arxiv.org/pdf/2408.05808
+//https://robotfrontier.com/
+//http://robotfrontier.com/papers/agents98.pdf
+//http://robotfrontier.com/papers/cira97.pdf
+//https://luismejias21.wordpress.com/wp-content/uploads/2017/09/inteligencia-artificial-un-enfoque-moderno-stuart-j-russell.pdf
+//file:///Users/luisalbertoballadoaradias/Downloads/Artificial-Intelligence-A-Modern-Approach-4th-Edition-1-compressed.pdf
+
 using namespace Eigen;
 
 namespace fast_planner {
