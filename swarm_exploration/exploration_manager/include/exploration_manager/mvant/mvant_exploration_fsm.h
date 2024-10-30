@@ -96,6 +96,7 @@ private:
   void explorationCallback(const ros::TimerEvent& e);
 
   void pruebaTopicoCallback(const std_msgs::Empty::ConstPtr& msg);
+  void pruebaPararCallback(const std_msgs::Empty::ConstPtr& msg);
   
   
   // Swarm
@@ -131,8 +132,8 @@ private:
   // ******************************
   // ***** Pruebas Dummy **********
   // ******************************
-  ros::Publisher test_topico;
-  ros::Subscriber topico_sub_;
+  ros::Publisher test_topico, test_topico2;
+  ros::Subscriber topico_sub_, topico_sub_2;
   // ******************************
 
   //pruebas
