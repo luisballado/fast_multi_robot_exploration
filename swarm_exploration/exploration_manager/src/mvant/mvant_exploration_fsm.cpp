@@ -32,7 +32,7 @@ using Eigen::Vector4d;
 namespace fast_planner {
   
   /**
-     INIT
+     INICIALIZACION DEL NODO
   */
   void MvantExplorationFSM::init(ros::NodeHandle& nh) {
     
@@ -65,7 +65,7 @@ namespace fast_planner {
 
     // Quitar, dado a que yo no uso este esquema
     coll_assigner_.reset(new CollaborationAssigner(nh));
-
+    
     planner_manager_ = expl_manager_->planner_manager_;
     
     state_ = EXPL_STATE::INIT; //estado inicial
@@ -168,9 +168,19 @@ namespace fast_planner {
     //prueba de fronteras
     //test_fronteras = nh.advertise<std_msgs::Empty>("/pruebas", 100);
 
-    //prueba de topico dummy
+    // prueba de topico dummy
+    // este es un topico que espera un mensaje vacio
     test_topico = nh.advertise<std_msgs::Empty>("/test_topic", 10);
+
+    // este es una funcion callback que se suscribe al topico,
+    // cuando el topico manda algo, la funcion se manda a llamar
     topico_sub_ = nh.subscribe("/test_topic", 10, &MvantExplorationFSM::pruebaTopicoCallback, this);
+
+    //***********************************************************************************************
+    test_topico2 = nh.advertise<std_msgs::Empty>("/test_topic2", 10);
+    
+    topico_sub_2 = nh.subscribe("/test_topic2", 10, &MvantExplorationFSM::pruebaPararCallback, this);
+
     
     // si lo utilizo para la evaluacion de los K-vecinos respecto al VANT
     // el topico se renombra haciendo un remap dentro del archivo
@@ -394,9 +404,10 @@ namespace fast_planner {
 
          //Estado final
     case FINISH: {
-      sendStopMsg(1);
+      ROS_WARN("FINISH STATE");
+      //sendStopMsg(1);
       ROS_INFO_THROTTLE(1.0, "-- exploracion terminada --");
-      
+      sendStopMsg(1);
       break;
     }
       
@@ -409,10 +420,10 @@ namespace fast_planner {
 	
 	ROS_WARN_THROTTLE(1.0, "-- No fronteras para agente %d", getId());
 	
-	sendStopMsg(1);
+	//sendStopMsg(1);
 	
-	//transitState(FINISH, "FSM");
-		
+	transitState(FINISH, "FSM");
+	
 	//ros::Duration(1).sleep();
 	
 	break;
@@ -443,7 +454,7 @@ namespace fast_planner {
       
     }
   }
-
+  
   // original implementation
   int MvantExplorationFSM::callExplorationPlanner() {
     ros::Time time_r = ros::Time::now() + ros::Duration(fp_->replan_time_);
@@ -872,12 +883,44 @@ namespace fast_planner {
     return std::sqrt(std::pow(cloud_point(0) - point(0), 2) + std::pow(cloud_point(1) - point(1), 2) + std::pow(cloud_point(2) - point(2), 2));
   }
 
+
   /**
-   * Ejemplo de un topico
+     Intentar parar todo
+   **/
+  void MvantExplorationFSM::pruebaPararCallback(const std_msgs::Empty::ConstPtr& msg){
+  
+    ROS_WARN_STREAM("Intentar parar todo");
+    transitState(FINISH, "triggerCallback");
+    
+  }
+  
+  /**
+   * Ejemplo de un callback apartir de un topico
    */
 
   void MvantExplorationFSM::pruebaTopicoCallback(const std_msgs::Empty::ConstPtr& msg){
-    ROS_WARN_ONCE("Tipo coordinacion: %s", fp_->coordination_type.c_str());
+    ROS_WARN_STREAM("Hola, me llamaron?");
+
+    //obtener la posicion para ir hacia ella
+    ROS_WARN_STREAM("Start expl pos: " << fd_->odom_pos_);
+    ROS_WARN_STREAM("Start expl pos transpose: " << fd_->start_pos_.transpose());
+    
+    fd_->trigger_ = true;
+    
+    ROS_WARN_STREAM("Triggered!");
+    
+    //cout << "Triggered!" << endl;
+    fd_->start_pos_ = fd_->odom_pos_;
+    
+    ROS_WARN_STREAM("Start expl pos: " << fd_->start_pos_.transpose());
+    
+    //verificar si existen fronteras que atender
+    if (expl_manager_->updateFrontierStruct(fd_->odom_pos_, fd_->odom_yaw_, fd_->odom_vel_) != 0) {
+      transitState(PLAN_TRAJ, "triggerCallback");
+    } else
+      transitState(FINISH, "triggerCallback");
+    
+    //ROS_WARN_ONCE("Tipo coordinacion: %s", fp_->coordination_type.c_str());
   }
   
   /**
@@ -950,7 +993,8 @@ namespace fast_planner {
 
     // transitar a IDLE cuando no existan mas fronteras por descubrir
     if (ed->frontiers_.size() == 0) {
-      transitState(IDLE, "pruebasCallback");
+      //transitState(IDLE, "pruebasCallback");
+      transitState(FINISH, "pruebasCallback");
     }
     
   }
@@ -966,8 +1010,6 @@ namespace fast_planner {
       - deberia regresar un vector con los vecinos cercanos - los indices -
       
   ***/
-  
-  
   void MvantExplorationFSM::nearbyObstaclesCallback(const ros::TimerEvent& e) {
     //si tuviera un msg
     //(const exploration_manager::SearchObstacle::ConstPtr& msg) {
