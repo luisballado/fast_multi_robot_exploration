@@ -20,6 +20,8 @@ int main(int argc, char** argv) {
   // ros::Publisher cloud_pub = node.advertise<sensor_msgs::PointCloud2>("/pcl_render_node/local_map", 10, true);
   
   ros::Duration(1.0).sleep();
+
+  ROS_WARN("*********** PUBLICANDO MAPA ***********");
   
   /* load cloud from pcd */
   pcl::PointCloud<pcl::PointXYZ> cloud;
