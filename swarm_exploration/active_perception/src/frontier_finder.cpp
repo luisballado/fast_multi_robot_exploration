@@ -1,15 +1,16 @@
 #include <active_perception/frontier_finder.h>
+#include <active_perception/perception_utils.h>
+#include <active_perception/graph_node.h>
+
 #include <plan_env/sdf_map.h>
 #include <plan_env/raycast.h>
-
+#include <plan_env/edt_environment.h>
+#include <plan_env/multi_map_manager.h>
 // #include <path_searching/astar2.h>
 
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
-#include <plan_env/edt_environment.h>
-#include <plan_env/multi_map_manager.h>
-#include <active_perception/perception_utils.h>
-#include <active_perception/graph_node.h>
+#include <pcl/filters/voxel_grid.h>
 
 // use PCL region growing segmentation
 // #include <pcl/point_types.h>
@@ -17,7 +18,6 @@
 // #include <pcl/search/kdtree.h>
 // #include <pcl/features/normal_3d.h>
 // #include <pcl/segmentation/region_growing.h>
-#include <pcl/filters/voxel_grid.h>
 
 #include <Eigen/Eigenvalues>
 
@@ -82,7 +82,7 @@ void FrontierFinder::searchFrontiers() {
   };
 
   // std::cout << "Before remove: " << frontiers_.size() << std::endl;
-
+  
   removed_ids_.clear();
   int rmv_idx = 0;
   for (auto iter = frontiers_.begin(); iter != frontiers_.end();) {

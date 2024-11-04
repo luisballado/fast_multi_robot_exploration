@@ -1,11 +1,12 @@
 // mvant_exploration_manager.cpp
 
 // #include <fstream>
-#include <exploration_manager/mvant/mvant_exploration_manager.h>
-
 #include <thread>
 #include <iostream>
 #include <fstream>
+
+#include <exploration_manager/mvant/mvant_exploration_manager.h>
+#include <exploration_manager/mvant/expl_data.h>
 
 #include <boost/filesystem.hpp>
 
@@ -22,8 +23,6 @@
 
 #include <lkh_tsp_solver/SolveTSP.h>
 #include <lkh_mtsp_solver/SolveMTSP.h>
-
-#include <exploration_manager/mvant/expl_data.h>
 
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>

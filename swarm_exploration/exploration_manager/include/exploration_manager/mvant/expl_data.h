@@ -117,7 +117,7 @@ struct ExplorationData {
   vector<int> ego_ids_, other_ids_;
   double pair_opt_stamp_;
   bool reallocated_, wait_response_;
-
+  
   // Coverage planning
   vector<Vector3d> grid_tour_, grid_tour2_;
   // int prev_first_id_;

@@ -778,11 +778,13 @@ namespace fast_planner {
     
     // visualization_->drawLines({}, {}, 0.03, Vector4d(1, 0, 0, 1), "current_pose", 0, 6);
   }
-  
+
+
+  //frontierCallback esta en un TimerEvent, se ejecuta cada cierto tiempo
   void MvantExplorationFSM::frontierCallback(const ros::TimerEvent& e) {
     
     if (state_ != WAIT_TRIGGER) {
-      
+
       auto ft = expl_manager_->frontier_finder_;
       auto ed = expl_manager_->ed_;
       
@@ -811,7 +813,8 @@ namespace fast_planner {
       
       // Draw frontier and bounding box
       auto res = expl_manager_->sdf_map_->getResolution();
-
+      //ROS_WARN_STREAM("RESOLUTION:: " << res);
+      
       for (int i = 0; i < ed->frontiers_.size(); ++i) {
 
 	auto color = visualization_->getColor(double(i) / ed->frontiers_.size(), 0.4);
