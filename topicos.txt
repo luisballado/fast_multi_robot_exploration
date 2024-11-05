@@ -1,3 +1,16 @@
+advertise - es un topico
+subscribe - es una subscripcion a un topico
+
+funciones que corren cada cierto tiempo:
+- FSMCallback
+- safetyCallback
+- frontierCallback
+- heartbitCallbak
+- droneStateTimerCallback -- brodcastear informacion DroneState
+- optTimerCallback -- 
+- swarmTrajTimerCallback -- recibir trayectorias para collision avoid
+- 
+
 http://wiki.ros.org/rostopic
 
 $ rostopic echo /topic_name

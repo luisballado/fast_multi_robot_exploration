@@ -69,7 +69,8 @@ struct DroneState {
 
   // FAME
   Eigen::Vector3d goal_pos_;
-  size_t role_;
+
+  //size_t role_;
 };
 
 struct ExplorationData {

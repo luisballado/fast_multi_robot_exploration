@@ -36,8 +36,13 @@ namespace fast_planner {
   */
   void MvantExplorationFSM::init(ros::NodeHandle& nh) {
     
-    // estan declaradas en algun lado
+    //replan_thresh1_,..thresh3_, replan_time_, attempt_interval_,
     fp_.reset(new FSMParam); //expl_data.h
+
+
+    //trigger, have_odom_, static_state_
+    //state_str_, odom_pos_, odom_vel_
+    //start_pos_, avoid_collision_, go_back_,
     fd_.reset(new FSMData);  //expl_data.h
     
     /*  Fsm param  */
@@ -57,14 +62,15 @@ namespace fast_planner {
     nh.param("exploration/coordination/type", fp_->coordination_type, string("null"));
     
     /* Initialize main modules */
-    // instanciar e inicializar para usar los metodos de exploration manager 
+    // instanciar e inicializar para usar los metodos
+    // de exploration manager 
     expl_manager_.reset(new MvantExplorationManager);
     expl_manager_->initialize(nh);
-
+    
     visualization_.reset(new PlanningVisualization(nh));
-
+    
     // Quitar, dado a que yo no uso este esquema
-    coll_assigner_.reset(new CollaborationAssigner(nh));
+    //coll_assigner_.reset(new CollaborationAssigner(nh));
     
     planner_manager_ = expl_manager_->planner_manager_;
     
@@ -88,7 +94,7 @@ namespace fast_planner {
     
     num_fail_ = 0;
     
-    // PROGRAMAS EN PARALELO CORRIENDO CADA CIERTO TIEMPO
+    // FUNCIONES EN PARALELO CORRIENDO CADA CIERTO TIEMPO
     
     //FSM principal
     exec_timer_     = nh.createTimer(ros::Duration(0.01), &MvantExplorationFSM::FSMCallback, this);
@@ -98,7 +104,7 @@ namespace fast_planner {
     
     //actualiza la frontera
     frontier_timer_ = nh.createTimer(ros::Duration(0.05), &MvantExplorationFSM::frontierCallback, this);
-
+    
     //mandar mensaje de vacio estar vivo
     heartbit_timer_ = nh.createTimer(ros::Duration(1.0), &MvantExplorationFSM::heartbitCallback, this);
     
@@ -813,8 +819,7 @@ namespace fast_planner {
       
       // Draw frontier and bounding box
       auto res = expl_manager_->sdf_map_->getResolution();
-      //ROS_WARN_STREAM("RESOLUTION:: " << res);
-      
+            
       for (int i = 0; i < ed->frontiers_.size(); ++i) {
 
 	auto color = visualization_->getColor(double(i) / ed->frontiers_.size(), 0.4);
@@ -1237,19 +1242,20 @@ namespace fast_planner {
     
     ROS_WARN_STREAM("[" + pos_call + "]: Drone "
 		    << getId()
-		    << " from " + fd_->state_str_[pre_s] + " to " + fd_->state_str_[int(new_state)]);
+		    << " from " + fd_->state_str_[pre_s] +
+		    " to " + fd_->state_str_[int(new_state)]);
     
   }
-
-
-  //enviar informacion
+  
+  // enviar informacion
+  // de un drone
+  // cambiar esto a un topico
   void MvantExplorationFSM::droneStateTimerCallback(const ros::TimerEvent& e) {
     // Broadcast own state periodically
     exploration_manager::DroneState msg;
     msg.drone_id = getId();
 
-    //modificar el vector que almacena la estructura de datos tipo DroneState
-    // por que es -1?? --> creo por ser cero basado
+    //modificar la estructura de datos tipo DroneState
     auto& state = expl_manager_->ed_->swarm_state_[msg.drone_id - 1];
 
     //si esta en hover
@@ -1266,7 +1272,7 @@ namespace fast_planner {
     }
     
     state.stamp_ = ros::Time::now().toSec();
-
+    
     msg.pos = { float(state.pos_[0]), float(state.pos_[1]), float(state.pos_[2]) };
     msg.vel = { float(state.vel_[0]), float(state.vel_[1]), float(state.vel_[2]) };
     msg.yaw = state.yaw_;
@@ -1276,7 +1282,7 @@ namespace fast_planner {
     msg.recent_attempt_time = state.recent_attempt_time_;
     msg.stamp = state.stamp_;
     msg.goal_posit = eigenToGeometryMsg(expl_manager_->ed_->next_pos_);
-
+    
     //msg.role = int(expl_manager_->role_); //Quitar, yo no uso este esquema
     
     drone_state_pub_.publish(msg);
@@ -1298,7 +1304,7 @@ namespace fast_planner {
     
     //quitar, yo no uso coll_assigner
     // Skip update if collaboration is inactive
-    if (!coll_assigner_->isActive()) return;
+    //if (!coll_assigner_->isActive()) return;
     
     auto& drone_state = expl_manager_->ed_->swarm_state_[msg->drone_id - 1];
     if (drone_state.stamp_ + 1e-4 >= msg->stamp) return;  // Avoid unordered msg
@@ -1314,7 +1320,7 @@ namespace fast_planner {
     drone_state.stamp_ = msg->stamp;
     drone_state.recent_attempt_time_ = msg->recent_attempt_time;
     drone_state.goal_pos_ = geometryMsgToEigen(msg->goal_posit);
-    drone_state.role_ = ROLE(msg->role);
+    //drone_state.role_ = ROLE(msg->role);
     
     //std::cout << "Drone " << getId() << " get drone " << int(msg->drone_id) << "'s state" <<
     //std::endl; std::cout << drone_state.pos_.transpose() << std::endl;
@@ -1362,13 +1368,14 @@ namespace fast_planner {
     
     auto t1 = ros::Time::now();
     Eigen::Vector3d ego_opt, other_opt;
-    const bool res = coll_assigner_->optimizePositions(ego_goal, other_goal, ego_opt, other_opt);
+    //const bool res = coll_assigner_->optimizePositions(ego_goal, other_goal, ego_opt, other_opt);
     double alloc_time = (ros::Time::now() - t1).toSec();
     
-    if (!res) {
+    /*
+      if (!res) {
       ROS_ERROR("Opt failed - keep same assignment");
     }
-    
+    */
     
     // Send the result to selected drone and wait for confirmation
     exploration_manager::PairOpt opt;
@@ -1395,7 +1402,8 @@ namespace fast_planner {
     ed->wait_response_ = true;
     state1.recent_attempt_time_ = tn;
   }
-  
+
+  //creo que no se esta usando
   void MvantExplorationFSM::findUnallocated(const vector<int>& actives, vector<int>& missed) {
     // Create map of all active
     unordered_map<int, char> active_map;
@@ -1419,6 +1427,7 @@ namespace fast_planner {
       missed.push_back(p.first);
     }
   }
+
   
   void MvantExplorationFSM::optMsgCallback(const exploration_manager::PairOptConstPtr& msg) {
     if (msg->from_drone_id == getId() || msg->to_drone_id != getId()) return;
