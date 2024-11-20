@@ -111,7 +111,7 @@ namespace fast_planner {
     // ******************************************************
     // ************** Exploración fronteras *****************
     // ******************************************************
-    // exploration_timer_ = nh.createTimer(ros::Duration(0.005), &MvantExplorationFSM::explorationCallback, this);
+    //exploration_timer_ = nh.createTimer(ros::Duration(0.05), &MvantExplorationFSM::explorationCallback, this);
     
     // ******************************************************
     // ************ Trigger para lanzar FSM *****************
@@ -289,6 +289,7 @@ namespace fast_planner {
 
       //poner aqui mi logica
       //buscar una frontera acudir y su trayectoria hacia ella en el grid
+      //itera y se queda con la dist min y hace la trayectoria A*
       int res = callPlannerExploration();
       
       if (res == SUCCEED) {
@@ -513,21 +514,24 @@ namespace fast_planner {
     int res;
     
     //TODO revisar expl_manager_->ed_->next_pos_
-    
-    //que significa el avoid collision ??
-    //que significa el go back         ??
-    
+    //TODO revisar expl_manager_->ed_->next_pos_
+    //TODO revisar expl_manager_->ed_->next_pos_
+    //TODO revisar expl_manager_->ed_->next_pos_
+
+    //replan trajectory por posibles colisiones    
     if (fd_->avoid_collision_ || fd_->go_back_) {  // Only replan trajectory
       ROS_WARN_STREAM("planTrajToView");
       
-      //que hace este planificador
+      //planificar una trayectoria respecto a dos puntos
+      //se hace con a* 
       res = expl_manager_->planTrajToView(fd_->start_pt_, fd_->start_vel_, fd_->start_acc_, fd_->start_yaw_, expl_manager_->ed_->next_pos_, expl_manager_->ed_->next_yaw_);
 
       fd_->avoid_collision_ = false;
-    } else {  // Do full planning normally
+    } else {
+      // Do full planning normally
       ROS_WARN_STREAM("planExploreMotion");
 
-      //que hace este planificador
+      //planificar respecto a mi ubicacion
       res = expl_manager_->planExploreMotion(fd_->start_pt_, fd_->start_vel_, fd_->start_acc_, fd_->start_yaw_);
     }
 
@@ -1164,23 +1168,22 @@ namespace fast_planner {
     //Solo se hace cuando el estado es WAIT_TRIGGER
     if (state_ != WAIT_TRIGGER) return;
     
-    //obtener la posicion para ir hacia ella
+    //obtener la posicion del drone
     ROS_WARN_STREAM("Start expl pos: " << fd_->odom_pos_);
-    ROS_WARN_STREAM("Start expl pos transpose: " << fd_->start_pos_.transpose());
-    
+        
     fd_->trigger_ = true;
     
     ROS_WARN_STREAM("Triggered!");
     
     //cout << "Triggered!" << endl;
     fd_->start_pos_ = fd_->odom_pos_;
-    
-    ROS_WARN_STREAM("Start expl pos: " << fd_->start_pos_.transpose());
-    
+
+    ROS_WARN_STREAM("Start expl pos transpose: " << fd_->start_pos_.transpose());
+        
     //verificar si existen fronteras que atender
-    if (expl_manager_->updateFrontierStruct(fd_->odom_pos_, fd_->odom_yaw_, fd_->odom_vel_) != 0) {
+    if (expl_manager_->updateFrontierStruct(fd_->odom_pos_, fd_->odom_yaw_, fd_->odom_vel_) != 0)
       transitState(PLAN_TRAJ, "triggerCallback");
-    } else
+    else
       transitState(FINISH, "triggerCallback");
   }
 
@@ -1283,7 +1286,7 @@ namespace fast_planner {
     msg.stamp = state.stamp_;
     msg.goal_posit = eigenToGeometryMsg(expl_manager_->ed_->next_pos_);
     
-    //msg.role = int(expl_manager_->role_); //Quitar, yo no uso este esquema
+    msg.role = int(expl_manager_->role_); //Quitar, yo no uso este esquema
     
     drone_state_pub_.publish(msg);
   }
@@ -1320,7 +1323,7 @@ namespace fast_planner {
     drone_state.stamp_ = msg->stamp;
     drone_state.recent_attempt_time_ = msg->recent_attempt_time;
     drone_state.goal_pos_ = geometryMsgToEigen(msg->goal_posit);
-    //drone_state.role_ = ROLE(msg->role);
+    drone_state.role_ = ROLE(msg->role);
     
     //std::cout << "Drone " << getId() << " get drone " << int(msg->drone_id) << "'s state" <<
     //std::endl; std::cout << drone_state.pos_.transpose() << std::endl;
@@ -1566,7 +1569,8 @@ namespace fast_planner {
       }
     }
   }
-  
+
+  //No debo mandar trayectorias
   void MvantExplorationFSM::swarmTrajTimerCallback(const ros::TimerEvent& e) {
     // Broadcast newest traj of this drone to others
     if (state_ == EXEC_TRAJ) {

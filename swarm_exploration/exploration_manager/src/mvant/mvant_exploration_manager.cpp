@@ -69,7 +69,7 @@ void MvantExplorationManager::initialize(ros::NodeHandle& nh) {
   hgrid_.reset(new HGrid(edt_environment_, nh));
 
   //Quitar, dado a que yo no uso este esquema
-  role_assigner_.reset(new RoleAssigner(nh));
+  //role_assigner_.reset(new RoleAssigner(nh));
   
   // view_finder_.reset(new ViewFinder(edt_environment_, nh));
 
@@ -296,7 +296,6 @@ int MvantExplorationManager::planTrajToView(const Vector3d& pos, const Vector3d&
   //reseteo de planner
   planner_manager_->path_finder_->reset();
   
-
   //busqueda 
   if (planner_manager_->path_finder_->search(pos, next_pos, optimistic) != Astar::REACH_END) {
     ROS_ERROR("No path to next viewpoint");
@@ -379,7 +378,7 @@ int MvantExplorationManager::updateFrontierStruct(
   frontier_finder_->computeFrontiersToVisit();
   
   // Binary classification of frontiers
-  frontier_finder_->binaryClassify();
+  //frontier_finder_->binaryClassify();
 
   // Get frontiers in front
   frontier_finder_->updateFrontiersInFront(
@@ -390,7 +389,7 @@ int MvantExplorationManager::updateFrontierStruct(
   frontier_finder_->getFrontiersIds(ed_->fronters_ids_);
   frontier_finder_->getDormantFrontiers(ed_->dead_frontiers_);
   frontier_finder_->getFrontierBoxes(ed_->frontier_boxes_);
-  frontier_finder_->getLabeledFrontiers(ed_->labeled_frontiers_);
+  //frontier_finder_->getLabeledFrontiers(ed_->labeled_frontiers_);
   frontier_finder_->getInFrontFrontiers(ed_->infront_frontiers_);
   
   frontier_finder_->getTopViewpointsInfo(pos, ed_->points_, ed_->yaws_, ed_->averages_);
@@ -409,6 +408,7 @@ int MvantExplorationManager::updateFrontierStruct(
   t1 = ros::Time::now();
 
   //hacer mi updateFrontierCostMatrix
+  //aqui debo tener informacion para hacer las comparaciones y llenar la matrix
   frontier_finder_->updateFrontierCostMatrix();
   
   double mat_time = (ros::Time::now() - t1).toSec();
@@ -654,7 +654,11 @@ bool MvantExplorationManager::closestGreedyFrontier(const Vector3d& pos, const V
       }
 
       std::vector<Vector3d> path;
+      
+      //busqueda basada en A* e iterar en los viewpoints y obtener distacia
       double distance = ViewNode::searchPath(pos, vp.pos_, path);
+
+      //AQUI ES TOMA DE DECISION
       if (distance < min_dist) {
         // Check if we need to force a new goal
         const double kMinDistGoals = 1.0;
