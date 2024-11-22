@@ -195,7 +195,8 @@ int MvantExplorationManager::planExploreMotion(
 
   Vector3d next_pos;
   double next_yaw;
-
+  
+  //modificar la velocidad
   updateVelocities(1.0);
 
   bool success = false;
@@ -212,11 +213,14 @@ int MvantExplorationManager::planExploreMotion(
 
   // If we haven't found a goal, then get the first viewpoint (this happens
   // when the goal is farther away)
-  if (!success) {
-    // ROS_ERROR("Falling back to closest greedy frontier");
-    success = closestGreedyFrontier(pos, yaw, next_pos, next_yaw);
-  }
+  //if (!success) {
+  // ROS_ERROR("Falling back to closest greedy frontier");
+  success = closestGreedyFrontier(pos, yaw, next_pos, next_yaw);
+  //}
 
+  //Aqui poner la estrategia
+  
+  
   // Update goal
   if (success) {
     std::cout << "Next view: " << next_pos.transpose() << ", " << next_yaw << std::endl;
@@ -229,6 +233,7 @@ int MvantExplorationManager::planExploreMotion(
       ed_->num_attempts_ = 0;
     }
 
+    //forzar frontera diferente despues de tres intentos de llegar
     const size_t kMaxAttempts = 3;
     if (ed_->num_attempts_ > kMaxAttempts) {
       bool force_different = true;
@@ -279,6 +284,7 @@ bool MvantExplorationManager::isPositionReachable(const Vector3d& from, const Ve
 int MvantExplorationManager::planTrajToView(const Vector3d& pos, const Vector3d& vel, const Vector3d& acc, const Vector3d& yaw, const Vector3d& next_pos, const double& next_yaw) {
 
 
+  //modificar la velocidad
   updateVelocities(1.0);
   // Plan trajectory (position and yaw) to the next viewpoint
   auto t1 = ros::Time::now();
@@ -638,7 +644,7 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
   return found_ftr;
 }
 
-  /*Exploracion principal aplicar yamauchi aqui*/
+  /*Exploracion principal*/
   
 bool MvantExplorationManager::closestGreedyFrontier(const Vector3d& pos, const Vector3d& yaw,
     Vector3d& next_pos, double& next_yaw, bool force_different) const {
@@ -657,8 +663,16 @@ bool MvantExplorationManager::closestGreedyFrontier(const Vector3d& pos, const V
       
       //busqueda basada en A* e iterar en los viewpoints y obtener distacia
       double distance = ViewNode::searchPath(pos, vp.pos_, path);
+      
+      //TERMINAR DE EVALUAR todas las fronteras
+      //Hacer hasta no fronteras
+      
+      //ROS_WARN_STREAM("distance_" << distance);
+      //ROS_WARN_STREAM("min_dist_" << min_dist);
 
-      //AQUI ES TOMA DE DECISION
+      //revisar la frontera que me tome menos distancia por recorrer
+      //se comienza con la primera frontera que analiza
+      //si encuentro una frontera mas cerca, voy a ella
       if (distance < min_dist) {
         // Check if we need to force a new goal
         const double kMinDistGoals = 1.0;
@@ -672,7 +686,7 @@ bool MvantExplorationManager::closestGreedyFrontier(const Vector3d& pos, const V
         min_dist = distance;
         next_pos = vp.pos_;
         next_yaw = vp.yaw_;
-
+	
 	//Pintar aqui el punto al que se va dirigir
 	
       }

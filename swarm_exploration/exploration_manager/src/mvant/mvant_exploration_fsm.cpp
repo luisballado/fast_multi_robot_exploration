@@ -284,10 +284,6 @@ namespace fast_planner {
       // Inform traj_server the replanning
       replan_pub_.publish(std_msgs::Empty());
       
-      //llamar a planificador original
-      //int res = callExplorationPlanner();
-
-      //poner aqui mi logica
       //buscar una frontera acudir y su trayectoria hacia ella en el grid
       //itera y se queda con la dist min y hace la trayectoria A*
       int res = callPlannerExploration();
@@ -348,26 +344,25 @@ namespace fast_planner {
     case EXEC_TRAJ: {
       auto tn = ros::Time::now();
       // Check whether replan is needed
-      //revisar aqui, si ya llego a la frontera
+      
       LocalTrajData* info = &planner_manager_->local_data_;
       double t_cur = (tn - info->start_time_).toSec();
       
-      //Aqui va si necesita replanificar si la frontera fue cubierta, hacer topico
-      
       if (!fd_->go_back_) {
         bool need_replan = false;
-        if (t_cur > fp_->replan_thresh2_ && expl_manager_->frontier_finder_->isFrontierCovered()) {
-          // ROS_WARN("Replan: cluster covered=====================================");
+	
+	if (t_cur > fp_->replan_thresh2_ && expl_manager_->frontier_finder_->isFrontierCovered()) {
+          ROS_WARN("Replan: frontera cubierta==================================");
           need_replan = true;
         } else if (info->duration_ - t_cur < fp_->replan_thresh1_) {
-          // Replan if traj is almost fully executed
-          // ROS_WARN("Replan: traj fully executed=================================");
+          // Replan si la trayectoria ya se realizo
+	  ROS_WARN("Replan: trayectoria realizada==============================");
           need_replan = true;
         } else if (t_cur > fp_->replan_thresh3_) {
-          // Replan after some time
-          // ROS_WARN("Replan: periodic call=======================================");
+          // Replan despues de un tiempo
+          ROS_WARN("Replan: despues de un tiempo===============================");
           need_replan = true;
-        }
+	}
 	
         if (need_replan) {
           if (expl_manager_->updateFrontierStruct(fd_->odom_pos_, fd_->odom_yaw_, fd_->odom_vel_) != 0) {
@@ -532,6 +527,7 @@ namespace fast_planner {
       ROS_WARN_STREAM("planExploreMotion");
 
       //planificar respecto a mi ubicacion
+      //busqueda greedy
       res = expl_manager_->planExploreMotion(fd_->start_pt_, fd_->start_vel_, fd_->start_acc_, fd_->start_yaw_);
     }
 
