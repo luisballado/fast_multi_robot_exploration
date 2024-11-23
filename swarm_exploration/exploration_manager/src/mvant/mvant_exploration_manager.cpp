@@ -201,25 +201,14 @@ int MvantExplorationManager::planExploreMotion(
 
   bool success = false;
 
-  /**
-     YO NO USO ESTE ESQUEMA
-     Replicar como se hace la funcion de exploracion
-     if (role_ == ROLE::EXPLORER) {
-    success = explorerPlan(pos, vel, yaw, next_pos, next_yaw);
-  } else if (role_ == ROLE::GARBAGE_COLLECTOR) {
-    success = collectorPlan(pos, vel, yaw, next_pos, next_yaw);
-  }
-  **/
-
   // If we haven't found a goal, then get the first viewpoint (this happens
-  // when the goal is farther away)
-  //if (!success) {
-  // ROS_ERROR("Falling back to closest greedy frontier");
+  //when the goal is farther away)
+  // Aqui poner la estrategia
+  // obtener los objetivos de los demas robots
+  // calcular distancias
   success = closestGreedyFrontier(pos, yaw, next_pos, next_yaw);
-  //}
 
-  //Aqui poner la estrategia
-  
+  //enviar a drones mi objetivo
   
   // Update goal
   if (success) {
@@ -645,57 +634,82 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
 }
 
   /*Exploracion principal*/
+
+  class Frontera {
+  public:
+    int id;   
+    float distance;
+    Vector3d pos;
+    double yaw;
+  };
   
-bool MvantExplorationManager::closestGreedyFrontier(const Vector3d& pos, const Vector3d& yaw,
-    Vector3d& next_pos, double& next_yaw, bool force_different) const {
-
-  double min_dist = std::numeric_limits<double>::max();
-  bool found_ftr = false;
-  for (const auto& ftr : frontier_finder_->getFrontiers()) {
-    // Find the viewpoint that will be evaluated by iterating over viewpoints (sorted)
-    for (const auto& vp : ftr.viewpoints_) {
+  bool MvantExplorationManager::closestGreedyFrontier(const Vector3d& pos, const Vector3d& yaw,
+						      Vector3d& next_pos, double& next_yaw, bool force_different) const {
+    
+    double min_dist = std::numeric_limits<double>::max();
+    
+    Frontera front1;
+    list<Frontera> fronteras;
+    bool found_ftr = false;
+    for (const auto& ftr : frontier_finder_->getFrontiers()) {
+      
+      // Find the viewpoint that will be evaluated by iterating over viewpoints (sorted)
+      //for (const auto& vp : ftr.viewpoints_) {
       // Check that the position is valid
+      
+      Viewpoint vp = ftr.viewpoints_.front();
+      
       if (!isPositionReachable(pos, vp.pos_)) {
-        continue;
+	continue;
       }
-
+      
       std::vector<Vector3d> path;
       
       //busqueda basada en A* e iterar en los viewpoints y obtener distacia
       double distance = ViewNode::searchPath(pos, vp.pos_, path);
       
-      //TERMINAR DE EVALUAR todas las fronteras
-      //Hacer hasta no fronteras
-      
-      //ROS_WARN_STREAM("distance_" << distance);
-      //ROS_WARN_STREAM("min_dist_" << min_dist);
-
-      //revisar la frontera que me tome menos distancia por recorrer
-      //se comienza con la primera frontera que analiza
-      //si encuentro una frontera mas cerca, voy a ella
-      if (distance < min_dist) {
-        // Check if we need to force a new goal
-        const double kMinDistGoals = 1.0;
-        if (force_different && (vp.pos_ - ed_->next_pos_).norm() < kMinDistGoals) {
-          continue;
-        }
-	
-        // Update flag
-        found_ftr = true;
-        // Target
-        min_dist = distance;
-        next_pos = vp.pos_;
-        next_yaw = vp.yaw_;
-	
-	//Pintar aqui el punto al que se va dirigir
-	
+      // Check if we need to force a new goal
+      const double kMinDistGoals = 1.0;
+      if (force_different && (vp.pos_ - ed_->next_pos_).norm() < kMinDistGoals) {
+	continue;
       }
+
+      front1.id = ftr.id_;
+      front1.distance = distance;
+      front1.pos = vp.pos_;
+      front1.yaw = vp.yaw_;
+      
+      fronteras.push_back(front1);
+      
+      //} end for (const auto& vp : ftr.viewpoi
     }
+
+    //hasta aqui tengo las fronteras categorizadas
+    ROS_WARN_STREAM("drone: " << ep_->drone_id_);
+    
+    //for(auto item: fronteras){
+    //  ROS_WARN_STREAM("F:" << item.id);
+    //  ROS_WARN_STREAM("D:" << item.distance);
+    //}
+    
+    //conseguir la mejor frontera para mi
+    //en base a mi informacion
+    auto it = std::min_element(fronteras.begin(), fronteras.end(), [](const Frontera& a, const Frontera& b) {return a.distance < b.distance;});
+    
+    //asignar frontera    
+    // Update flag
+    found_ftr = true;
+    // Target
+    min_dist = it->distance;
+    next_pos = it->pos;
+    next_yaw = it->yaw;
+
+    //compartir con los demas drones
+    
+    //ros::Duration(5.0).sleep();
+    return found_ftr;
   }
   
-  return found_ftr;
-}
-
 double MvantExplorationManager::attractivePotentialField(double distance) const {
   // NOTE: Here function returns a negative value (the lower the distance, the better),
   // since we are selecting the target with LOWEST cost
