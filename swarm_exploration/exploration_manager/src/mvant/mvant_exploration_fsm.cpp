@@ -146,7 +146,7 @@ namespace fast_planner {
     
     // Swarm, timer, pub and sub
     //broadcast own state periodically
-    drone_state_timer_ = nh.createTimer(ros::Duration(0.04), &MvantExplorationFSM::droneStateTimerCallback, this);
+    drone_state_timer_ = nh.createTimer(ros::Duration(1.0), &MvantExplorationFSM::droneStateTimerCallback, this);
     
     drone_state_pub_   = nh.advertise<exploration_manager::DroneState>("/swarm_expl/drone_state_send", 10);
     drone_state_sub_   = nh.subscribe("/swarm_expl/drone_state_recv", 10, &MvantExplorationFSM::droneStateMsgCallback, this);
@@ -183,6 +183,9 @@ namespace fast_planner {
     topico_sub_ = nh.subscribe("/test_topic", 10, &MvantExplorationFSM::pruebaTopicoCallback, this);
 
     //***********************************************************************************************
+    test_msgs = nh.advertise<std_msgs::Int32>("/com_protocol", 10);
+    test_msgs_sub_ = nh.subscribe("/com_protocol", 10, &MvantExplorationFSM::comunicacionCallback, this);
+    
     test_topico2 = nh.advertise<std_msgs::Empty>("/test_topic2", 10);
     
     topico_sub_2 = nh.subscribe("/test_topic2", 10, &MvantExplorationFSM::pruebaPararCallback, this);
@@ -901,8 +904,51 @@ namespace fast_planner {
     transitState(FINISH, "triggerCallback");
     
   }
+
+
+  void MvantExplorationFSM::comunicacionCallback(const std_msgs::Int32::ConstPtr& msg){
   
-  /**
+    //ROS_WARN_STREAM("PROTOCOLO DE COMUNICACION");
+    
+    switch (msg->data) {
+
+      //solicitud de objetivos
+    case 0: {
+      //Envía mi objetivo y el objetivo conocido de los otros robots
+      break;
+    }
+
+      //recibe objetivo
+    case 1: {
+      //actualiza los objetivos de los otros robot
+      break;
+    }
+      
+      //solicitud de mapa
+    case 2:{
+      //envía mapa
+      break;
+    }
+      //recibe mapa
+    case 3:{
+      //actualiza mapa
+      break;
+    }
+      //señal de parada
+    case 4:{
+      //pon la señal de parada en verdadero
+      break;
+    }
+      
+    default: {
+      ROS_WARN_STREAM("OTRACOSA");
+      break;    
+      
+    }
+      
+    }
+  }
+    /**
    * Ejemplo de un callback apartir de un topico
    */
 
@@ -1245,11 +1291,15 @@ namespace fast_planner {
 		    " to " + fd_->state_str_[int(new_state)]);
     
   }
+
+  //yo quiero una informacion enviarla en un evento
+  
   
   // enviar informacion
   // de un drone
   // cambiar esto a un topico
   void MvantExplorationFSM::droneStateTimerCallback(const ros::TimerEvent& e) {
+    
     // Broadcast own state periodically
     exploration_manager::DroneState msg;
     msg.drone_id = getId();
@@ -1290,7 +1340,7 @@ namespace fast_planner {
   
   //recibo un mensaje DroneState con la informacion de un Drone
   void MvantExplorationFSM::droneStateMsgCallback(const exploration_manager::DroneStateConstPtr& msg) {
-
+    
     // Simulate swarm communication loss
     // si la ubicacion del dron esta lejos de la distancia de comunicacion, no hacer nada
     const Eigen::Vector3d msg_pos(msg->pos[0], msg->pos[1], msg->pos[2]);

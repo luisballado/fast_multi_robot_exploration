@@ -59,10 +59,6 @@ void MvantExplorationManager::initialize(ros::NodeHandle& nh) {
   edt_environment_ = planner_manager_->edt_environment_;
   sdf_map_ = edt_environment_->sdf_map_;
 
-  //hacer mi propuesta de busqueda de fronteras aqui
-  //conocer aqui el valor de planificador seleccionado
-  //hacer switch
-  //frontier_finder.reset(new FrontierFinderMVANT(edt_environment_,nh));
   frontier_finder_.reset(new FrontierFinder(edt_environment_, nh));
 
   // uniform_grid_.reset(new UniformGrid(edt_environment_, nh));
@@ -90,6 +86,7 @@ void MvantExplorationManager::initialize(ros::NodeHandle& nh) {
 
   // Explorer Parameters
   // Quitar, dado a que yo no uso este esquema
+  
   explorer_params_.reset(new ExplorerParams);
   nh.param("explorer/ftr_max_distance", explorer_params_->ftr_max_distance, 15.0);
   nh.param("explorer/max_ang_dist", explorer_params_->max_ang_dist, M_PI / 4.0);
@@ -191,7 +188,7 @@ int MvantExplorationManager::planExploreMotion(
   auto t2 = t1;
   
   std::cout << "start pos: " << pos.transpose() << ", vel: " << vel.transpose()
-            << ", acc: " << acc.transpose() << std::endl;
+	    << ", acc: " << acc.transpose() << std::endl;
 
   Vector3d next_pos;
   double next_yaw;
@@ -200,22 +197,21 @@ int MvantExplorationManager::planExploreMotion(
   updateVelocities(1.0);
 
   bool success = false;
-
+  
   // If we haven't found a goal, then get the first viewpoint (this happens
   //when the goal is farther away)
   // Aqui poner la estrategia
   // obtener los objetivos de los demas robots
   // calcular distancias
   success = closestGreedyFrontier(pos, yaw, next_pos, next_yaw);
-
-  //enviar a drones mi objetivo
   
   // Update goal
   if (success) {
     std::cout << "Next view: " << next_pos.transpose() << ", " << next_yaw << std::endl;
-
+    
     // Check if we have been trying to access them too often
     const double kMinDistGoals = 0.2;
+
     if ((next_pos - ed_->next_pos_).norm() < kMinDistGoals) {
       ++ed_->num_attempts_;
     } else {
@@ -643,14 +639,14 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
     double yaw;
   };
   
-  bool MvantExplorationManager::closestGreedyFrontier(const Vector3d& pos, const Vector3d& yaw,
-						      Vector3d& next_pos, double& next_yaw, bool force_different) const {
+  bool MvantExplorationManager::closestGreedyFrontier(const Vector3d& pos, const Vector3d& yaw, Vector3d& next_pos, double& next_yaw, bool force_different) const {
     
     double min_dist = std::numeric_limits<double>::max();
     
     Frontera front1;
     list<Frontera> fronteras;
     bool found_ftr = false;
+
     for (const auto& ftr : frontier_finder_->getFrontiers()) {
       
       // Find the viewpoint that will be evaluated by iterating over viewpoints (sorted)
@@ -684,7 +680,7 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
       //} end for (const auto& vp : ftr.viewpoi
     }
 
-    //hasta aqui tengo las fronteras categorizadas
+    //hasta aqui tengo las fronteras con distancias
     ROS_WARN_STREAM("drone: " << ep_->drone_id_);
     
     //for(auto item: fronteras){
@@ -705,6 +701,7 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
     next_yaw = it->yaw;
 
     //compartir con los demas drones
+    //como puedo compartir con los demas drones??
     
     //ros::Duration(5.0).sleep();
     return found_ftr;
