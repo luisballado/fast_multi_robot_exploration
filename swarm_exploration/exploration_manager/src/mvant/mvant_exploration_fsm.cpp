@@ -158,10 +158,13 @@ namespace fast_planner {
     
     opt_res_pub_ = nh.advertise<exploration_manager::PairOptResponse>("/swarm_expl/pair_opt_res_send", 10);
     opt_res_sub_ = nh.subscribe("/swarm_expl/pair_opt_res_recv", 100, &MvantExplorationFSM::optResMsgCallback, this, ros::TransportHints().tcpNoDelay());
-    
-    swarm_traj_pub_   = nh.advertise<bspline::Bspline>("/planning/swarm_traj_send", 100);
-    swarm_traj_sub_   = nh.subscribe("/planning/swarm_traj_recv", 100, &MvantExplorationFSM::swarmTrajCallback, this);
-    swarm_traj_timer_ = nh.createTimer(ros::Duration(0.1), &MvantExplorationFSM::swarmTrajTimerCallback, this);
+
+    //topico para mandar traj
+    //swarm_traj_pub_   = nh.advertise<bspline::Bspline>("/planning/swarm_traj_send", 100);
+    //recibir traj y validar que no choquen drones
+    //swarm_traj_sub_   = nh.subscribe("/planning/swarm_traj_recv", 100, &MvantExplorationFSM::swarmTrajCallback, this);
+    //cada cierto tiempo se mandan traj
+    //swarm_traj_timer_ = nh.createTimer(ros::Duration(0.1), &MvantExplorationFSM::swarmTrajTimerCallback, this);
     
     hgrid_pub_     = nh.advertise<exploration_manager::HGrid>("/swarm_expl/hgrid_send", 10);
     grid_tour_pub_ = nh.advertise<exploration_manager::GridTour>("/swarm_expl/grid_tour_send", 10);
@@ -335,7 +338,7 @@ namespace fast_planner {
         fd_->newest_traj_.drone_id = expl_manager_->ep_->drone_id_;
 
 	//informar a los drones
-	swarm_traj_pub_.publish(fd_->newest_traj_);
+	//swarm_traj_pub_.publish(fd_->newest_traj_);
 	
         thread vis_thread(&MvantExplorationFSM::visualize, this, 2);
         vis_thread.detach();
@@ -789,7 +792,7 @@ namespace fast_planner {
     
     if (state_ != WAIT_TRIGGER) {
 
-      auto ft = expl_manager_->frontier_finder_;
+      //auto ft = expl_manager_->frontier_finder_;
       auto ed = expl_manager_->ed_;
       
       /*
@@ -851,27 +854,7 @@ namespace fast_planner {
 
 	
       }
-      
-      
-      // Draw labeled frontier
-      /**
-      for (size_t i = 0; i < ed->labeled_frontiers_.size(); ++i) {
-	Eigen::Vector4d color(0, 0, 0, 0.5);
-	if (ed->labeled_frontiers_[i].first == LABEL::TRAIL) {
-	  color[0] = 1.;
-	} else if (ed->labeled_frontiers_[i].first == LABEL::FRONTIER) {
-	  color[1] = 1.;
-	} else {
-	  color[2] = 1.;
-	}
-	visualization_->drawCubes(
-				  ed->labeled_frontiers_[i].second, res, color, "labeled_frontier", i, 7);
-      }
-      for (int i = ed->frontiers_.size(); i < 50; ++i) {
-	visualization_->drawCubes({}, res, Vector4d(0, 0, 0, 1), "labeled_frontier", i, 7);
-      }
-      **/
-      
+            
       visualize(2);
       // if (status)
       //   visualize(2);
@@ -1568,6 +1551,8 @@ namespace fast_planner {
    *
    */
   void MvantExplorationFSM::swarmTrajCallback(const bspline::BsplineConstPtr& msg) {
+    //recibe trayectoria y compara que no se intersecten, replanifica si lo hacen
+    
     // Get newest trajs from other drones, for inter-drone collision avoidance
     auto& sdat = planner_manager_->swarm_traj_data_;
     
@@ -1622,8 +1607,9 @@ namespace fast_planner {
   //No debo mandar trayectorias
   void MvantExplorationFSM::swarmTrajTimerCallback(const ros::TimerEvent& e) {
     // Broadcast newest traj of this drone to others
+    //Programa se llama cada cierto tiempo
     if (state_ == EXEC_TRAJ) {
-      swarm_traj_pub_.publish(fd_->newest_traj_);
+      //swarm_traj_pub_.publish(fd_->newest_traj_);
       
     } else if (state_ == WAIT_TRIGGER) {
       // Publish a virtual traj at current pose, to avoid collision
@@ -1649,7 +1635,7 @@ namespace fast_planner {
 	bspline.knots.push_back(knots(i));
       }
       bspline.drone_id = expl_manager_->ep_->drone_id_;
-      swarm_traj_pub_.publish(bspline);
+      //swarm_traj_pub_.publish(bspline);
     }
   }
 }  // namespace fast_planner
