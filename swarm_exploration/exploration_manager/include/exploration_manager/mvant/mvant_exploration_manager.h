@@ -24,7 +24,7 @@ class HGrid;
 class FrontierFinder;
 struct ExplorationParam;
 struct ExplorationData;
-
+  
 enum EXPL_RESULT { NO_FRONTIER, FAIL, SUCCEED, NO_GRID };
 
 struct ExplorerParams {

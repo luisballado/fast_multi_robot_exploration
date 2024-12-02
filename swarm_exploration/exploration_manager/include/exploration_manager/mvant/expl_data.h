@@ -55,7 +55,7 @@ struct FSMParam {
   string coordination_type;
   
 };
-
+  
 struct DroneState {
   Eigen::Vector3d pos_;
   Eigen::Vector3d vel_;
@@ -71,6 +71,7 @@ struct DroneState {
   Eigen::Vector3d goal_pos_;
   
   size_t role_;
+  
 };
 
 struct ExplorationData {
@@ -125,6 +126,9 @@ struct ExplorationData {
   vector<int> last_grid_ids_;
 
   int plan_num_;
+
+  list<int> fronteras; //segun lista aca
+  
 };
 
 struct ExplorationParam {

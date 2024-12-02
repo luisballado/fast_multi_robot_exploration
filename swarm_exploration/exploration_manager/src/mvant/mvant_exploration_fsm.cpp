@@ -409,7 +409,7 @@ namespace fast_planner {
 
          //Estado final
     case FINISH: {
-      ROS_WARN("FINISH STATE");
+      ROS_INFO_THROTTLE(1.0, "FINISH STATE");
       //sendStopMsg(1);
       ROS_INFO_THROTTLE(1.0, "-- exploracion terminada --");
       sendStopMsg(1);
@@ -511,11 +511,6 @@ namespace fast_planner {
     
     int res;
     
-    //TODO revisar expl_manager_->ed_->next_pos_
-    //TODO revisar expl_manager_->ed_->next_pos_
-    //TODO revisar expl_manager_->ed_->next_pos_
-    //TODO revisar expl_manager_->ed_->next_pos_
-
     //replan trajectory por posibles colisiones    
     if (fd_->avoid_collision_ || fd_->go_back_) {  // Only replan trajectory
       ROS_WARN_STREAM("planTrajToView");
@@ -857,6 +852,7 @@ namespace fast_planner {
 	
       }
       
+      
       // Draw labeled frontier
       /**
       for (size_t i = 0; i < ed->labeled_frontiers_.size(); ++i) {
@@ -907,14 +903,20 @@ namespace fast_planner {
 
 
   void MvantExplorationFSM::comunicacionCallback(const std_msgs::Int32::ConstPtr& msg){
-  
+
+    auto ed_ptr = expl_manager_->ed_;
     //ROS_WARN_STREAM("PROTOCOLO DE COMUNICACION");
     
     switch (msg->data) {
 
       //solicitud de objetivos
     case 0: {
+      //de la base de mis conocimientos, hacer busqueda y enviar
+      //next 
+      ROS_WARN_STREAM("drone-comm: " << getId() << "--" << ed_ptr->fronteras.size());
+      ROS_WARN_STREAM("next pos: " << ed_ptr->next_pos_);
       //Envía mi objetivo y el objetivo conocido de los otros robots
+      //pub
       break;
     }
 
@@ -1227,6 +1229,7 @@ namespace fast_planner {
       transitState(PLAN_TRAJ, "triggerCallback");
     else
       transitState(FINISH, "triggerCallback");
+    
   }
 
   //Detectar colisiones

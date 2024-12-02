@@ -71,7 +71,7 @@ void MvantExplorationManager::initialize(ros::NodeHandle& nh) {
 
   ed_.reset(new ExplorationData);
   ep_.reset(new ExplorationParam);
-  
+
   nh.param("exploration/refine_local", ep_->refine_local_, true);
   nh.param("exploration/refined_num", ep_->refined_num_, -1);
   nh.param("exploration/refined_radius", ep_->refined_radius_, -1.0);
@@ -207,7 +207,8 @@ int MvantExplorationManager::planExploreMotion(
   
   // Update goal
   if (success) {
-    std::cout << "Next view: " << next_pos.transpose() << ", " << next_yaw << std::endl;
+    
+    //ROS_WARN_STREAM("Next view: " << next_pos.transpose() << ", " << next_yaw);
     
     // Check if we have been trying to access them too often
     const double kMinDistGoals = 0.2;
@@ -630,7 +631,7 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
 }
 
   /*Exploracion principal*/
-
+  
   class Frontera {
   public:
     int id;   
@@ -640,18 +641,16 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
   };
   
   bool MvantExplorationManager::closestGreedyFrontier(const Vector3d& pos, const Vector3d& yaw, Vector3d& next_pos, double& next_yaw, bool force_different) const {
+
+    Frontera front1;
+    list<Frontera> fronteras = {};
+    ed_->fronteras = {};
     
     double min_dist = std::numeric_limits<double>::max();
     
-    Frontera front1;
-    list<Frontera> fronteras;
     bool found_ftr = false;
-
+    
     for (const auto& ftr : frontier_finder_->getFrontiers()) {
-      
-      // Find the viewpoint that will be evaluated by iterating over viewpoints (sorted)
-      //for (const auto& vp : ftr.viewpoints_) {
-      // Check that the position is valid
       
       Viewpoint vp = ftr.viewpoints_.front();
       
@@ -661,7 +660,7 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
       
       std::vector<Vector3d> path;
       
-      //busqueda basada en A* e iterar en los viewpoints y obtener distacia
+      //busqueda basada en A* e iterar en fronteras y obtener distacia
       double distance = ViewNode::searchPath(pos, vp.pos_, path);
       
       // Check if we need to force a new goal
@@ -669,19 +668,21 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
       if (force_different && (vp.pos_ - ed_->next_pos_).norm() < kMinDistGoals) {
 	continue;
       }
-
+      
       front1.id = ftr.id_;
       front1.distance = distance;
       front1.pos = vp.pos_;
       front1.yaw = vp.yaw_;
-      
+
       fronteras.push_back(front1);
       
-      //} end for (const auto& vp : ftr.viewpoi
+      ed_->fronteras.push_back(ftr.id_);
+      
     }
 
     //hasta aqui tengo las fronteras con distancias
-    ROS_WARN_STREAM("drone: " << ep_->drone_id_);
+    //ROS_WARN_STREAM("drone ffr: " << ed_->fronteras.size());
+    
     
     //for(auto item: fronteras){
     //  ROS_WARN_STREAM("F:" << item.id);
