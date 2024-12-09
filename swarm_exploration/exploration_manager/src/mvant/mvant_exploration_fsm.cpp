@@ -109,11 +109,6 @@ namespace fast_planner {
     heartbit_timer_ = nh.createTimer(ros::Duration(1.0), &MvantExplorationFSM::heartbitCallback, this);
     
     // ******************************************************
-    // ************** Exploración fronteras *****************
-    // ******************************************************
-    //exploration_timer_ = nh.createTimer(ros::Duration(0.05), &MvantExplorationFSM::explorationCallback, this);
-    
-    // ******************************************************
     // ************ Trigger para lanzar FSM *****************
     // ******************************************************
     // Se puede invocar desde terminal
@@ -125,13 +120,8 @@ namespace fast_planner {
     // ******************************************************
     odom_sub_    = nh.subscribe("/odom_world", 1, &MvantExplorationFSM::odometryCallback, this);
     
-    //funcion que se suscribe de prueba
-    //test_sub_ = nh.subscribe("/pruebas", 1, &MvantExplorationFSM::pruebasCallback, this);
-    
-    //subscriber llevarlo a nuevo archivo
-    //nearby_obs_sub_ = nh.subscribe("/nearby_obstacles", 1000, &MvantExplorationFSM::nearbyObstaclesCallback, this);
-    
-    //-------------------------------------------------------------------------------------------------
+        
+    //-------------------------------------------------------
     // ******************************************************
     // ****************** TOPICOS  **************************
     // ******************************************************
@@ -153,8 +143,7 @@ namespace fast_planner {
     
     opt_timer_ = nh.createTimer(ros::Duration(0.05), &MvantExplorationFSM::optTimerCallback, this);
     opt_pub_   = nh.advertise<exploration_manager::PairOpt>("/swarm_expl/pair_opt_send", 10);
-    opt_sub_   = nh.subscribe("/swarm_expl/pair_opt_recv", 100, &MvantExplorationFSM::optMsgCallback,
-			    this, ros::TransportHints().tcpNoDelay());
+    opt_sub_   = nh.subscribe("/swarm_expl/pair_opt_recv", 100, &MvantExplorationFSM::optMsgCallback,this, ros::TransportHints().tcpNoDelay());
     
     opt_res_pub_ = nh.advertise<exploration_manager::PairOptResponse>("/swarm_expl/pair_opt_res_send", 10);
     opt_res_sub_ = nh.subscribe("/swarm_expl/pair_opt_res_recv", 100, &MvantExplorationFSM::optResMsgCallback, this, ros::TransportHints().tcpNoDelay());
@@ -166,7 +155,7 @@ namespace fast_planner {
     //cada cierto tiempo se mandan traj
     //swarm_traj_timer_ = nh.createTimer(ros::Duration(0.1), &MvantExplorationFSM::swarmTrajTimerCallback, this);
     
-    hgrid_pub_     = nh.advertise<exploration_manager::HGrid>("/swarm_expl/hgrid_send", 10);
+    //hgrid_pub_     = nh.advertise<exploration_manager::HGrid>("/swarm_expl/hgrid_send", 10);
     grid_tour_pub_ = nh.advertise<exploration_manager::GridTour>("/swarm_expl/grid_tour_send", 10);
     
     //-------------------------------------------------------------------------------------------------
@@ -179,19 +168,19 @@ namespace fast_planner {
 
     // prueba de topico dummy
     // este es un topico que espera un mensaje vacio
-    test_topico = nh.advertise<std_msgs::Empty>("/test_topic", 10);
+    test_topico = nh.advertise<std_msgs::Empty>("/test_topic/one", 10);
 
     // este es una funcion callback que se suscribe al topico,
     // cuando el topico manda algo, la funcion se manda a llamar
-    topico_sub_ = nh.subscribe("/test_topic", 10, &MvantExplorationFSM::pruebaTopicoCallback, this);
+    topico_sub_ = nh.subscribe("/test_topic/one", 10, &MvantExplorationFSM::pruebaTopicoCallback, this);
 
     //***********************************************************************************************
     test_msgs = nh.advertise<std_msgs::Int32>("/com_protocol", 10);
     test_msgs_sub_ = nh.subscribe("/com_protocol", 10, &MvantExplorationFSM::comunicacionCallback, this);
     
-    test_topico2 = nh.advertise<std_msgs::Empty>("/test_topic2", 10);
+    test_topico2 = nh.advertise<std_msgs::Empty>("/test_topic/two", 10);
     
-    topico_sub_2 = nh.subscribe("/test_topic2", 10, &MvantExplorationFSM::pruebaPararCallback, this);
+    topico_sub_2 = nh.subscribe("/test_topic/two", 10, &MvantExplorationFSM::pruebaPararCallback, this);
 
     
     // si lo utilizo para la evaluacion de los K-vecinos respecto al VANT
@@ -260,7 +249,7 @@ namespace fast_planner {
     case WAIT_TRIGGER: {
       // Do nothing but wait for trigger
       ROS_WARN_ONCE(" -- esperando lanzador -- ");
-      ROS_WARN_ONCE("Exploracion: %s", "mvant");
+      ROS_WARN_ONCE("Exploracion: mvant");
       ROS_WARN_ONCE("Tipo coordinacion: %s", fp_->coordination_type.c_str());
             
       break;
@@ -792,32 +781,10 @@ namespace fast_planner {
     
     if (state_ != WAIT_TRIGGER) {
 
-      //auto ft = expl_manager_->frontier_finder_;
       auto ed = expl_manager_->ed_;
-      
-      /*
-	auto getColorVal = [&](const int& id, const int& num, const int& drone_id) {
-	double a = (drone_id - 1) / double(num + 1);
-	double b = 1 / double(num + 1);
-	return a + b * double(id) / ed->frontiers_.size();
-	};
-      */
-      
-      // ft->searchFrontiers();
-      // ft->computeFrontiersToVisit();
-      // ft->updateFrontierCostMatrix();
-      
-      // ft->getFrontiers(ed->frontiers_);
-      // ft->getFrontierBoxes(ed->frontier_boxes_);
-      
+
       expl_manager_->updateFrontierStruct(fd_->odom_pos_, fd_->odom_yaw_, fd_->odom_vel_);
-      
-      // cout << "odom: " << fd_->odom_pos_.transpose() << endl;
-      // vector<int> tmp_id1;
-      // vector<vector<int>> tmp_id2;
-      // bool status = expl_manager_->findGlobalTourOfGrid(
-      //     { fd_->odom_pos_ }, { fd_->odom_vel_ }, tmp_id1, tmp_id2, true);
-      
+            
       // Draw frontier and bounding box
       auto res = expl_manager_->sdf_map_->getResolution();
             
@@ -825,17 +792,12 @@ namespace fast_planner {
 
 	auto color = visualization_->getColor(double(i) / ed->frontiers_.size(), 0.4);
 	visualization_->drawCubes(ed->frontiers_[i], res, color, "frontier", i, 4);
-	// getColorVal(i, expl_manager_->ep_->drone_num_, expl_manager_->ep_->drone_id_)
-	// double(i) / ed->frontiers_.size()
-	// visualization_->drawBox(ed->frontier_boxes_[i].first, ed->frontier_boxes_[i].second,
-	//   color, "frontier_boxes", i, 4);
-
+	
 	Vector3d centroid(0.0, 0.0, 0.0);
 	int count = 0;
 	
 	centroid = ed->views_[i];
-	/* ########################################### */
-	
+		
 	// mostrar el numero de frontera
 	auto id_str = std::to_string(ed->fronters_ids_[i]);
 	//ROS_WARN_STREAM("Frontera:: " << id_str);
@@ -843,16 +805,12 @@ namespace fast_planner {
 	
 	visualization_->drawText(centroid, "F-"+id_str, 0.8, Eigen::Vector4d(0.0, 0.0, 0.0, 1.0), "id", ed->frontiers_.size() + i, 4);
 	
-	
       }
       
       for (int i = ed->frontiers_.size(); i < 50; ++i) {
 	visualization_->drawCubes({}, res, Vector4d(0, 0, 0, 1), "frontier", i, 4);
 	visualization_->drawText({}, "", 0.8, Eigen::Vector4d(0.0, 0.0, 0.0, 1.0), "id", ed->frontiers_.size() + i, 4);
-	// visualization_->drawBox(Vector3d(0, 0, 0), Vector3d(0, 0, 0), Vector4d(1, 0, 0, 0.3),
-	//   "frontier_boxes", i, 4);
-
-	
+		
       }
             
       visualize(2);
@@ -961,83 +919,7 @@ namespace fast_planner {
     
     //ROS_WARN_ONCE("Tipo coordinacion: %s", fp_->coordination_type.c_str());
   }
-  
-  /**
-     Dummy Explorarcion
-   **/
-  void MvantExplorationFSM::explorationCallback(const ros::TimerEvent& e) {
-    //const std_msgs::Empty::ConstPtr& msg){
     
-    if (state_ == EXEC_TRAJ || state_ == WAIT_TRIGGER || state_ == INIT || state_ == PUB_TRAJ) return;
-    
-    auto ft = expl_manager_->frontier_finder_; //cosas de frontier finder
-    auto ed = expl_manager_->ed_;              //cosas de exploration data
-    
-    // Actualizar fonteras
-    // respecto a la posicion del vant (pos,yaw,vel)
-    auto fronteras_num = expl_manager_->updateFrontierStruct(fd_->odom_pos_, fd_->odom_yaw_, fd_->odom_vel_);
-    
-    // Resolucion de los voxels (0.15)
-    auto res = expl_manager_->sdf_map_->getResolution();
-    
-    // almacenar distancias
-    std::multimap<double,Eigen::Vector3d> distancias;
-    
-    for (int i = 0; i < ed->frontiers_.size(); ++i) {
-      
-      /* ########################################### */
-      // obtener centroide para cada frontera
-      Vector3d centroid(0.0, 0.0, 0.0);
-      //en views_[] <- viene el centroide de la frontera
-      centroid = ed->views_[i];
-      /* ########################################### */
-      
-      // calcular distancia y meterlo a un arreglo
-      double _distancia_ = getDistance(fd_->odom_pos_,centroid);
-      distancias.emplace(_distancia_,centroid);
-            
-    }
-
-    auto it = distancias.begin();
-
-    double dis = it->first;
-    ROS_WARN_STREAM("DISTANCIA::" << dis);
-    if (dis < 3.0) {
-      advance(it, 1); // mover el iterador
-    }
-        
-    // multimap los ordena ascendente
-    //la posicion del vector views_[] funciona, pero el punto lo marca atras en ciertas condiciones
-    Eigen::Vector3d posicion = it->second; // ed->views_[0]; // 
-
-    //ROS_WARN_STREAM("VALOR::" << posicion.transpose());
-    
-    Eigen::Vector3d pos;
-    pos << posicion(0), posicion(1), 1;
-
-    Eigen::Vector3d dir = pos - fd_->odom_pos_;
-    
-    ed->next_pos_ = pos;
-    ed->next_yaw_ = atan2(dir[1], dir[0]);
-        
-    //pintar un punto - que es el objetivo
-    auto _col_ = visualization_->getColor(2 / 20, 1); //RED
-    visualization_->drawGoal(pos,0.30,_col_,1);
-    
-    transitState(PLAN_TRAJ, "pruebasCallback");
-    
-    // imprimir num de fronteras
-    ROS_WARN_STREAM("Num::" << ed->frontiers_.size());
-    //visualize(1);
-
-    // transitar a IDLE cuando no existan mas fronteras por descubrir
-    if (ed->frontiers_.size() == 0) {
-      //transitState(IDLE, "pruebasCallback");
-      transitState(FINISH, "pruebasCallback");
-    }
-    
-  }
-  
   /***
       Entrada k, di
       Salida Vector con los k cercanos -- talvez su indice
@@ -1278,9 +1160,6 @@ namespace fast_planner {
     
   }
 
-  //yo quiero una informacion enviarla en un evento
-  
-  
   // enviar informacion
   // de un drone
   // cambiar esto a un topico
@@ -1318,7 +1197,7 @@ namespace fast_planner {
     msg.stamp = state.stamp_;
     msg.goal_posit = eigenToGeometryMsg(expl_manager_->ed_->next_pos_);
     
-    msg.role = int(expl_manager_->role_); //Quitar, yo no uso este esquema
+    //msg.role = int(expl_manager_->role_); //Quitar, yo no uso este esquema
     
     drone_state_pub_.publish(msg);
   }
@@ -1327,19 +1206,16 @@ namespace fast_planner {
   //recibo un mensaje DroneState con la informacion de un Drone
   void MvantExplorationFSM::droneStateMsgCallback(const exploration_manager::DroneStateConstPtr& msg) {
     
-    // Simulate swarm communication loss
-    // si la ubicacion del dron esta lejos de la distancia de comunicacion, no hacer nada
+    // todos menos yo
+    if (msg->drone_id == getId()) return;
+    
+    // simular perdida de comunicacion
+    // si la ubicacion del dron esta lejos de la distancia de comunicacion,
+    // no hacer nada
     const Eigen::Vector3d msg_pos(msg->pos[0], msg->pos[1], msg->pos[2]);
     if ((msg_pos - fd_->odom_pos_).norm() > fp_->communication_range_) {
       return;
     }
-    
-    // Update other drones' states
-    if (msg->drone_id == getId()) return;
-    
-    //quitar, yo no uso coll_assigner
-    // Skip update if collaboration is inactive
-    //if (!coll_assigner_->isActive()) return;
     
     auto& drone_state = expl_manager_->ed_->swarm_state_[msg->drone_id - 1];
     if (drone_state.stamp_ + 1e-4 >= msg->stamp) return;  // Avoid unordered msg
@@ -1350,16 +1226,17 @@ namespace fast_planner {
     
     drone_state.grid_ids_.clear();
 
+    //planchar mapa
     for (auto id : msg->grid_ids) drone_state.grid_ids_.push_back(id);
 
     drone_state.stamp_ = msg->stamp;
     drone_state.recent_attempt_time_ = msg->recent_attempt_time;
     drone_state.goal_pos_ = geometryMsgToEigen(msg->goal_posit);
-    drone_state.role_ = ROLE(msg->role);
+    //drone_state.role_ = ROLE(msg->role);
     
     //std::cout << "Drone " << getId() << " get drone " << int(msg->drone_id) << "'s state" <<
     //std::endl; std::cout << drone_state.pos_.transpose() << std::endl;
-    //ROS_WARN_STREAM_THROTTLE(1.0, "Drone " << getId() << " get drone " << int(msg->drone_id) << "'s state" << drone_state.pos_.transpose());
+    //ROS_WARN_STREAM("Drone " << getId() << " get drone " << int(msg->drone_id) << "'s state" << drone_state.pos_.transpose());
   }
   
   void MvantExplorationFSM::optTimerCallback(const ros::TimerEvent& e) {

@@ -55,6 +55,9 @@ struct FSMParam {
   string coordination_type;
   
 };
+
+  //Unico mensaje
+  //ID, pos, goal, mapa
   
 struct DroneState {
   Eigen::Vector3d pos_;
@@ -70,7 +73,7 @@ struct DroneState {
   // FAME
   Eigen::Vector3d goal_pos_;
   
-  size_t role_;
+  //size_t role_;
   
 };
 
@@ -142,7 +145,7 @@ struct ExplorationParam {
   string mtsp_dir_;  // resource dir of tsp solver
   double relax_time_;
   int init_plan_num_;
-
+  
   // Swarm
   int drone_num_;
   int drone_id_;

@@ -24,10 +24,9 @@ void MultiMapManager::init() {
   node_.param("multi_map_manager/chunk_size", chunk_size_, 200);
   node_.param("fsm/communication_range", communication_range_, std::numeric_limits<double>::max());
 
-  stamp_timer_ = node_.createTimer(ros::Duration(0.1), &MultiMapManager::stampTimerCallback, this);
-  chunk_timer_ = node_.createTimer(ros::Duration(0.1), &MultiMapManager::chunkTimerCallback, this);
-  logging_timer_ =
-      node_.createTimer(ros::Duration(5.0), &MultiMapManager::loggingTimerCallback, this);
+  //stamp_timer_ = node_.createTimer(ros::Duration(0.1), &MultiMapManager::stampTimerCallback, this);
+  //chunk_timer_ = node_.createTimer(ros::Duration(0.1), &MultiMapManager::chunkTimerCallback, this);
+  logging_timer_ = node_.createTimer(ros::Duration(5.0), &MultiMapManager::loggingTimerCallback, this);
 
   stamp_pub_ =
       node_.advertise<plan_env_msgs::ChunkStamps>("/multi_map_manager/chunk_stamps_send", 10);
@@ -56,7 +55,7 @@ void MultiMapManager::init() {
 
   // Logging
   std::string log_folder;
-  node_.param("multi_map_manager/log_folder", log_folder, std::string("/home/luca/Desktop/test"));
+  node_.param("multi_map_manager/log_folder", log_folder, std::string("/home/catkin_ws/logs"));
   assert(!log_folder.empty());
   logger_.reset(new MapLogger(log_folder, drone_id_));
 
@@ -150,7 +149,7 @@ void MultiMapManager::stampTimerCallback(const ros::TimerEvent& e) {
   stamp_pub_.publish(msg);
 
   return;
-
+  
   // Test, visualize the chunks
   static int pub_num = 0;
   static int pub_id = 0;
@@ -263,6 +262,7 @@ bool MultiMapManager::findIntersect(
   return false;
 }
 
+  //envio de pedazos
 void MultiMapManager::sendChunks(
     const int& chunk_drone_id, const int& to_drone_id, const vector<int>& idx_list) {
   auto& data = multi_map_chunks_[chunk_drone_id - 1];
@@ -320,8 +320,7 @@ void MultiMapManager::chunkCallback(const plan_env_msgs::ChunkDataConstPtr& msg)
       buffer_map_[msg->chunk_drone_id - 1].end())
     return;
 
-  // ROS_ERROR("received msg idx: %d, from %d to %d", msg->idx, msg->from_drone_id,
-  // msg->to_drone_id);
+  //ROS_ERROR("received msg idx: %d, from %d to %d", msg->idx, msg->from_drone_id, msg->to_drone_id);
   chunk_buffer_[msg->chunk_drone_id - 1].push_back(*msg);
   buffer_map_[msg->chunk_drone_id - 1][msg->idx] = 1;
 
