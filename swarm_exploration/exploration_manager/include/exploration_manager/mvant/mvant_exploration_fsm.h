@@ -99,7 +99,6 @@ private:
   void pruebaPararCallback(const std_msgs::Empty::ConstPtr& msg);
   void comunicacionCallback(const std_msgs::Int32::ConstPtr& msg);
   
-  
   // Swarm
   void droneStateTimerCallback(const ros::TimerEvent& e);
   void droneStateMsgCallback(const exploration_manager::DroneStateConstPtr& msg);
@@ -108,7 +107,7 @@ private:
   void optResMsgCallback(const exploration_manager::PairOptResponseConstPtr& msg);
   void swarmTrajCallback(const bspline::BsplineConstPtr& msg);
   void swarmTrajTimerCallback(const ros::TimerEvent& e);
-  
+
   /* planning utils */
   shared_ptr<FastPlannerManager> planner_manager_;
   shared_ptr<MvantExplorationManager> expl_manager_;
@@ -137,6 +136,12 @@ private:
   ros::Subscriber topico_sub_, topico_sub_2,test_msgs_sub_;
   // ******************************
 
+  //objetos
+  ros::Publisher marker_pub_;
+  ros::Timer timer_;
+  std::vector<visualization_msgs::Marker> markers_; // Vector de marcadores
+  void timerCallback(const ros::TimerEvent& e);
+  
   //pruebas
   ros::Publisher test_fronteras;
   ros::Subscriber test_sub_;

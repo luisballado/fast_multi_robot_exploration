@@ -192,7 +192,44 @@ namespace fast_planner {
     prueba_nb = nh.createTimer(ros::Duration(0.2), &MvantExplorationFSM::nearbyObstaclesCallback, this);
     
     //-------------------------------------------------------------------------------------------------
+
+    //prueba de cajas
+    marker_pub_ = nh.advertise<visualization_msgs::Marker>("/moving_boxes", 10);
+        
+    // Inicializa el generador de números aleatorios
+    std::srand(std::time(0));
+
+    // Crea 5 marcadores iniciales
+    for (int i = 0; i < 5; ++i){
+      visualization_msgs::Marker marker;
+      marker.header.frame_id = "world";
+      marker.ns = "moving_boxes";
+      marker.id = i;
+      marker.type = visualization_msgs::Marker::CUBE;
+      marker.action = visualization_msgs::Marker::ADD;
+      marker.scale.x = 0.5;
+      marker.scale.y = 0.5;
+      marker.scale.z = 0.5;
+      marker.color.r = 0.0;
+      marker.color.g = 1.0; // Verde
+      marker.color.b = 0.0;
+      marker.color.a = 1.0;
+      
+      // Posiciones iniciales aleatorias
+      marker.pose.position.x = static_cast<float>(std::rand()) / RAND_MAX * 10 - 5;
+      marker.pose.position.y = static_cast<float>(std::rand()) / RAND_MAX * 10 - 5;
+      marker.pose.position.z = static_cast<float>(std::rand()) / RAND_MAX * 2;
+      
+      marker.pose.orientation.x = 0.0;
+      marker.pose.orientation.y = 0.0;
+      marker.pose.orientation.z = 0.0;
+      marker.pose.orientation.w = 1.0;
+      
+      markers_.push_back(marker);
+    }
     
+    timer_ = nh.createTimer(ros::Duration(1.0), &MvantExplorationFSM::timerCallback, this);
+        
   }
   
   int MvantExplorationFSM::getId() {
@@ -919,7 +956,26 @@ namespace fast_planner {
     
     //ROS_WARN_ONCE("Tipo coordinacion: %s", fp_->coordination_type.c_str());
   }
-    
+
+  void MvantExplorationFSM::timerCallback(const ros::TimerEvent& e) {
+    for (auto& marker : markers_){
+      // Actualiza las posiciones aleatoriamente
+      marker.pose.position.x += static_cast<float>(std::rand()) / RAND_MAX * 0.2 - 0.1; // Movimiento pequeño en X
+      marker.pose.position.y += static_cast<float>(std::rand()) / RAND_MAX * 0.2 - 0.1; // Movimiento pequeño en Y
+      marker.pose.position.z += static_cast<float>(std::rand()) / RAND_MAX * 0.1 - 0.05; // Movimiento pequeño en Z
+      
+      // Asegúrate de que las cajas permanezcan en el rango [-5, 5] para X e Y, y [0, 2] para Z
+      
+      marker.pose.position.x = std::max(-5.0, std::min(5.0, marker.pose.position.x));
+      marker.pose.position.y = std::max(-5.0, std::min(5.0, marker.pose.position.y));
+      marker.pose.position.z = std::max(0.0, std::min(2.0, marker.pose.position.z));
+      
+      // Publica el marcador actualizado
+      marker_pub_.publish(marker);
+    }
+  }
+  
+
   /***
       Entrada k, di
       Salida Vector con los k cercanos -- talvez su indice
