@@ -147,7 +147,6 @@ private:
   float max_velocity_;
   float min_velocity_;
   void timerCallback(const ros::TimerEvent& e);
-
   
   //pruebas
   ros::Publisher test_fronteras;
