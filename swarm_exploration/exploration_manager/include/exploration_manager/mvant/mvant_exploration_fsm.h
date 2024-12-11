@@ -137,10 +137,17 @@ private:
   // ******************************
 
   //objetos
-  ros::Publisher marker_pub_;
+  struct Obstacle{
+    geometry_msgs::Point position;
+    geometry_msgs::Point velocity;
+  };
+  ros::Publisher cloud_pub_;
   ros::Timer timer_;
-  std::vector<visualization_msgs::Marker> markers_; // Vector de marcadores
+  std::vector<Obstacle> obstacles_; // Vector de obstaculos
+  float max_velocity_;
+  float min_velocity_;
   void timerCallback(const ros::TimerEvent& e);
+
   
   //pruebas
   ros::Publisher test_fronteras;

@@ -192,40 +192,27 @@ namespace fast_planner {
     prueba_nb = nh.createTimer(ros::Duration(0.2), &MvantExplorationFSM::nearbyObstaclesCallback, this);
     
     //-------------------------------------------------------------------------------------------------
-
+    
     //prueba de cajas
-    marker_pub_ = nh.advertise<visualization_msgs::Marker>("/moving_boxes", 10);
-        
+    nh.param("max_velocity", max_velocity_, 0.0f); // Velocidad máxima por defecto
+    nh.param("min_velocity", min_velocity_, 0.0f); // Velocidad mínima por defecto
+    cloud_pub_ = nh.advertise<sensor_msgs::PointCloud2>("/obstacle_cloud", 10);
+    
     // Inicializa el generador de números aleatorios
     std::srand(std::time(0));
 
     // Crea 5 marcadores iniciales
     for (int i = 0; i < 5; ++i){
-      visualization_msgs::Marker marker;
-      marker.header.frame_id = "world";
-      marker.ns = "moving_boxes";
-      marker.id = i;
-      marker.type = visualization_msgs::Marker::CUBE;
-      marker.action = visualization_msgs::Marker::ADD;
-      marker.scale.x = 0.5;
-      marker.scale.y = 0.5;
-      marker.scale.z = 0.5;
-      marker.color.r = 0.0;
-      marker.color.g = 1.0; // Verde
-      marker.color.b = 0.0;
-      marker.color.a = 1.0;
+      Obstacle obstacle;
+      obstacle.position.x = static_cast<float>(std::rand()) / RAND_MAX * 20 - 10;
+      obstacle.position.y = static_cast<float>(std::rand()) / RAND_MAX * 20 - 10;
+      obstacle.position.z = static_cast<float>(std::rand()) / RAND_MAX * 2;
       
-      // Posiciones iniciales aleatorias
-      marker.pose.position.x = static_cast<float>(std::rand()) / RAND_MAX * 10 - 5;
-      marker.pose.position.y = static_cast<float>(std::rand()) / RAND_MAX * 10 - 5;
-      marker.pose.position.z = static_cast<float>(std::rand()) / RAND_MAX * 2;
+      obstacle.velocity.x = min_velocity_ + static_cast<float>(std::rand()) / RAND_MAX * (max_velocity_ - min_velocity_);
+      obstacle.velocity.y = min_velocity_ + static_cast<float>(std::rand()) / RAND_MAX * (max_velocity_ - min_velocity_);
+      obstacle.velocity.z = min_velocity_ + static_cast<float>(std::rand()) / RAND_MAX * (max_velocity_ - min_velocity_);
       
-      marker.pose.orientation.x = 0.0;
-      marker.pose.orientation.y = 0.0;
-      marker.pose.orientation.z = 0.0;
-      marker.pose.orientation.w = 1.0;
-      
-      markers_.push_back(marker);
+      obstacles_.push_back(obstacle);
     }
     
     timer_ = nh.createTimer(ros::Duration(1.0), &MvantExplorationFSM::timerCallback, this);
@@ -958,21 +945,43 @@ namespace fast_planner {
   }
 
   void MvantExplorationFSM::timerCallback(const ros::TimerEvent& e) {
-    for (auto& marker : markers_){
-      // Actualiza las posiciones aleatoriamente
-      marker.pose.position.x += static_cast<float>(std::rand()) / RAND_MAX * 0.2 - 0.1; // Movimiento pequeño en X
-      marker.pose.position.y += static_cast<float>(std::rand()) / RAND_MAX * 0.2 - 0.1; // Movimiento pequeño en Y
-      marker.pose.position.z += static_cast<float>(std::rand()) / RAND_MAX * 0.1 - 0.05; // Movimiento pequeño en Z
+    pcl::PointCloud<pcl::PointXYZ> cloud;
+    
+    for (auto& obstacle : obstacles_){
+      // Actualiza las posiciones con las velocidades
+      obstacle.position.x += obstacle.velocity.x;
+      obstacle.position.y += obstacle.velocity.y;
+      obstacle.position.z += obstacle.velocity.z;
       
-      // Asegúrate de que las cajas permanezcan en el rango [-5, 5] para X e Y, y [0, 2] para Z
+      // Asegúrate de que las cajas permanezcan en el rango [-10, 10] para X e Y, y [0, 2] para Z
+      if (obstacle.position.x < -10.0f || obstacle.position.x > 10.0f)
+	obstacle.velocity.x *= -1;
+      if (obstacle.position.y < -10.0f || obstacle.position.y > 10.0f)
+	obstacle.velocity.y *= -1;
+      if (obstacle.position.z < 0.0f || obstacle.position.z > 2.0f)
+	obstacle.velocity.z *= -1;
       
-      marker.pose.position.x = std::max(-5.0, std::min(5.0, marker.pose.position.x));
-      marker.pose.position.y = std::max(-5.0, std::min(5.0, marker.pose.position.y));
-      marker.pose.position.z = std::max(0.0, std::min(2.0, marker.pose.position.z));
-      
-      // Publica el marcador actualizado
-      marker_pub_.publish(marker);
+      // Genera puntos que representan un cubo alrededor de la posición
+      float size = 0.5; // Tamaño del cubo
+      for (float dx = -size; dx <= size; dx += 0.1){
+	for (float dy = -size; dy <= size; dy += 0.1){
+	  for (float dz = -size; dz <= size; dz += 0.1){
+	    pcl::PointXYZ point;
+	    point.x = obstacle.position.x + dx;
+	    point.y = obstacle.position.y + dy;
+	    point.z = obstacle.position.z + dz;
+	    cloud.points.push_back(point);
+	  }
+	}
+      }
     }
+    
+    // Convierte la nube de puntos a formato ROS y publícala
+    sensor_msgs::PointCloud2 cloud_msg;
+    pcl::toROSMsg(cloud, cloud_msg);
+    cloud_msg.header.frame_id = "world";
+    cloud_msg.header.stamp = ros::Time::now();
+    cloud_pub_.publish(cloud_msg);
   }
   
 
