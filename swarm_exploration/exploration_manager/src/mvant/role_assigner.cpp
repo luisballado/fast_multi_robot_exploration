@@ -1,3 +1,5 @@
+//creo que no se usa
+/*
 #include <exploration_manager/mvant/role_assigner.h>
 
 namespace fast_planner {
@@ -119,3 +121,4 @@ ROLE RoleAssigner::assignRole(const Eigen::Vector3d& position, int ego_id,
 }
 
 }  // namespace fast_planner
+*/

@@ -963,9 +963,9 @@ namespace fast_planner {
       
       // Genera puntos que representan un cubo alrededor de la posición
       float size = 0.5; // Tamaño del cubo
-      for (float dx = -size; dx <= size; dx += 0.1){
-	for (float dy = -size; dy <= size; dy += 0.1){
-	  for (float dz = -size; dz <= size; dz += 0.1){
+      for (float dx = -size; dx <= size; dx += 0.05){
+	for (float dy = -size; dy <= size; dy += 0.05){
+	  for (float dz = -size; dz <= size; dz += 0.05){
 	    pcl::PointXYZ point;
 	    point.x = obstacle.position.x + dx;
 	    point.y = obstacle.position.y + dy;
