@@ -24,8 +24,14 @@ void MultiMapManager::init() {
   node_.param("multi_map_manager/chunk_size", chunk_size_, 200);
   node_.param("fsm/communication_range", communication_range_, std::numeric_limits<double>::max());
 
-  stamp_timer_ = node_.createTimer(ros::Duration(0.1), &MultiMapManager::stampTimerCallback, this);
-  chunk_timer_ = node_.createTimer(ros::Duration(0.1), &MultiMapManager::chunkTimerCallback, this);
+  //llamar para copiar el mapa
+  //invocar despues de elegir la frontera
+  /**
+   * Comunicar solamente cuando yo lo indique
+   * 
+   */
+  stamp_timer_ = node_.createTimer(ros::Duration(0.1), &MultiMapManager::stampTimerCallback, this); //pedazos
+  chunk_timer_ = node_.createTimer(ros::Duration(0.1), &MultiMapManager::chunkTimerCallback, this); //pedazos
   logging_timer_ = node_.createTimer(ros::Duration(5.0), &MultiMapManager::loggingTimerCallback, this);
 
   stamp_pub_ =

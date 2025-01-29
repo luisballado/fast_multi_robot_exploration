@@ -1,5 +1,6 @@
 //mvant_exploration_fsm.cpp
 //FSM
+//NAVEGANTE
 
 #include <plan_manage/planner_manager.h>
 #include <traj_utils/planning_visualization.h>
@@ -542,9 +543,11 @@ namespace fast_planner {
 
       //planificar respecto a mi ubicacion
       //busqueda greedy
+      //es la que se debe trabajar para que sea multi agente
       res = expl_manager_->planExploreMotion(fd_->start_pt_, fd_->start_vel_, fd_->start_acc_, fd_->start_yaw_);
     }
 
+    //informar a los demas robots mi pos, pos_obj, mapa
     //si hay un camino
     if (res == SUCCEED) {
       auto info = &planner_manager_->local_data_;
@@ -556,20 +559,20 @@ namespace fast_planner {
       bspline.traj_id = info->traj_id_;
       Eigen::MatrixXd pos_pts = info->position_traj_.getControlPoint();
       for (int i = 0; i < pos_pts.rows(); ++i) {
-	geometry_msgs::Point pt;
-	pt.x = pos_pts(i, 0);
-	pt.y = pos_pts(i, 1);
-	pt.z = pos_pts(i, 2);
-	bspline.pos_pts.push_back(pt);
+      	geometry_msgs::Point pt;
+      	pt.x = pos_pts(i, 0);
+      	pt.y = pos_pts(i, 1);
+      	pt.z = pos_pts(i, 2);
+      	bspline.pos_pts.push_back(pt);
       }
       Eigen::VectorXd knots = info->position_traj_.getKnot();
       for (int i = 0; i < knots.rows(); ++i) {
-	bspline.knots.push_back(knots(i));
+      	bspline.knots.push_back(knots(i));
       }
       Eigen::MatrixXd yaw_pts = info->yaw_traj_.getControlPoint();
       for (int i = 0; i < yaw_pts.rows(); ++i) {
-	double yaw = yaw_pts(i, 0);
-	bspline.yaw_pts.push_back(yaw);
+      	double yaw = yaw_pts(i, 0);
+      	bspline.yaw_pts.push_back(yaw);
       }
       bspline.yaw_dt = info->yaw_traj_.getKnotSpan();
       fd_->newest_traj_ = bspline;

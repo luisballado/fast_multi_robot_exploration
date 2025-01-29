@@ -67,7 +67,7 @@ struct DroneState {
   double stamp_;                // Stamp of pos,vel,yaw
   double recent_attempt_time_;  // Stamp of latest opt attempt with any drone
 
-  //mapa??
+  //mapa de id del grid
   vector<int> grid_ids_;         // Id of grid tour
   double recent_interact_time_;  // Stamp of latest opt with this drone
 

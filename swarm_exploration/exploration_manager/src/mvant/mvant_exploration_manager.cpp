@@ -656,6 +656,8 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
       
       Viewpoint vp = ftr.viewpoints_.front();
       
+      //no brincar fronteras
+      //aqui hay infinitos agregar
       if (!isPositionReachable(pos, vp.pos_)) {
 	continue;
       }
@@ -663,10 +665,12 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
       std::vector<Vector3d> path;
       
       //busqueda basada en A* e iterar en fronteras y obtener distacia
+      //llenar tabla con las distancias de las fronteras para los n robots
       double distance = ViewNode::searchPath(pos, vp.pos_, path);
       
       // Check if we need to force a new goal
       const double kMinDistGoals = 1.0;
+      //si esto ocurre tener infinitos, no se debe brincar fronteras
       if (force_different && (vp.pos_ - ed_->next_pos_).norm() < kMinDistGoals) {
 	continue;
       }
@@ -693,6 +697,8 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
     
     //conseguir la mejor frontera para mi
     //en base a mi informacion
+
+    //remplazar con el hungaro con la tabla que se genero
     auto it = std::min_element(fronteras.begin(), fronteras.end(), [](const Frontera& a, const Frontera& b) {return a.distance < b.distance;});
     
     //asignar frontera    
