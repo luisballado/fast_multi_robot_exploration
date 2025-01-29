@@ -68,7 +68,7 @@ public:
   }
   void getFrontiers(vector<vector<Vector3d>>& clusters);
   void getFrontiersIds(vector<int>& ids);
-  void getLabeledFrontiers(vector<pair<LABEL, vector<Vector3d>>>& labeled_clusters);
+  void getLabeledFrontiers(vector<pair<LABEL, vector<Vector3d>>>& labeled_clusters); // no uso etiquetados
   void getDormantFrontiers(vector<vector<Vector3d>>& clusters);
   void getInFrontFrontiers(vector<pair<LABEL, vector<Eigen::Vector3d>>>& infront_clusters) const;
   void getTrailCentroidsAroundPosition(

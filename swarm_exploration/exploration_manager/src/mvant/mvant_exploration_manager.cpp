@@ -126,6 +126,7 @@ void MvantExplorationManager::initialize(ros::NodeHandle& nh) {
   role_ = ROLE::UNKNOWN;
 
   //ed - exploration data
+  // se supone que cada nodo se levanta respecto a los num de drones
   ed_->swarm_state_.resize(ep_->drone_num_);
   ed_->pair_opt_stamps_.resize(ep_->drone_num_);
   ed_->pair_opt_res_stamps_.resize(ep_->drone_num_);
@@ -435,6 +436,7 @@ void MvantExplorationManager::updateVelocities(const double factor) {
   ViewNode::am_ *= velocity_factor;
 }
   
+//esquema fame
 void MvantExplorationManager::updateRoleAndVelocities(const ROLE updated_role) {
   // Update velocities
   const double inv_factor = 1. / collector_params_->velocity_factor;

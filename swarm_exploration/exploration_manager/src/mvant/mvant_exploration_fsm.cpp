@@ -149,13 +149,13 @@ namespace fast_planner {
     opt_res_sub_ = nh.subscribe("/swarm_expl/pair_opt_res_recv", 100, &MvantExplorationFSM::optResMsgCallback, this, ros::TransportHints().tcpNoDelay());
 
     //topico para mandar traj
-    //swarm_traj_pub_   = nh.advertise<bspline::Bspline>("/planning/swarm_traj_send", 100);
+    swarm_traj_pub_   = nh.advertise<bspline::Bspline>("/planning/swarm_traj_send", 100);
     //recibir traj y validar que no choquen drones
-    //swarm_traj_sub_   = nh.subscribe("/planning/swarm_traj_recv", 100, &MvantExplorationFSM::swarmTrajCallback, this);
+    swarm_traj_sub_   = nh.subscribe("/planning/swarm_traj_recv", 100, &MvantExplorationFSM::swarmTrajCallback, this);
     //cada cierto tiempo se mandan traj
-    //swarm_traj_timer_ = nh.createTimer(ros::Duration(0.1), &MvantExplorationFSM::swarmTrajTimerCallback, this);
+    swarm_traj_timer_ = nh.createTimer(ros::Duration(0.1), &MvantExplorationFSM::swarmTrajTimerCallback, this);
     
-    //hgrid_pub_     = nh.advertise<exploration_manager::HGrid>("/swarm_expl/hgrid_send", 10);
+    hgrid_pub_     = nh.advertise<exploration_manager::HGrid>("/swarm_expl/hgrid_send", 10);
     grid_tour_pub_ = nh.advertise<exploration_manager::GridTour>("/swarm_expl/grid_tour_send", 10);
     
     //-------------------------------------------------------------------------------------------------
@@ -351,7 +351,7 @@ namespace fast_planner {
         fd_->newest_traj_.drone_id = expl_manager_->ep_->drone_id_;
 
 	//informar a los drones
-	//swarm_traj_pub_.publish(fd_->newest_traj_);
+	swarm_traj_pub_.publish(fd_->newest_traj_);
 	
         thread vis_thread(&MvantExplorationFSM::visualize, this, 2);
         vis_thread.detach();
@@ -1551,7 +1551,7 @@ namespace fast_planner {
     // Broadcast newest traj of this drone to others
     //Programa se llama cada cierto tiempo
     if (state_ == EXEC_TRAJ) {
-      //swarm_traj_pub_.publish(fd_->newest_traj_);
+      swarm_traj_pub_.publish(fd_->newest_traj_);
       
     } else if (state_ == WAIT_TRIGGER) {
       // Publish a virtual traj at current pose, to avoid collision
@@ -1577,7 +1577,7 @@ namespace fast_planner {
 	bspline.knots.push_back(knots(i));
       }
       bspline.drone_id = expl_manager_->ep_->drone_id_;
-      //swarm_traj_pub_.publish(bspline);
+      swarm_traj_pub_.publish(bspline);
     }
   }
 }  // namespace fast_planner

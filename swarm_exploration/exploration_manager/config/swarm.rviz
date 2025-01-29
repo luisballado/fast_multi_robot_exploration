@@ -5,9 +5,7 @@ Panels:
     Property Tree Widget:
       Expanded:
         - /ExplorePlanner1/frontier11/Namespaces1
-        - /Maps1
         - /Maps1/occupied_all11/Autocompute Value Bounds1
-        - /Simulators1
       Splitter Ratio: 0.6411764621734619
     Tree Height: 905
   - Class: rviz/Selection
@@ -142,13 +140,14 @@ Visualization Manager:
           Queue Size: 100
           Value: false
         - Class: rviz/Marker
-          Enabled: false
+          Enabled: true
           Marker Topic: /planning_vis/frontier_1
           Name: frontier1
           Namespaces:
-            {}
+            frontier: true
+            id: true
           Queue Size: 10000
-          Value: false
+          Value: true
         - Class: rviz/Marker
           Enabled: true
           Marker Topic: /planning_vis/trajectory_1
@@ -373,7 +372,7 @@ Visualization Manager:
           Color: 116; 116; 116
           Color Transformer: AxisColor
           Decay Time: 0
-          Enabled: true
+          Enabled: false
           Invert Rainbow: false
           Max Color: 0; 0; 0
           Min Color: 0; 0; 0
@@ -388,7 +387,7 @@ Visualization Manager:
           Unreliable: false
           Use Fixed Frame: true
           Use rainbow: true
-          Value: true
+          Value: false
         - Alpha: 1
           Autocompute Intensity Bounds: true
           Autocompute Value Bounds:
@@ -545,7 +544,7 @@ Visualization Manager:
           Color: 255; 255; 255
           Color Transformer: FlatColor
           Decay Time: 0
-          Enabled: true
+          Enabled: false
           Invert Rainbow: false
           Max Color: 255; 255; 255
           Min Color: 0; 0; 0
@@ -560,7 +559,7 @@ Visualization Manager:
           Unreliable: false
           Use Fixed Frame: true
           Use rainbow: false
-          Value: true
+          Value: false
         - Alpha: 0.05000000074505806
           Autocompute Intensity Bounds: true
           Autocompute Value Bounds:
@@ -798,7 +797,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/ThirdPersonFollower
-      Distance: 13.066448211669922
+      Distance: 59.565982818603516
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -814,9 +813,9 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.0603984594345093
+      Pitch: 0.6253986358642578
       Target Frame: <Fixed Frame>
-      Yaw: 2.4785807132720947
+      Yaw: 3.1235804557800293
     Saved:
       - Class: rviz/ThirdPersonFollower
         Distance: 17.48538589477539

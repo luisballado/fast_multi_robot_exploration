@@ -49,6 +49,7 @@ struct FSMParam {
   int repeat_send_num_;
 
   // Communication
+  //depreciado!
   double communication_range_;
 
   //Coordination
@@ -79,9 +80,9 @@ struct DroneState {
 
 struct ExplorationData {
   vector<vector<Vector3d>> frontiers_;
-  vector<pair<LABEL, vector<Vector3d>>> labeled_frontiers_;
-  vector<vector<Vector3d>> dead_frontiers_;
-  vector<pair<LABEL, vector<Vector3d>>> infront_frontiers_;
+  vector<pair<LABEL, vector<Vector3d>>> labeled_frontiers_; //no uso fronteras etiquetadas
+  vector<vector<Vector3d>> dead_frontiers_;  //fronteras muertas ?
+  vector<pair<LABEL, vector<Vector3d>>> infront_frontiers_; //fronteras enfrente, 
   vector<pair<Vector3d, Vector3d>> frontier_boxes_;
   vector<int> fronters_ids_;
   vector<Vector3d> points_;

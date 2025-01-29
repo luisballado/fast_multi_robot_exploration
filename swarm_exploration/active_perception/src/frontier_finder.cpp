@@ -678,6 +678,8 @@ void FrontierFinder::getFullCostMatrix(const Vector3d& cur_pos, const Vector3d& 
   // std::cout << "mat size: " << mat.rows() << ", " << mat.cols() << std::endl;
   // Fill block for clusters
   int i = 1, j = 1;
+
+  //llenar matriz
   for (const auto& ftr : frontiers_) {
     for (auto cs : ftr.costs_) {
       // std::cout << "(" << i << ", " << j << ")"
