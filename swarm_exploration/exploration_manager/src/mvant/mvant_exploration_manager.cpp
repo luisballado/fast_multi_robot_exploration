@@ -77,8 +77,8 @@ void MvantExplorationManager::initialize(ros::NodeHandle& nh) {
   nh.param("exploration/refined_radius", ep_->refined_radius_, -1.0);
   nh.param("exploration/top_view_num", ep_->top_view_num_, -1);
   nh.param("exploration/max_decay", ep_->max_decay_, -1.0);
-  nh.param("exploration/tsp_dir", ep_->tsp_dir_, string("null"));
-  nh.param("exploration/mtsp_dir", ep_->mtsp_dir_, string("null"));
+  //nh.param("exploration/tsp_dir", ep_->tsp_dir_, string("null"));
+  //nh.param("exploration/mtsp_dir", ep_->mtsp_dir_, string("null"));
   nh.param("exploration/relax_time", ep_->relax_time_, 1.0);
   nh.param("exploration/drone_num", ep_->drone_num_, 1);
   nh.param("exploration/drone_id", ep_->drone_id_, 1);
@@ -98,17 +98,17 @@ void MvantExplorationManager::initialize(ros::NodeHandle& nh) {
 
   // Collector Parameters
   // Quitar, dado a que yo no uso este esquema
-  collector_params_.reset(new CollectorParams);
-  nh.param("collector/min_vel", collector_params_->min_vel, 1.0);
-  nh.param("collector/label_penalty", collector_params_->label_penalty, 15.0);
-  nh.param("collector/velocity_factor", collector_params_->velocity_factor, 2.0);
-  nh.param("collector/w_distance", collector_params_->w_distance, 1.0);
-  nh.param("collector/w_direction", collector_params_->w_direction, 1.0);
-  nh.param("collector/w_others", collector_params_->w_others, 1.0);
-  nh.param("collector/w_previous_goal", collector_params_->w_previous_goal, 1.0);
+  //collector_params_.reset(new CollectorParams);
+  //nh.param("collector/min_vel", collector_params_->min_vel, 1.0);
+  //nh.param("collector/label_penalty", collector_params_->label_penalty, 15.0);
+  //nh.param("collector/velocity_factor", collector_params_->velocity_factor, 2.0);
+  //nh.param("collector/w_distance", collector_params_->w_distance, 1.0);
+  //nh.param("collector/w_direction", collector_params_->w_direction, 1.0);
+  //nh.param("collector/w_others", collector_params_->w_others, 1.0);
+  //nh.param("collector/w_previous_goal", collector_params_->w_previous_goal, 1.0);
 
   // Use the same parameter as in role assigner
-  nh.param("role_assigner/region_size", collector_params_->ftr_max_distance, 8.0);
+  //nh.param("role_assigner/region_size", collector_params_->ftr_max_distance, 8.0);
 
   // Potential Field Parameters
   pf_params_.reset(new PotentialFieldParams);
@@ -159,9 +159,9 @@ void MvantExplorationManager::initialize(ros::NodeHandle& nh) {
   // planner_manager_->path_finder_->max_search_time_ = 0.05;
   planner_manager_->path_finder_->max_search_time_ = 1.0;
 
-  tsp_client_ = nh.serviceClient<lkh_mtsp_solver::SolveMTSP>("/solve_tsp_" + to_string(ep_->drone_id_), true);
+  //tsp_client_ = nh.serviceClient<lkh_mtsp_solver::SolveMTSP>("/solve_tsp_" + to_string(ep_->drone_id_), true);
 
-  acvrp_client_ = nh.serviceClient<lkh_mtsp_solver::SolveMTSP>("/solve_acvrp_" + to_string(ep_->drone_id_), true);
+  //acvrp_client_ = nh.serviceClient<lkh_mtsp_solver::SolveMTSP>("/solve_acvrp_" + to_string(ep_->drone_id_), true);
   
   // Swarm
   for (auto& state : ed_->swarm_state_) {
@@ -182,6 +182,7 @@ void MvantExplorationManager::initialize(ros::NodeHandle& nh) {
   // fout.close();
 }
 
+//buscar una frontera
 int MvantExplorationManager::planExploreMotion(
     const Vector3d& pos, const Vector3d& vel, const Vector3d& acc, const Vector3d& yaw) {
   
@@ -657,7 +658,7 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
       Viewpoint vp = ftr.viewpoints_.front();
       
       //no brincar fronteras
-      //aqui hay infinitos agregar
+      //aqui hay infinitos agregar y se deben considerar
       if (!isPositionReachable(pos, vp.pos_)) {
 	continue;
       }
@@ -687,13 +688,13 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
     }
 
     //hasta aqui tengo las fronteras con distancias
-    //ROS_WARN_STREAM("drone ffr: " << ed_->fronteras.size());
+    ROS_WARN_STREAM("drone ffr: " << ed_->fronteras.size());
     
     
-    //for(auto item: fronteras){
-    //  ROS_WARN_STREAM("F:" << item.id);
-    //  ROS_WARN_STREAM("D:" << item.distance);
-    //}
+    for(auto item: fronteras){
+      ROS_WARN_STREAM("F:" << item.id);
+      ROS_WARN_STREAM("D:" << item.distance);
+    }
     
     //conseguir la mejor frontera para mi
     //en base a mi informacion

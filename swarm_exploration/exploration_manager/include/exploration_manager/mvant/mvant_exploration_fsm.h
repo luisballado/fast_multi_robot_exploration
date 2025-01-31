@@ -141,6 +141,7 @@ private:
     geometry_msgs::Point position;
     geometry_msgs::Point velocity;
   };
+  
   ros::Publisher cloud_pub_;
   ros::Timer timer_;
   std::vector<Obstacle> obstacles_; // Vector de obstaculos

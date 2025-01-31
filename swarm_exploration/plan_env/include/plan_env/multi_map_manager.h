@@ -4,6 +4,8 @@
 #include <pcl_conversions/pcl_conversions.h>
 #include <ros/ros.h>
 
+#include <std_msgs/Empty.h>
+
 #include <plan_env_msgs/ChunkStamps.h>
 #include <plan_env_msgs/ChunkData.h>
 
@@ -92,7 +94,7 @@ private:
   void insertChunkToMap(const MapChunk& chunk, const int& chunk_drone_id);
   void adrToIndex(const uint32_t& adr, Eigen::Vector3i& idx);
 
-  void stampTimerCallback(const ros::TimerEvent& e);
+  void stampTimerCallback(const std_msgs::Empty::ConstPtr& msg_);//const ros::TimerEvent& e);
   void chunkTimerCallback(const ros::TimerEvent& e);
   void loggingTimerCallback(const ros::TimerEvent& e);
   void stampMsgCallback(const plan_env_msgs::ChunkStampsConstPtr& msg);
@@ -113,8 +115,8 @@ private:
 
   SDFMap* map_;
   ros::NodeHandle node_;
-  ros::Publisher stamp_pub_, chunk_pub_, marker_pub_;
-  ros::Subscriber stamp_sub_, chunk_sub_;
+  ros::Publisher stamp_pub_, chunk_pub_, marker_pub_, enviar_msg_;
+  ros::Subscriber stamp_sub_, chunk_sub_, enviar_msg_sub_;
   ros::Timer stamp_timer_, chunk_timer_, logging_timer_;
 
   vector<ChunksData> multi_map_chunks_;                    // Main map data

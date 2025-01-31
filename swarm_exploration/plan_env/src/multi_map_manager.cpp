@@ -1,8 +1,6 @@
 #include <plan_env/sdf_map.h>
 #include <plan_env/multi_map_manager.h>
-
 #include <visualization_msgs/Marker.h>
-
 #include <fstream>
 
 namespace fast_planner {
@@ -24,27 +22,34 @@ void MultiMapManager::init() {
   node_.param("multi_map_manager/chunk_size", chunk_size_, 200);
   node_.param("fsm/communication_range", communication_range_, std::numeric_limits<double>::max());
 
-  //llamar para copiar el mapa
-  //invocar despues de elegir la frontera
+  //llamar para copiar el mapa invocar despues de elegir la frontera
   /**
    * Comunicar solamente cuando yo lo indique
    * 
    */
-  stamp_timer_ = node_.createTimer(ros::Duration(0.1), &MultiMapManager::stampTimerCallback, this); //pedazos
-  chunk_timer_ = node_.createTimer(ros::Duration(0.1), &MultiMapManager::chunkTimerCallback, this); //pedazos
+  //stampTimerCallback se debe llamar cuando deba cambiar mapa
+  //stamp_timer_ = node_.createTimer(ros::Duration(0.1), &MultiMapManager::stampTimerCallback, this); //envia pedazos de mapa
+
+  enviar_msg_ = node_.advertise<std_msgs::Empty>("/mapa/enviar",10);
+  enviar_msg_sub_ = node_.subscribe("/mapa/enviar", 10, &MultiMapManager::stampTimerCallback, this);
+
+
+  //recibo el mensaje - escuchar siempre
+  chunk_timer_ = node_.createTimer(ros::Duration(0.1), &MultiMapManager::chunkTimerCallback, this); //incorpora pedazos de mapa
+  
   logging_timer_ = node_.createTimer(ros::Duration(5.0), &MultiMapManager::loggingTimerCallback, this);
 
-  stamp_pub_ =
-      node_.advertise<plan_env_msgs::ChunkStamps>("/multi_map_manager/chunk_stamps_send", 10);
-  chunk_pub_ =
-      node_.advertise<plan_env_msgs::ChunkData>("/multi_map_manager/chunk_data_send", 5000);
-  marker_pub_ = node_.advertise<visualization_msgs::Marker>(
-      "/multi_map_manager/marker_" + std::to_string(drone_id_), 10);
+  //publica el mensaje 
+  stamp_pub_ = node_.advertise<plan_env_msgs::ChunkStamps>("/multi_map_manager/chunk_stamps_send", 10);
 
-  stamp_sub_ = node_.subscribe(
-      "/multi_map_manager/chunk_stamps_recv", 10, &MultiMapManager::stampMsgCallback, this);
-  chunk_sub_ = node_.subscribe("/multi_map_manager/chunk_data_recv", 5000,
-      &MultiMapManager::chunkCallback, this, ros::TransportHints().tcpNoDelay());
+  chunk_pub_ = node_.advertise<plan_env_msgs::ChunkData>("/multi_map_manager/chunk_data_send", 5000);
+  marker_pub_ = node_.advertise<visualization_msgs::Marker>("/multi_map_manager/marker_" + std::to_string(drone_id_), 10);
+
+  //recibe el mensaje 
+  stamp_sub_ = node_.subscribe("/multi_map_manager/chunk_stamps_recv", 10, &MultiMapManager::stampMsgCallback, this);
+  
+  //recibo el mapa sin delays
+  chunk_sub_ = node_.subscribe("/multi_map_manager/chunk_data_recv", 5000, &MultiMapManager::chunkCallback, this, ros::TransportHints().tcpNoDelay());
 
   multi_map_chunks_.resize(map_num_);
   for (auto& data : multi_map_chunks_) {
@@ -141,7 +146,8 @@ void MultiMapManager::updateMapChunk(const vector<uint32_t>& adrs) {
   }
 }
 
-void MultiMapManager::stampTimerCallback(const ros::TimerEvent& e) {
+//se llama cada cierto tiempo
+void MultiMapManager::stampTimerCallback(const std_msgs::Empty::ConstPtr& msg_){//const ros::TimerEvent& e) {
   // Send stamp of chunks to other drones
   plan_env_msgs::ChunkStamps msg;
   msg.from_drone_id = drone_id_;
@@ -273,6 +279,7 @@ void MultiMapManager::sendChunks(
     const int& chunk_drone_id, const int& to_drone_id, const vector<int>& idx_list) {
   auto& data = multi_map_chunks_[chunk_drone_id - 1];
 
+  //lista de listas
   for (int i = 0; i < idx_list.size(); i += 2) {
     for (int j = idx_list[i]; j <= idx_list[i + 1]; ++j) {
       plan_env_msgs::ChunkData msg;
@@ -333,6 +340,8 @@ void MultiMapManager::chunkCallback(const plan_env_msgs::ChunkDataConstPtr& msg)
   return;
 }
 
+
+//pegar pedazos
 void MultiMapManager::chunkTimerCallback(const ros::TimerEvent& e) {
 
   // Not process chunk until swarm basecoor transform is available
