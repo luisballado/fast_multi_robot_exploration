@@ -53,6 +53,7 @@ FrontierFinder::FrontierFinder(const EDTEnvironment::Ptr& edt, ros::NodeHandle& 
 FrontierFinder::~FrontierFinder() {
 }
 
+//buscar fronteras
 void FrontierFinder::searchFrontiers() {
   ros::Time t1 = ros::Time::now();
   tmp_frontiers_.clear();
@@ -330,7 +331,7 @@ void FrontierFinder::updateFrontierCostMatrix() {
 
   // Compute path and cost between new clusters
   for (auto it1 = first_new_ftr_; it1 != frontiers_.end(); ++it1)
-    for (auto it2 = it1; it2 != frontiers_.end(); ++it2) {
+    for (auto it2 = it1; it2 != frontiers_.end(); ++it2) {auto updateCost = [](const list<Frontier>::iterator& it1, const list<Frontier>::iterator& it2) {
       if (it1 == it2) {
         // std::cout << "(" << it1->id_ << "," << it2->id_ << "), ";
         it1->costs_.push_back(0);
@@ -704,6 +705,7 @@ void FrontierFinder::getFullCostMatrix(const Vector3d& cur_pos, const Vector3d& 
   // std::cout << "" << std::endl;
 }
 
+//llenar matriz de costos para los VANTS
 void FrontierFinder::getSwarmCostMatrix(const vector<Vector3d>& positions,
     const vector<Vector3d>& velocities, const vector<double> yaws, Eigen::MatrixXd& mat) {
 

@@ -94,7 +94,7 @@ private:
   void insertChunkToMap(const MapChunk& chunk, const int& chunk_drone_id);
   void adrToIndex(const uint32_t& adr, Eigen::Vector3i& idx);
 
-  void stampTimerCallback(const std_msgs::Empty::ConstPtr& msg_);//const ros::TimerEvent& e);
+  void stampTimerCallback(const ros::TimerEvent& e);//const std_msgs::Empty::ConstPtr& msg_);//const ros::TimerEvent& e);
   void chunkTimerCallback(const ros::TimerEvent& e);
   void loggingTimerCallback(const ros::TimerEvent& e);
   void stampMsgCallback(const plan_env_msgs::ChunkStampsConstPtr& msg);

@@ -1,3 +1,4 @@
+/*
 #include <exploration_manager/mvant/collaboration_assigner.h>
 #include <nlopt.hpp>
 
@@ -95,3 +96,4 @@ double CollaborationAssigner::distanceCost(
 }
 
 }  // end namespace fast_planner
+*/

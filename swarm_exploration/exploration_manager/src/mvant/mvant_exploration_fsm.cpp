@@ -81,10 +81,10 @@ namespace fast_planner {
     
     /* Estados VANT FSM*/
     fd_->state_str_ = {
-		       "INIT", "WAIT_TRIGGER",
-		       "PLAN_TRAJ", "PUB_TRAJ",
-		       "EXEC_TRAJ", "FINISH",
-		       "IDLE"
+           "INIT", "WAIT_TRIGGER",
+           "PLAN_TRAJ", "PUB_TRAJ",
+           "EXEC_TRAJ", "FINISH",
+           "IDLE"
     };
     
     fd_->static_state_ = true; //comienza de un estado hover inicial
@@ -194,6 +194,7 @@ namespace fast_planner {
     
     //-------------------------------------------------------------------------------------------------
     
+    /*
     //prueba de cajas
     nh.param("max_velocity", max_velocity_, 0.0f); // Velocidad máxima por defecto
     nh.param("min_velocity", min_velocity_, 0.0f); // Velocidad mínima por defecto
@@ -217,6 +218,7 @@ namespace fast_planner {
     }
     
     timer_ = nh.createTimer(ros::Duration(1.0), &MvantExplorationFSM::timerCallback, this);
+    */
         
   }
   
@@ -254,283 +256,239 @@ namespace fast_planner {
       
       // Estado inicial,
       // espera a tener valores de odometria
-    case INIT: {
-      // Wait for odometry ready
-      // La odometria la recibe del callback de odometria
-      if (!fd_->have_odom_) {
-        ROS_WARN_THROTTLE(1.0, "-- no datos odometria --");
-        return;
-      }
-      if ((ros::Time::now() - fd_->fsm_init_time_).toSec() < 2.0) {
-        ROS_WARN_THROTTLE(1.0, "-- esperar para inicializar --");
-	return;
-      }
-      // Go to wait trigger when odom is ok
-      transitState(WAIT_TRIGGER, "FSM");
-      break;
-    }
-      
-      //Esperando el lanzador
-    case WAIT_TRIGGER: {
-      // Do nothing but wait for trigger
-      ROS_WARN_ONCE(" -- esperando lanzador -- ");
-      ROS_WARN_ONCE("Exploracion: mvant");
-      ROS_WARN_ONCE("Tipo coordinacion: %s", fp_->coordination_type.c_str());
-            
-      break;
-    }
-      
-    case PLAN_TRAJ: {
-      
-      if (fd_->static_state_) {
-        // Plan from static state (hover)
-        fd_->start_pt_ = fd_->odom_pos_;
-        fd_->start_vel_ = fd_->odom_vel_;
-        fd_->start_acc_.setZero();
-        fd_->start_yaw_ << fd_->odom_yaw_, 0, 0;
-      } else {
-        // Replan from non-static state, starting from 'replan_time' seconds later
-	//LocalTrajData esta dentro de plan_container.hpp
-        LocalTrajData* info = &planner_manager_->local_data_;
-        double t_r = (ros::Time::now() - info->start_time_).toSec() + fp_->replan_time_;
-        fd_->start_pt_ = info->position_traj_.evaluateDeBoorT(t_r);
-        fd_->start_vel_ = info->velocity_traj_.evaluateDeBoorT(t_r);
-        fd_->start_acc_ = info->acceleration_traj_.evaluateDeBoorT(t_r);
-        fd_->start_yaw_(0) = info->yaw_traj_.evaluateDeBoorT(t_r)[0];
-        fd_->start_yaw_(1) = info->yawdot_traj_.evaluateDeBoorT(t_r)[0];
-        fd_->start_yaw_(2) = info->yawdotdot_traj_.evaluateDeBoorT(t_r)[0];
-      }
-      
-      // Inform traj_server the replanning
-      replan_pub_.publish(std_msgs::Empty());
-      
-      //buscar una frontera acudir y su trayectoria hacia ella en el grid
-      //itera y se queda con la dist min y hace la trayectoria A*
-      int res = callPlannerExploration();
-      
-      if (res == SUCCEED) {
-        transitState(PUB_TRAJ, "FSM");
-        // Emergency
-        num_fail_ = 0;
-        sendEmergencyMsg(false);
-	
-      } else if (res == FAIL) {  // Keep trying to replan
-	fd_->static_state_ = true;
-	ROS_WARN_THROTTLE(1.0, "-- Plan fail (drone %d) --", getId());
-	// Check if we need to send a message
-	if (num_fail_ > 10) {
-          sendEmergencyMsg(true);
-          num_fail_ = 0;
-        } else {
-          ++num_fail_;
-        }
-	
-      } else if (res == NO_GRID) {
-        fd_->static_state_ = true;
-        fd_->last_check_frontier_time_ = ros::Time::now();
-        // ROS_WARN("No grid (drone %d)", getId());
-        transitState(IDLE, "FSM");
-	
-        // Emergency
-        num_fail_ = 0;
-        sendEmergencyMsg(false);
-      }
-      
-      //visualize(1);
-      clearVisMarker();
-      break;
-    }
-      
-    case PUB_TRAJ: {
-      
-      double dt = (ros::Time::now() - fd_->newest_traj_.start_time).toSec();
-      if (dt > 0) {
-        bspline_pub_.publish(fd_->newest_traj_);
-        fd_->static_state_ = false;
-	
-        // fd_->newest_traj_.drone_id = planner_manager_->swarm_traj_data_.drone_id_;
-        fd_->newest_traj_.drone_id = expl_manager_->ep_->drone_id_;
-
-	//informar a los drones
-	swarm_traj_pub_.publish(fd_->newest_traj_);
-	
-        thread vis_thread(&MvantExplorationFSM::visualize, this, 2);
-        vis_thread.detach();
-        transitState(EXEC_TRAJ, "FSM");
-      }
-      break;
-    }
-      
-    case EXEC_TRAJ: {
-      auto tn = ros::Time::now();
-      // Check whether replan is needed
-      
-      LocalTrajData* info = &planner_manager_->local_data_;
-      double t_cur = (tn - info->start_time_).toSec();
-      
-      if (!fd_->go_back_) {
-        bool need_replan = false;
-	
-	if (t_cur > fp_->replan_thresh2_ && expl_manager_->frontier_finder_->isFrontierCovered()) {
-          ROS_WARN("Replan: frontera cubierta==================================");
-          need_replan = true;
-        } else if (info->duration_ - t_cur < fp_->replan_thresh1_) {
-          // Replan si la trayectoria ya se realizo
-	  ROS_WARN("Replan: trayectoria realizada==============================");
-          need_replan = true;
-        } else if (t_cur > fp_->replan_thresh3_) {
-          // Replan despues de un tiempo
-          ROS_WARN("Replan: despues de un tiempo===============================");
-          need_replan = true;
-	}
-	
-        if (need_replan) {
-          if (expl_manager_->updateFrontierStruct(fd_->odom_pos_, fd_->odom_yaw_, fd_->odom_vel_) != 0) {
-            // Update frontier and plan new motion
-            //thread vis_thread(&MvantExplorationFSM::visualize, this, 1);
-            //vis_thread.detach();
-            transitState(PLAN_TRAJ, "FSM");
-          } else {
-            // No frontier detected, finish exploration
-            fd_->last_check_frontier_time_ = ros::Time::now();
-            transitState(IDLE, "FSM");
-            ROS_WARN_THROTTLE(1., "Idle since no frontier is detected");
-            fd_->static_state_ = true;
-            replan_pub_.publish(std_msgs::Empty());
-            sendStopMsg(1);
-          }
-          clearVisMarker();
-          //visualize(1);
-        }
-      } else {
-        // Check if reach goal
-        auto pos = info->position_traj_.evaluateDeBoorT(t_cur);
-        if ((pos - expl_manager_->ed_->next_pos_).norm() < 1.0) {
-          replan_pub_.publish(std_msgs::Empty());
-          clearVisMarker();
-          transitState(FINISH, "FSM");
+      case INIT: {
+        // Wait for odometry ready
+        // La odometria la recibe del callback de odometria
+        if (!fd_->have_odom_) {
+          ROS_WARN_THROTTLE(1.0, "-- no datos odometria --");
           return;
         }
-	//replanear si el tiempo se cumple
-	if (t_cur > fp_->replan_thresh3_ || info->duration_ - t_cur < fp_->replan_thresh1_) {
-          // Replan for going back
-          replan_pub_.publish(std_msgs::Empty());
-          transitState(PLAN_TRAJ, "FSM");
-          //thread vis_thread(&MvantExplorationFSM::visualize, this, 1);
-          //vis_thread.detach();
+
+        if ((ros::Time::now() - fd_->fsm_init_time_).toSec() < 2.0) {
+          ROS_WARN_THROTTLE(1.0, "-- esperar para inicializar --");
+          return;
         }
-      }
-      
-      break;
-    }
 
-         //Estado final
-    case FINISH: {
-      ROS_INFO_THROTTLE(1.0, "FINISH STATE");
-      //sendStopMsg(1);
-      ROS_INFO_THROTTLE(1.0, "-- exploracion terminada --");
-      sendStopMsg(1);
-      break;
-    }
+        // Go to wait trigger when odom is ok
+        transitState(WAIT_TRIGGER, "FSM");
+        break;
+      }
+        
+        //Esperando el lanzador
+      case WAIT_TRIGGER: {
+        // Do nothing but wait for trigger
+        ROS_WARN_ONCE(" -- esperando lanzador -- ");
+        ROS_WARN_ONCE("Exploracion: mvant");
+        ROS_WARN_ONCE("Tipo coordinacion: %s", fp_->coordination_type.c_str());
+              
+        break;
+      }
+        
+      case PLAN_TRAJ: {
+        
+        //Planificar si viene de un estado hover
+        if (fd_->static_state_) {
+          fd_->start_pt_ = fd_->odom_pos_;
+          fd_->start_vel_ = fd_->odom_vel_;
+          fd_->start_acc_.setZero();
+          fd_->start_yaw_ << fd_->odom_yaw_, 0, 0;
+        } else {
+        // Replan from non-static state, starting from 'replan_time' seconds later
+        //LocalTrajData esta dentro de plan_container.hpp
+          LocalTrajData* info = &planner_manager_->local_data_;
+          double t_r = (ros::Time::now() - info->start_time_).toSec() + fp_->replan_time_;
+          fd_->start_pt_ = info->position_traj_.evaluateDeBoorT(t_r);
+          fd_->start_vel_ = info->velocity_traj_.evaluateDeBoorT(t_r);
+          fd_->start_acc_ = info->acceleration_traj_.evaluateDeBoorT(t_r);
+          fd_->start_yaw_(0) = info->yaw_traj_.evaluateDeBoorT(t_r)[0];
+          fd_->start_yaw_(1) = info->yawdot_traj_.evaluateDeBoorT(t_r)[0];
+          fd_->start_yaw_(2) = info->yawdotdot_traj_.evaluateDeBoorT(t_r)[0];
+        }
+        
+        // Inform traj_server the replanning
+        replan_pub_.publish(std_msgs::Empty());
+        
+        //buscar una frontera acudir y su trayectoria hacia ella en el grid
+        //itera y se queda con la dist min y hace la trayectoria A*
+        int res = callExplorationPlanner();
+        
+        if (res == SUCCEED) {
+          transitState(PUB_TRAJ, "FSM");
+          // Emergency
+          num_fail_ = 0;
+          sendEmergencyMsg(false);
+    
+        } else if (res == FAIL) {  // Keep trying to replan
+          fd_->static_state_ = true;
+          ROS_WARN_THROTTLE(1.0, "-- Plan fail (drone %d) --", getId());
+          // Check if we need to send a message
+          if (num_fail_ > 10) {
+            sendEmergencyMsg(true);
+            num_fail_ = 0;
+          } else {
+            ++num_fail_;
+          }
+    
+        } else if (res == NO_GRID) {
+          fd_->static_state_ = true;
+          fd_->last_check_frontier_time_ = ros::Time::now();
+          // ROS_WARN("No grid (drone %d)", getId());
+          transitState(IDLE, "FSM");
+    
+          // Emergency
+          num_fail_ = 0;
+          sendEmergencyMsg(false);
+        }
+        
+        //visualize(1);
+        clearVisMarker();
+        break;
+      }
+        
+      case PUB_TRAJ: {
+        
+        double dt = (ros::Time::now() - fd_->newest_traj_.start_time).toSec();
+        if (dt > 0) {
+          bspline_pub_.publish(fd_->newest_traj_);
+          fd_->static_state_ = false;
+    
+          // fd_->newest_traj_.drone_id = planner_manager_->swarm_traj_data_.drone_id_;
+          fd_->newest_traj_.drone_id = expl_manager_->ep_->drone_id_;
+
+          //informar a los drones
+          swarm_traj_pub_.publish(fd_->newest_traj_);
+    
+          thread vis_thread(&MvantExplorationFSM::visualize, this, 2);
+          vis_thread.detach();
+          transitState(EXEC_TRAJ, "FSM");
+        }
+        break;
+      }
+        
+      case EXEC_TRAJ: {
+        auto tn = ros::Time::now();
+        // Check whether replan is needed
+        
+        LocalTrajData* info = &planner_manager_->local_data_;
+        double t_cur = (tn - info->start_time_).toSec();
+        
+        if (!fd_->go_back_) {
+          bool need_replan = false;
+    
+          if (t_cur > fp_->replan_thresh2_ && expl_manager_->frontier_finder_->isFrontierCovered()) {
+              ROS_WARN("Replan: frontera cubierta==================================");
+              need_replan = true;
+          } else if (info->duration_ - t_cur < fp_->replan_thresh1_) {
+            // Replan si la trayectoria ya se realizo
+            ROS_WARN("Replan: trayectoria realizada==============================");
+            need_replan = true;
+          } else if (t_cur > fp_->replan_thresh3_) {
+            // Replan despues de un tiempo
+            ROS_WARN("Replan: despues de un tiempo===============================");
+            need_replan = true;
+          }
       
-      //Estado Inactivo
-    case IDLE: {
-      double check_interval = (ros::Time::now() - fd_->last_check_frontier_time_).toSec();
-      
-      // Check: if we don't have any frontier, then stop
-      if (expl_manager_->updateFrontierStruct(fd_->odom_pos_, fd_->odom_yaw_, fd_->odom_vel_) <= 1) {
-	
-	ROS_WARN_THROTTLE(1.0, "-- No fronteras para agente %d", getId());
-	
-	//sendStopMsg(1);
-	
-	transitState(FINISH, "FSM");
-	
-	//ros::Duration(1).sleep();
-	
-	break;
-	
+          if (need_replan) {
+            if (expl_manager_->updateFrontierStruct(fd_->odom_pos_, fd_->odom_yaw_, fd_->odom_vel_) != 0) {
+              // Update frontier and plan new motion
+              //thread vis_thread(&MvantExplorationFSM::visualize, this, 1);
+              //vis_thread.detach();
+              transitState(PLAN_TRAJ, "FSM");
+            } else {
+              // No frontier detected, finish exploration
+              fd_->last_check_frontier_time_ = ros::Time::now();
+              transitState(IDLE, "FSM");
+              ROS_WARN_THROTTLE(1., "Idle since no frontier is detected");
+              fd_->static_state_ = true;
+              replan_pub_.publish(std_msgs::Empty());
+              sendStopMsg(1);
+            }
+            clearVisMarker();
+            //visualize(1);
+          }
+        } else {
+          // Check if reach goal
+          auto pos = info->position_traj_.evaluateDeBoorT(t_cur);
+          if ((pos - expl_manager_->ed_->next_pos_).norm() < 1.0) {
+            replan_pub_.publish(std_msgs::Empty());
+            clearVisMarker();
+            transitState(FINISH, "FSM");
+            return;
+          }
+        //replanear si el tiempo se cumple
+          if (t_cur > fp_->replan_thresh3_ || info->duration_ - t_cur < fp_->replan_thresh1_) {
+            // Replan for going back
+            replan_pub_.publish(std_msgs::Empty());
+            transitState(PLAN_TRAJ, "FSM");
+            //thread vis_thread(&MvantExplorationFSM::visualize, this, 1);
+            //vis_thread.detach();
+          }
+        }
+        
+        break;
       }
 
-      if (check_interval > 100.0) {
-        // if (!expl_manager_->updateFrontierStruct(fd_->odom_pos_)) {
-        ROS_WARN("Go back to (0,0,1)");
-        // if (getId() == 1) {
-        //   expl_manager_->ed_->next_pos_ = Eigen::Vector3d(-3, 1.9, 1);
-        // } else
-        // expl_manager_->ed_->next_pos_ = Eigen::Vector3d(0, 0.0, 1);
-        // Eigen::Vector3d dir = (fd_->start_pos_ - fd_->odom_pos_);
-        // expl_manager_->ed_->next_yaw_ = atan2(dir[1], dir[0]);
-	
-        expl_manager_->ed_->next_pos_ = fd_->start_pos_;
-        expl_manager_->ed_->next_yaw_ = 0.0;
-	
-        fd_->go_back_ = true;
-        transitState(PLAN_TRAJ, "FSM");
-        // } else {
-        //   fd_->last_check_frontier_time_ = ros::Time::now();
-        // }
+           //Estado final
+      case FINISH: {
+        ROS_INFO_THROTTLE(1.0, "FINISH STATE");
+        ROS_INFO_THROTTLE(1.0, "-- exploracion terminada --");
+        sendStopMsg(1);
+        break;
       }
-      break;
-    }
-      
+        
+        //Estado Inactivo
+      case IDLE: {
+        double check_interval = (ros::Time::now() - fd_->last_check_frontier_time_).toSec();
+        
+        // Check: if we don't have any frontier, then stop
+        if (expl_manager_->updateFrontierStruct(fd_->odom_pos_, fd_->odom_yaw_, fd_->odom_vel_) <= 1) {
+    
+          ROS_WARN_THROTTLE(1.0, "-- No fronteras para agente %d", getId());
+    
+          //sendStopMsg(1);
+    
+          transitState(FINISH, "FSM");
+    
+          //ros::Duration(1).sleep();
+    
+          break;
+    
+        }
+
+        if (check_interval > 100.0) {
+          // if (!expl_manager_->updateFrontierStruct(fd_->odom_pos_)) {
+          ROS_WARN("Go back to (0,0,1)");
+          // if (getId() == 1) {
+          //   expl_manager_->ed_->next_pos_ = Eigen::Vector3d(-3, 1.9, 1);
+          // } else
+          // expl_manager_->ed_->next_pos_ = Eigen::Vector3d(0, 0.0, 1);
+          // Eigen::Vector3d dir = (fd_->start_pos_ - fd_->odom_pos_);
+          // expl_manager_->ed_->next_yaw_ = atan2(dir[1], dir[0]);
+    
+          expl_manager_->ed_->next_pos_ = fd_->start_pos_;
+          expl_manager_->ed_->next_yaw_ = 0.0;
+    
+          fd_->go_back_ = true;
+          transitState(PLAN_TRAJ, "FSM");
+          // } else {
+          //   fd_->last_check_frontier_time_ = ros::Time::now();
+          // }
+        }
+
+        break;
+      }
     }
   }
-  
-  // original implementation
+
+      
   int MvantExplorationFSM::callExplorationPlanner() {
-    ros::Time time_r = ros::Time::now() + ros::Duration(fp_->replan_time_);
-    
-    int res;
-    
-    //TODO revisar expl_manager_->ed_->next_pos_
-    
-    if (fd_->avoid_collision_ || fd_->go_back_) {  // Only replan trajectory
-      res = expl_manager_->planTrajToView(fd_->start_pt_, fd_->start_vel_, fd_->start_acc_, fd_->start_yaw_, expl_manager_->ed_->next_pos_, expl_manager_->ed_->next_yaw_);
-      fd_->avoid_collision_ = false;
-    } else {  // Do full planning normally
-      res = expl_manager_->planExploreMotion(fd_->start_pt_, fd_->start_vel_, fd_->start_acc_, fd_->start_yaw_);
-    }
-    
-    if (res == SUCCEED) {
-      auto info = &planner_manager_->local_data_;
-      info->start_time_ = (ros::Time::now() - time_r).toSec() > 0 ? ros::Time::now() : time_r;
-      
-      bspline::Bspline bspline;
-      bspline.order = planner_manager_->pp_.bspline_degree_;
-      bspline.start_time = info->start_time_;
-      bspline.traj_id = info->traj_id_;
-      Eigen::MatrixXd pos_pts = info->position_traj_.getControlPoint();
-      for (int i = 0; i < pos_pts.rows(); ++i) {
-	geometry_msgs::Point pt;
-	pt.x = pos_pts(i, 0);
-	pt.y = pos_pts(i, 1);
-	pt.z = pos_pts(i, 2);
-	bspline.pos_pts.push_back(pt);
-      }
-      Eigen::VectorXd knots = info->position_traj_.getKnot();
-      for (int i = 0; i < knots.rows(); ++i) {
-	bspline.knots.push_back(knots(i));
-      }
-      Eigen::MatrixXd yaw_pts = info->yaw_traj_.getControlPoint();
-      for (int i = 0; i < yaw_pts.rows(); ++i) {
-	double yaw = yaw_pts(i, 0);
-	bspline.yaw_pts.push_back(yaw);
-      }
-      bspline.yaw_dt = info->yaw_traj_.getKnotSpan();
-      fd_->newest_traj_ = bspline;
-    }
-    return res;
-  }
-    
-  int MvantExplorationFSM::callPlannerExploration() {
     ros::Time time_r = ros::Time::now() + ros::Duration(fp_->replan_time_);
     
     int res;
     
     //replan trajectory por posibles colisiones    
     if (fd_->avoid_collision_ || fd_->go_back_) {  // Only replan trajectory
-      ROS_WARN_STREAM("planTrajToView");
+      ROS_WARN_STREAM("*********************planTrajToView**************************");
       
       //planificar una trayectoria respecto a dos puntos
       //se hace con a* 
@@ -539,7 +497,7 @@ namespace fast_planner {
       fd_->avoid_collision_ = false;
     } else {
       // Do full planning normally
-      ROS_WARN_STREAM("planExploreMotion");
+      ROS_WARN_STREAM("********************planExploreMotion********************");
 
       //planificar respecto a mi ubicacion
       //busqueda greedy
@@ -559,20 +517,20 @@ namespace fast_planner {
       bspline.traj_id = info->traj_id_;
       Eigen::MatrixXd pos_pts = info->position_traj_.getControlPoint();
       for (int i = 0; i < pos_pts.rows(); ++i) {
-      	geometry_msgs::Point pt;
-      	pt.x = pos_pts(i, 0);
-      	pt.y = pos_pts(i, 1);
-      	pt.z = pos_pts(i, 2);
-      	bspline.pos_pts.push_back(pt);
+        geometry_msgs::Point pt;
+        pt.x = pos_pts(i, 0);
+        pt.y = pos_pts(i, 1);
+        pt.z = pos_pts(i, 2);
+        bspline.pos_pts.push_back(pt);
       }
       Eigen::VectorXd knots = info->position_traj_.getKnot();
       for (int i = 0; i < knots.rows(); ++i) {
-      	bspline.knots.push_back(knots(i));
+        bspline.knots.push_back(knots(i));
       }
       Eigen::MatrixXd yaw_pts = info->yaw_traj_.getControlPoint();
       for (int i = 0; i < yaw_pts.rows(); ++i) {
-      	double yaw = yaw_pts(i, 0);
-      	bspline.yaw_pts.push_back(yaw);
+        double yaw = yaw_pts(i, 0);
+        bspline.yaw_pts.push_back(yaw);
       }
       bspline.yaw_dt = info->yaw_traj_.getKnotSpan();
       fd_->newest_traj_ = bspline;
@@ -589,10 +547,10 @@ namespace fast_planner {
     
     //Obtencion de colores
     auto getColorVal = [&](const int& id, const int& num, const int& drone_id) {
-			 double a = (drone_id - 1) / double(num + 1);
-			 double b = 1 / double(num + 1);
-			 return a + b * double(id) / ed_ptr->frontiers_.size();
-		       };
+       double a = (drone_id - 1) / double(num + 1);
+       double b = 1 / double(num + 1);
+       return a + b * double(id) / ed_ptr->frontiers_.size();
+           };
     
     if (content == 1) {
       // Draw frontier
@@ -601,48 +559,49 @@ namespace fast_planner {
 
       for (int i = 0; i < ed_ptr->frontiers_.size(); ++i) {
 
-	auto color = visualization_->getColor(double(i) / ed_ptr->frontiers_.size(), 1);
+  auto color = visualization_->getColor(double(i) / ed_ptr->frontiers_.size(), 1);
 
-	visualization_->drawCubes(ed_ptr->frontiers_[i], res, color, "frontier", i, 0.9);
+  visualization_->drawCubes(ed_ptr->frontiers_[i], res, color, "frontier", i, 0.9);
 
-	// getColorVal(i, expl_manager_->ep_->drone_num_, expl_manager_->ep_->drone_id_)
-	// double(i) / ed_ptr->frontiers_.size()
-	
-	// visualization_->drawBox(ed_ptr->frontier_boxes_[i].first,
-	// ed_ptr->frontier_boxes_[i].second,
-	//   color, "frontier_boxes", i, 4);
+  // getColorVal(i, expl_manager_->ep_->drone_num_, expl_manager_->ep_->drone_id_)
+  // double(i) / ed_ptr->frontiers_.size()
+  
+  // visualization_->drawBox(ed_ptr->frontier_boxes_[i].first,
+  // ed_ptr->frontier_boxes_[i].second,
+  //   color, "frontier_boxes", i, 4);
 
-	//obtener centroide
-	//puntos
-       	Vector3d centroid(0.0, 0.0, 0.0);
-	int count = 0;
-	
-	vector<Vector3d> points = ed_ptr->frontiers_[i];
-	
-	for (const auto& point : points) {
-	  centroid += point;
-	  count++;
-	}
-	
-	if (count > 0) {
-	  centroid /= count;
-	}
-	
-	//Mostrar el numero de frontera
-	auto id_str = std::to_string(ed_ptr->fronters_ids_[i]);
-	ROS_WARN_STREAM("Frontera:: " << id_str);
-	//ROS_WARN_STREAM("Frontera:: " << ed_ptr->frontiers_[i][0]);
-	ROS_WARN_STREAM("Frontera:: " << centroid.transpose());
-	//visualization_->drawText(ed_ptr->frontiers_[i][0] - Eigen::Vector3d(0., 0., 0.), id_str, 0.5, Eigen::Vector4d::Ones(), "id", ed_ptr->frontiers_.size() + i, 4);
-	visualization_->drawText(centroid - Eigen::Vector3d(0., 0., 0.), id_str, 0.5, Eigen::Vector4d::Ones(), "id", ed_ptr->frontiers_.size() + i, 4);
+  //obtener centroide
+  //puntos
+        Vector3d centroid(0.0, 0.0, 0.0);
+  int count = 0;
+  
+  vector<Vector3d> points = ed_ptr->frontiers_[i];
+  
+  for (const auto& point : points) {
+    centroid += point;
+    count++;
+  }
+  
+  if (count > 0) {
+    centroid /= count;
+  }
+  
+  //Mostrar el numero de frontera
+  auto id_str = std::to_string(ed_ptr->fronters_ids_[i]);
+
+  ROS_WARN_STREAM("Frontera:: " << id_str);
+  //ROS_WARN_STREAM("Frontera:: " << ed_ptr->frontiers_[i][0]);
+  ROS_WARN_STREAM("Frontera:: " << centroid.transpose());
+  //visualization_->drawText(ed_ptr->frontiers_[i][0] - Eigen::Vector3d(0., 0., 0.), id_str, 0.5, Eigen::Vector4d::Ones(), "id", ed_ptr->frontiers_.size() + i, 4);
+  visualization_->drawText(centroid - Eigen::Vector3d(0., 0., 0.), id_str, 0.5, Eigen::Vector4d::Ones(), "id", ed_ptr->frontiers_.size() + i, 4);
       }
       
       for (int i = ed_ptr->frontiers_.size(); i < last_ftr_num; ++i) {
-	visualization_->drawCubes({}, res, Vector4d(0, 0, 0, 1), "frontier", i, 4);
-	// visualization_->drawBox(Vector3d(0, 0, 0), Vector3d(0, 0, 0), Vector4d(1, 0, 0, 0.3),
-	//   "frontier_boxes", i, 4);
-	// visualization_->drawText(ed_ptr->frontiers_[i][0] - Eigen::Vector3d(0., 0., 0.), "", 0.5,
-	// Eigen::Vector4d::Ones(), "id", i + 1, 4);
+  visualization_->drawCubes({}, res, Vector4d(0, 0, 0, 1), "frontier", i, 4);
+  // visualization_->drawBox(Vector3d(0, 0, 0), Vector3d(0, 0, 0), Vector4d(1, 0, 0, 0.3),
+  //   "frontier_boxes", i, 4);
+  // visualization_->drawText(ed_ptr->frontiers_[i][0] - Eigen::Vector3d(0., 0., 0.), "", 0.5,
+  // Eigen::Vector4d::Ones(), "id", i + 1, 4);
       }
       
       last_ftr_num = ed_ptr->frontiers_.size();
@@ -651,20 +610,20 @@ namespace fast_planner {
       static size_t last_ftr_num_labeled = 0;
       
       for (size_t i = 0; i < ed_ptr->labeled_frontiers_.size(); ++i) {
-	Eigen::Vector4d color(0, 0, 0, 0.5);
-	if (ed_ptr->labeled_frontiers_[i].first == 0) {
-	  color[0] = 1.;
-	} else if (ed_ptr->labeled_frontiers_[i].first == LABEL::FRONTIER) {
-	  color[1] = 1.;
-	} else {
-	  color[2] = 1.;
-	}
-	visualization_->drawCubes(
-				  ed_ptr->labeled_frontiers_[i].second, res, color, "labeled_frontier", i, 7);
+  Eigen::Vector4d color(0, 0, 0, 0.5);
+  if (ed_ptr->labeled_frontiers_[i].first == 0) {
+    color[0] = 1.;
+  } else if (ed_ptr->labeled_frontiers_[i].first == LABEL::FRONTIER) {
+    color[1] = 1.;
+  } else {
+    color[2] = 1.;
+  }
+  visualization_->drawCubes(
+          ed_ptr->labeled_frontiers_[i].second, res, color, "labeled_frontier", i, 7);
       }
       
       for (size_t i = ed_ptr->labeled_frontiers_.size(); i < last_ftr_num_labeled; ++i) {
-	visualization_->drawCubes({}, res, Eigen::Vector4d(0, 0, 0, 1), "labeled_frontier", i, 7);
+  visualization_->drawCubes({}, res, Eigen::Vector4d(0, 0, 0, 1), "labeled_frontier", i, 7);
       }
       
       last_ftr_num_labeled = ed_ptr->labeled_frontiers_.size();
@@ -673,13 +632,13 @@ namespace fast_planner {
       static size_t last_ftr_num_infront = 0;
       
       for (size_t i = 0; i < ed_ptr->infront_frontiers_.size(); ++i) {
-	Eigen::Vector4d color(1, 1, 0, 0.5);
-	visualization_->drawCubes(
-				  ed_ptr->infront_frontiers_[i].second, res, color, "infront_frontiers", i, 10);
+  Eigen::Vector4d color(1, 1, 0, 0.5);
+  visualization_->drawCubes(
+          ed_ptr->infront_frontiers_[i].second, res, color, "infront_frontiers", i, 10);
       }
       
       for (size_t i = ed_ptr->infront_frontiers_.size(); i < last_ftr_num_labeled; ++i) {
-	visualization_->drawCubes({}, res, Eigen::Vector4d(0, 0, 0, 1), "infront_frontiers", i, 10);
+  visualization_->drawCubes({}, res, Eigen::Vector4d(0, 0, 0, 1), "infront_frontiers", i, 10);
       }
       
       last_ftr_num_infront = ed_ptr->infront_frontiers_.size();
@@ -687,21 +646,21 @@ namespace fast_planner {
       // Publish role
       const std::string role_str = roleToString(expl_manager_->role_);
       visualization_->drawText(fd_->odom_pos_ - Eigen::Vector3d(1., 0., 0.), role_str, 0.4,
-			       Eigen::Vector4d::Ones(), "role", 0, 8);
+             Eigen::Vector4d::Ones(), "role", 0, 8);
       
       // Publish current goal
       auto color =
-	PlanningVisualization::getColor((getId() - 1) / double(expl_manager_->ep_->drone_num_));
+  PlanningVisualization::getColor((getId() - 1) / double(expl_manager_->ep_->drone_num_));
       visualization_->drawArrow(expl_manager_->ed_->next_pos_, expl_manager_->ed_->next_yaw_,
-				Eigen::Vector3d(0.75, 0.3, 0.75), color, "goal", 0, 9);
+        Eigen::Vector3d(0.75, 0.3, 0.75), color, "goal", 0, 9);
       
       // Publish trails tour
       if (expl_manager_->role_ == ROLE::GARBAGE_COLLECTOR) {
-	std::vector<Eigen::Vector3d> tour;
-	for (const auto& p : expl_manager_->ed_->trails_tour_) tour.push_back(p.first);
-	visualization_->drawLines(tour, 0.07, color, "trails_tour", 0, 11);
+  std::vector<Eigen::Vector3d> tour;
+  for (const auto& p : expl_manager_->ed_->trails_tour_) tour.push_back(p.first);
+  visualization_->drawLines(tour, 0.07, color, "trails_tour", 0, 11);
       } else {
-	visualization_->drawLines({}, 0.07, Eigen::Vector4d::Zero(), "trails_tour", 0, 11);
+  visualization_->drawLines({}, 0.07, Eigen::Vector4d::Zero(), "trails_tour", 0, 11);
       }
       
     } else if (content == 2) {
@@ -713,41 +672,41 @@ namespace fast_planner {
       // 6);
       
       if (expl_manager_->ep_->drone_id_ == 1) {
-	vector<Eigen::Vector3d> pts1, pts2;
-	expl_manager_->hgrid_->getGridMarker(pts1, pts2);
-	visualization_->drawLines(pts1, pts2, 0.05, Eigen::Vector4d(1, 0, 1, 0.5), "partition", 1, 6);
-	
-	vector<Eigen::Vector3d> pts;
-	vector<string> texts;
-	expl_manager_->hgrid_->getGridMarker2(pts, texts);
-	static int last_text_num = 0;
+  vector<Eigen::Vector3d> pts1, pts2;
+  expl_manager_->hgrid_->getGridMarker(pts1, pts2);
+  visualization_->drawLines(pts1, pts2, 0.05, Eigen::Vector4d(1, 0, 1, 0.5), "partition", 1, 6);
+  
+  vector<Eigen::Vector3d> pts;
+  vector<string> texts;
+  expl_manager_->hgrid_->getGridMarker2(pts, texts);
+  static int last_text_num = 0;
 
-	for (int i = 0; i < pts.size(); ++i) {
-	  visualization_->drawText(pts[i], texts[i], 1, Eigen::Vector4d(0, 0, 0, 1), "text", i, 6);
-	}
+  for (int i = 0; i < pts.size(); ++i) {
+    visualization_->drawText(pts[i], texts[i], 1, Eigen::Vector4d(0, 0, 0, 1), "text", i, 6);
+  }
 
-	for (int i = pts.size(); i < last_text_num; ++i) {
-	  visualization_->drawText(
-				   Eigen::Vector3d(0, 0, 0), string(""), 1, Eigen::Vector4d(0, 0, 0, 1), "text", i, 6);
-	}
+  for (int i = pts.size(); i < last_text_num; ++i) {
+    visualization_->drawText(
+           Eigen::Vector3d(0, 0, 0), string(""), 1, Eigen::Vector4d(0, 0, 0, 1), "text", i, 6);
+  }
 
-	last_text_num = pts.size();
-	
-	// // Pub hgrid to ground node
-	// exploration_manager::HGrid hgrid;
-	// hgrid.stamp = ros::Time::now().toSec();
-	// for (int i = 0; i < pts1.size(); ++i) {
-	//   geometry_msgs::Point pt1, pt2;
-	//   pt1.x = pts1[i][0];
-	//   pt1.y = pts1[i][1];
-	//   pt1.z = pts1[i][2];
-	//   hgrid.points1.push_back(pt1);
-	//   pt2.x = pts2[i][0];
-	//   pt2.y = pts2[i][1];
-	//   pt2.z = pts2[i][2];
-	//   hgrid.points2.push_back(pt2);
-	// }
-	// hgrid_pub_.publish(hgrid);
+  last_text_num = pts.size();
+  
+  // // Pub hgrid to ground node
+  // exploration_manager::HGrid hgrid;
+  // hgrid.stamp = ros::Time::now().toSec();
+  // for (int i = 0; i < pts1.size(); ++i) {
+  //   geometry_msgs::Point pt1, pt2;
+  //   pt1.x = pts1[i][0];
+  //   pt1.y = pts1[i][1];
+  //   pt1.z = pts1[i][2];
+  //   hgrid.points1.push_back(pt1);
+  //   pt2.x = pts2[i][0];
+  //   pt2.y = pts2[i][1];
+  //   pt2.z = pts2[i][2];
+  //   hgrid.points2.push_back(pt2);
+  // }
+  // hgrid_pub_.publish(hgrid);
       }
       
       auto grid_tour = expl_manager_->ed_->grid_tour_;
@@ -760,11 +719,11 @@ namespace fast_planner {
       exploration_manager::GridTour tour;
 
       for (int i = 0; i < grid_tour.size(); ++i) {
-	geometry_msgs::Point point;
-	point.x = grid_tour[i][0];
-	point.y = grid_tour[i][1];
-	point.z = grid_tour[i][2];
-	tour.points.push_back(point);
+  geometry_msgs::Point point;
+  point.x = grid_tour[i][0];
+  point.y = grid_tour[i][1];
+  point.z = grid_tour[i][2];
+  tour.points.push_back(point);
       }
 
       tour.drone_id = expl_manager_->ep_->drone_id_;
@@ -817,27 +776,27 @@ namespace fast_planner {
             
       for (int i = 0; i < ed->frontiers_.size(); ++i) {
 
-	auto color = visualization_->getColor(double(i) / ed->frontiers_.size(), 0.4);
-	visualization_->drawCubes(ed->frontiers_[i], res, color, "frontier", i, 4);
-	
-	Vector3d centroid(0.0, 0.0, 0.0);
-	int count = 0;
-	
-	centroid = ed->views_[i];
-		
-	// mostrar el numero de frontera
-	auto id_str = std::to_string(ed->fronters_ids_[i]);
-	//ROS_WARN_STREAM("Frontera:: " << id_str);
-	//ROS_WARN_STREAM("Frontera:: " << centroid.transpose());
-	
-	visualization_->drawText(centroid, "F-"+id_str, 0.8, Eigen::Vector4d(0.0, 0.0, 0.0, 1.0), "id", ed->frontiers_.size() + i, 4);
-	
+  auto color = visualization_->getColor(double(i) / ed->frontiers_.size(), 0.4);
+  visualization_->drawCubes(ed->frontiers_[i], res, color, "frontier", i, 4);
+  
+  Vector3d centroid(0.0, 0.0, 0.0);
+  int count = 0;
+  
+  centroid = ed->views_[i];
+    
+  // mostrar el numero de frontera
+  auto id_str = std::to_string(ed->fronters_ids_[i]);
+  //ROS_WARN_STREAM("Frontera:: " << id_str);
+  //ROS_WARN_STREAM("Frontera:: " << centroid.transpose());
+  
+  visualization_->drawText(centroid, "F-"+id_str, 0.8, Eigen::Vector4d(0.0, 0.0, 0.0, 1.0), "id", ed->frontiers_.size() + i, 4);
+  
       }
       
       for (int i = ed->frontiers_.size(); i < 50; ++i) {
-	visualization_->drawCubes({}, res, Vector4d(0, 0, 0, 1), "frontier", i, 4);
-	visualization_->drawText({}, "", 0.8, Eigen::Vector4d(0.0, 0.0, 0.0, 1.0), "id", ed->frontiers_.size() + i, 4);
-		
+  visualization_->drawCubes({}, res, Vector4d(0, 0, 0, 1), "frontier", i, 4);
+  visualization_->drawText({}, "", 0.8, Eigen::Vector4d(0.0, 0.0, 0.0, 1.0), "id", ed->frontiers_.size() + i, 4);
+    
       }
             
       visualize(2);
@@ -881,6 +840,8 @@ namespace fast_planner {
     case 0: {
       //de la base de mis conocimientos, hacer busqueda y enviar
       //next 
+      ROS_WARN_STREAM("CASE 0");
+
       ROS_WARN_STREAM("drone-comm: " << getId() << "--" << ed_ptr->fronteras.size());
       ROS_WARN_STREAM("next pos: " << ed_ptr->next_pos_);
       //Envía mi objetivo y el objetivo conocido de los otros robots
@@ -891,21 +852,25 @@ namespace fast_planner {
       //recibe objetivo
     case 1: {
       //actualiza los objetivos de los otros robot
+      ROS_WARN_STREAM("CASE 1");
       break;
     }
       
       //solicitud de mapa
     case 2:{
       //envía mapa
+      ROS_WARN_STREAM("CASE 2");
       break;
     }
       //recibe mapa
     case 3:{
+      ROS_WARN_STREAM("CASE 3");
       //actualiza mapa
       break;
     }
       //señal de parada
     case 4:{
+      ROS_WARN_STREAM("CASE 4");
       //pon la señal de parada en verdadero
       break;
     }
@@ -958,24 +923,24 @@ namespace fast_planner {
       
       // Asegúrate de que las cajas permanezcan en el rango [-10, 10] para X e Y, y [0, 2] para Z
       if (obstacle.position.x < -10.0f || obstacle.position.x > 10.0f)
-	obstacle.velocity.x *= -1;
+  obstacle.velocity.x *= -1;
       if (obstacle.position.y < -10.0f || obstacle.position.y > 10.0f)
-	obstacle.velocity.y *= -1;
+  obstacle.velocity.y *= -1;
       if (obstacle.position.z < 0.0f || obstacle.position.z > 2.0f)
-	obstacle.velocity.z *= -1;
+  obstacle.velocity.z *= -1;
       
       // Genera puntos que representan un cubo alrededor de la posición
       float size = 0.5; // Tamaño del cubo
       for (float dx = -size; dx <= size; dx += 0.05){
-	for (float dy = -size; dy <= size; dy += 0.05){
-	  for (float dz = -size; dz <= size; dz += 0.05){
-	    pcl::PointXYZ point;
-	    point.x = obstacle.position.x + dx;
-	    point.y = obstacle.position.y + dy;
-	    point.z = obstacle.position.z + dz;
-	    cloud.points.push_back(point);
-	  }
-	}
+  for (float dy = -size; dy <= size; dy += 0.05){
+    for (float dz = -size; dz <= size; dz += 0.05){
+      pcl::PointXYZ point;
+      point.x = obstacle.position.x + dx;
+      point.y = obstacle.position.y + dy;
+      point.z = obstacle.position.z + dz;
+      cloud.points.push_back(point);
+    }
+  }
       }
     }
     
@@ -1043,28 +1008,28 @@ namespace fast_planner {
     // Iterar sobre el cubo 3D con los valores del voxel, entonces la sumatoria debe ser la resolucion del mapa
     for (int x = minX; x < maxX; ++x) {
       for (int y = minY; y < maxY; ++y) {
-	for (int z = minZ; z < maxZ; ++z) {
-	  
-	  // Calcular la distancia de todos y guardar datos en un vector
-	  // en el vector guardar x,y,z ; distancia ; occupancy
-	  //son los puntos en la iter
-	  
-	  expl_manager_->sdf_map_->indexToPos(Eigen::Vector3i(x,y,z),cloud_points);
-	  
-	  distancia = getDistance(cloud_points,central_point);
-	  //ROS_WARN_STREAM("Distancia:: " << distancia);
-	  //0 - DESCONOCIDO | 1 - LIBRE | 2 - OCUPADO
-	  state = expl_manager_->sdf_map_->getOccupancy(Eigen::Vector3i(x,y,z));
-	  
-	  //guardar en vector
-	  //distancia | x,y.z
-	  
-	  //neighborhood.emplace(distancia,std::make_pair(cloud_points,state));
-	  neighborhood.emplace(distancia,std::make_pair(cloud_points,state));
-	  
-	  //ROS_WARN_STREAM("Estado" << state);
-	  
-	}
+  for (int z = minZ; z < maxZ; ++z) {
+    
+    // Calcular la distancia de todos y guardar datos en un vector
+    // en el vector guardar x,y,z ; distancia ; occupancy
+    //son los puntos en la iter
+    
+    expl_manager_->sdf_map_->indexToPos(Eigen::Vector3i(x,y,z),cloud_points);
+    
+    distancia = getDistance(cloud_points,central_point);
+    //ROS_WARN_STREAM("Distancia:: " << distancia);
+    //0 - DESCONOCIDO | 1 - LIBRE | 2 - OCUPADO
+    state = expl_manager_->sdf_map_->getOccupancy(Eigen::Vector3i(x,y,z));
+    
+    //guardar en vector
+    //distancia | x,y.z
+    
+    //neighborhood.emplace(distancia,std::make_pair(cloud_points,state));
+    neighborhood.emplace(distancia,std::make_pair(cloud_points,state));
+    
+    //ROS_WARN_STREAM("Estado" << state);
+    
+  }
       }
     }
     
@@ -1081,17 +1046,17 @@ namespace fast_planner {
       int _estado_ = it->second.second;
       
       if(_estado_==2){
-	
-	//ROS_WARN_STREAM("Magnitud: " << magnitud << ", Vector: (" << vector.x() << "," << vector.y() << "," << vector.z() << " - " << _estado_ << ")");
-	
-	pt.x = vector.x();
-	pt.y = vector.y();
-	pt.z = vector.z();
-	
-	cloud.push_back(pt);
-	
-	++count;
-	
+  
+  //ROS_WARN_STREAM("Magnitud: " << magnitud << ", Vector: (" << vector.x() << "," << vector.y() << "," << vector.z() << " - " << _estado_ << ")");
+  
+  pt.x = vector.x();
+  pt.y = vector.y();
+  pt.z = vector.z();
+  
+  cloud.push_back(pt);
+  
+  ++count;
+  
       }
     }
 
@@ -1174,18 +1139,18 @@ namespace fast_planner {
       bool safe = planner_manager_->checkTrajCollision(dist);
       //si no es seguro
       if (!safe) {
-	ROS_WARN_STREAM("Replan: collision detected=======================");
-	fd_->avoid_collision_ = true;
-	transitState(PLAN_TRAJ, "safetyCallback");
+  ROS_WARN_STREAM("Replan: collision detected=======================");
+  fd_->avoid_collision_ = true;
+  transitState(PLAN_TRAJ, "safetyCallback");
       }
       
       static auto time_check = ros::Time::now();
       if (expl_manager_->sdf_map_->getOccupancy(fd_->odom_pos_) != SDFMap::OCCUPANCY::FREE) {
-	if ((ros::Time::now() - time_check).toSec() > 20.) {
-	  sendStopMsg(-1);
-	}
+  if ((ros::Time::now() - time_check).toSec() > 20.) {
+    sendStopMsg(-1);
+  }
       } else {
-	time_check = ros::Time::now();
+  time_check = ros::Time::now();
       }
     }
   }
@@ -1222,9 +1187,9 @@ namespace fast_planner {
     state_ = new_state;
     
     ROS_WARN_STREAM("[" + pos_call + "]: Drone "
-		    << getId()
-		    << " from " + fd_->state_str_[pre_s] +
-		    " to " + fd_->state_str_[int(new_state)]);
+        << getId()
+        << " from " + fd_->state_str_[pre_s] +
+        " to " + fd_->state_str_[int(new_state)]);
     
   }
 
@@ -1394,11 +1359,11 @@ namespace fast_planner {
     // Remove allocated ones
     for (auto state : expl_manager_->ed_->swarm_state_) {
       for (auto id : state.grid_ids_) {
-	if (active_map.find(id) != active_map.end()) {
-	  active_map.erase(id);
-	} else {
-	  // ROS_ERROR("Inactive grid %d is allocated.", id);
-	}
+  if (active_map.find(id) != active_map.end()) {
+    active_map.erase(id);
+  } else {
+    // ROS_ERROR("Inactive grid %d is allocated.", id);
+  }
       }
     }
     
@@ -1448,8 +1413,8 @@ namespace fast_planner {
       expl_manager_->ed_->reallocated_ = true;
       
       if (state_ == IDLE && !state2.grid_ids_.empty()) {
-	transitState(PLAN_TRAJ, "optMsgCallback");
-	// ROS_WARN("Restart after opt!");
+  transitState(PLAN_TRAJ, "optMsgCallback");
+  // ROS_WARN("Restart after opt!");
       }
       
       // if (!check_consistency(tmp1, tmp2)) {
@@ -1506,7 +1471,7 @@ namespace fast_planner {
     
     // Ignore outdated trajectory
     if (sdat.receive_flags_[msg->drone_id - 1] == true &&
-	msg->start_time.toSec() <= sdat.swarm_trajs_[msg->drone_id - 1].start_time_ + 1e-3)
+  msg->start_time.toSec() <= sdat.swarm_trajs_[msg->drone_id - 1].start_time_ + 1e-3)
       return;
     
     // Convert the msg to B-spline
@@ -1541,10 +1506,10 @@ namespace fast_planner {
     if (state_ == EXEC_TRAJ) {
       // Check collision with received trajectory
       if (!planner_manager_->checkSwarmCollision(msg->drone_id)) {
-	ROS_ERROR("Drone %d collide with drone %d.", sdat.drone_id_, msg->drone_id);
-	fd_->avoid_collision_ = true;
-	//forzar a volver a planear una trajectoria
-	transitState(PLAN_TRAJ, "swarmTrajCallback");
+  ROS_ERROR("Drone %d collide with drone %d.", sdat.drone_id_, msg->drone_id);
+  fd_->avoid_collision_ = true;
+  //forzar a volver a planear una trajectoria
+  transitState(PLAN_TRAJ, "swarmTrajCallback");
       }
     }
   }
@@ -1567,20 +1532,21 @@ namespace fast_planner {
       for (int i = 0; i < 4; ++i) pos_pts.row(i) = fd_->odom_pos_.transpose();
       
       for (int i = 0; i < pos_pts.rows(); ++i) {
-	geometry_msgs::Point pt;
-	pt.x = pos_pts(i, 0);
-	pt.y = pos_pts(i, 1);
-	pt.z = pos_pts(i, 2);
-	bspline.pos_pts.push_back(pt);
+  geometry_msgs::Point pt;
+  pt.x = pos_pts(i, 0);
+  pt.y = pos_pts(i, 1);
+  pt.z = pos_pts(i, 2);
+  bspline.pos_pts.push_back(pt);
       }
       
       NonUniformBspline tmp(pos_pts, planner_manager_->pp_.bspline_degree_, 1.0);
       Eigen::VectorXd knots = tmp.getKnot();
       for (int i = 0; i < knots.rows(); ++i) {
-	bspline.knots.push_back(knots(i));
+  bspline.knots.push_back(knots(i));
       }
       bspline.drone_id = expl_manager_->ep_->drone_id_;
       swarm_traj_pub_.publish(bspline);
     }
   }
+
 }  // namespace fast_planner

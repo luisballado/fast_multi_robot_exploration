@@ -89,8 +89,7 @@ add_executable(mvant_node
   src/mvant/mvant_node.cpp
   src/mvant/mvant_exploration_fsm.cpp
   src/mvant/mvant_exploration_manager.cpp
-  #src/mvant/role_assigner.cpp
-  #src/mvant/collaboration_assigner.cpp
+  src/mvant/hungarian.cpp
 )
 
 target_link_libraries(mvant_node 
