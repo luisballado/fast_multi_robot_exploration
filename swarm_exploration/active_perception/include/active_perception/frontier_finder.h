@@ -93,6 +93,8 @@ public:
   void updateFrontierCostMatrix();
   void getFullCostMatrix(const Vector3d& cur_pos, const Vector3d& cur_vel, const Vector3d cur_yaw,
       Eigen::MatrixXd& mat);
+  void getFullMatrix(const Vector3d& cur_pos, const Vector3d& cur_vel, const Vector3d cur_yaw,
+      Eigen::MatrixXd& mat);
   void getSwarmCostMatrix(const vector<Vector3d>& positions, const vector<Vector3d>& velocities,
       const vector<double> yaws, Eigen::MatrixXd& mat);
   void getSwarmCostMatrix(const vector<Vector3d>& positions, const vector<Vector3d>& velocities,

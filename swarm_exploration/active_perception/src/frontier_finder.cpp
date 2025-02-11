@@ -331,7 +331,7 @@ void FrontierFinder::updateFrontierCostMatrix() {
 
   // Compute path and cost between new clusters
   for (auto it1 = first_new_ftr_; it1 != frontiers_.end(); ++it1)
-    for (auto it2 = it1; it2 != frontiers_.end(); ++it2) {auto updateCost = [](const list<Frontier>::iterator& it1, const list<Frontier>::iterator& it2) {
+    for (auto it2 = it1; it2 != frontiers_.end(); ++it2) {
       if (it1 == it2) {
         // std::cout << "(" << it1->id_ << "," << it2->id_ << "), ";
         it1->costs_.push_back(0);
@@ -704,6 +704,41 @@ void FrontierFinder::getFullCostMatrix(const Vector3d& cur_pos, const Vector3d& 
   }
   // std::cout << "" << std::endl;
 }
+
+//pasarle el DroneSwarmState
+//pasarle el cur_pos e todos
+void FrontierFinder::getFullMatrix(const Vector3d& cur_pos, const Vector3d& cur_vel,
+    const Vector3d cur_yaw, Eigen::MatrixXd& mat) {
+  
+  const int drone_num = cur_pos.size()-1;
+  const int ftr_num = frontiers_.size();
+  // obtener las dimensiones de la matriz original
+  int nRows = drone_num;
+  int nCols = ftr_num;
+  
+  int n = std::max(nRows, nCols);
+  mat.resize(n,n);
+  
+  //llenar matriz con infinitos
+  mat.setConstant(10000.0);
+  
+  //Copiar valor original
+  
+  for(int i = 0; i < drone_num; i++){
+    int j = 0;
+    for(const auto& ftr: frontiers_){
+      Viewpoint vj = ftr.viewpoints_.front();
+      //debe ser con la posicion hacia donde va ir el drone
+      std::vector<Vector3d> path;
+      mat(i,j) = ViewNode::searchPath(cur_pos,vj.pos_,path);
+      j++;
+    }
+  }
+  
+  
+  // std::cout << "" << std::endl;
+}
+
 
 //llenar matriz de costos para los VANTS
 void FrontierFinder::getSwarmCostMatrix(const vector<Vector3d>& positions,

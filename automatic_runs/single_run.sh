@@ -36,7 +36,7 @@ else
 
   # Roscore
   roscore &
-  sleep 5s
+  sleep 3s
 
   # Visualization
   if [ ${visualize} == true ]; then

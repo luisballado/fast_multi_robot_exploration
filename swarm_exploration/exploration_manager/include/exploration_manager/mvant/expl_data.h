@@ -71,7 +71,7 @@ struct DroneState {
   vector<int> grid_ids_;         // Id of grid tour
   double recent_interact_time_;  // Stamp of latest opt with this drone
 
-  // FAME
+  // FAME MVANT
   Eigen::Vector3d goal_pos_;
   
   //size_t role_;

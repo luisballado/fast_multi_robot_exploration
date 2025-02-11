@@ -104,7 +104,7 @@ namespace fast_planner {
     safety_timer_   = nh.createTimer(ros::Duration(0.05), &MvantExplorationFSM::safetyCallback, this);
     
     //actualiza la frontera
-    frontier_timer_ = nh.createTimer(ros::Duration(0.05), &MvantExplorationFSM::frontierCallback, this);
+    frontier_timer_ = nh.createTimer(ros::Duration(0.1), &MvantExplorationFSM::frontierCallback, this);
     
     //mandar mensaje de vacio estar vivo
     heartbit_timer_ = nh.createTimer(ros::Duration(1.0), &MvantExplorationFSM::heartbitCallback, this);
@@ -137,7 +137,7 @@ namespace fast_planner {
     
     // Swarm, timer, pub and sub
     //broadcast own state periodically
-    drone_state_timer_ = nh.createTimer(ros::Duration(1.0), &MvantExplorationFSM::droneStateTimerCallback, this);
+    drone_state_timer_ = nh.createTimer(ros::Duration(0.04), &MvantExplorationFSM::droneStateTimerCallback, this);
     
     drone_state_pub_   = nh.advertise<exploration_manager::DroneState>("/swarm_expl/drone_state_send", 10);
     drone_state_sub_   = nh.subscribe("/swarm_expl/drone_state_recv", 10, &MvantExplorationFSM::droneStateMsgCallback, this);

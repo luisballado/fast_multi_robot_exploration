@@ -182,8 +182,7 @@ void MvantExplorationManager::initialize(ros::NodeHandle& nh) {
 }
 
 //buscar una frontera 
-int MvantExplorationManager::planExploreMotion(
-    const Vector3d& pos, const Vector3d& vel, const Vector3d& acc, const Vector3d& yaw) {
+int MvantExplorationManager::planExploreMotion(const Vector3d& pos, const Vector3d& vel, const Vector3d& acc, const Vector3d& yaw) {
   
   ros::Time t1 = ros::Time::now();
   auto t2 = t1;
@@ -642,18 +641,116 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
     double yaw;
   };
   
+  //algoritmo 2
+  //entrada: robots r, fronteras F,objetivos de robot,distancia hacia objetivo
+  //salida frontera
+  //j = 0.9
+  //repite
+  // alpha = beta 
   const Frontera& findMinFrontera(const std::list<Frontera>& fronteras){
 
     if(fronteras.empty()){
       //Fronteras vacias
     }
 
-    auto it = std::min_element(fronteras.begin(),fronteras.end(),[](const Frontera& a, const Frontera& b){
+    auto frontera = fronteras.begin();
+    
+    for (auto i = fronteras.begin(); i != fronteras.end(); ++i) {
+        if (i->distance < frontera->distance) {
+            frontera = i;
+        }
+    }
+
+    /**
+      auto it = std::min_element(fronteras.begin(),fronteras.end(),[](const Frontera& a, const Frontera& b){
       return a.distance < b.distance;
     });
+    */
+    ROS_WARN_STREAM("DRONE BUSCANDO MINIMO:: ");
 
-    return *it; //regresar un apuntador al valor
+    return *frontera; //regresar un apuntador al valor
   }
+
+
+  std::vector<int> HungarianAlgorithm(Eigen::MatrixXd& costMatrix) {
+  
+      // Save the original matrix dimensions.
+    int origRows = costMatrix.rows();
+    int origCols = costMatrix.cols();
+    
+    const double INF = std::numeric_limits<double>::infinity();
+    int n = costMatrix.rows();  // Now 'cost' is an n x n square matrix.
+    
+    // Step 2: Initialize the dual variables (u and v) and auxiliary arrays (p and way).
+    // We use 1-indexed arrays for convenience (index 0 is used as a dummy).
+    std::vector<double> u(n + 1, 0), v(n + 1, 0);
+    std::vector<int> p(n + 1, 0), way(n + 1, 0);
+    
+    // Process each row (from 1 to n) to build the matching.
+    for (int i = 1; i <= n; i++) {
+        p[0] = i;           // Initialize the dummy column with the current row.
+        int j0 = 0;         // j0 is the current column in the alternating path.
+        std::vector<double> minv(n + 1, INF);  // minv[j] will hold the minimum reduced cost for column j.
+        std::vector<bool> used(n + 1, false);  // used[j] indicates whether column j is visited.
+        
+        // Find an augmenting path.
+        do {
+            used[j0] = true;
+            int i0 = p[j0]; // The row currently matched with column j0.
+            int j1 = 0;
+            double delta = INF;
+            
+            // Update the minimum values for all columns not yet visited.
+            for (int j = 1; j <= n; j++) {
+                if (!used[j]) {
+                    // Compute the reduced cost for assigning row i0 to column j.
+                    double cur = costMatrix(i0 - 1, j - 1) - u[i0] - v[j];
+                    if (cur < minv[j]) {
+                        minv[j] = cur;
+                        way[j] = j0;  // Record the predecessor of column j.
+                    }
+                    if (minv[j] < delta) {
+                        delta = minv[j];
+                        j1 = j;  // j1 is the candidate for the next column.
+                    }
+                }
+            }
+            
+            // Update the dual variables.
+            for (int j = 0; j <= n; j++) {
+                if (used[j]) {
+                    u[p[j]] += delta;
+                    v[j] -= delta;
+                } else {
+                    minv[j] -= delta;
+                }
+            }
+            j0 = j1;  // Move to the next column.
+        } while (p[j0] != 0); // Continue until an unmatched column is found.
+        
+        // Update the matching along the alternating path.
+        do {
+            int j1 = way[j0];
+            p[j0] = p[j1];
+            j0 = j1;
+        } while (j0);
+    }
+    
+    // Step 3: Build the assignment result.
+    // For each column j (1-indexed), p[j] is the row assigned to j.
+    // We only care about assignments for rows in the original matrix.
+    std::vector<int> assignment(origRows, -1);
+    for (int j = 1; j <= n; j++) {
+        int i = p[j]; // i is the row (1-indexed) assigned to column j.
+        // Only record the assignment if it is within the original dimensions.
+        if (i <= origRows && j <= origCols) {
+            assignment[i - 1] = j - 1;  // Convert to 0-indexed.
+        }
+    }
+    
+    return assignment;
+  }
+
 
   //Funcion principal de exploración con todos los elementos
   bool MvantExplorationManager::closestGreedyFrontier(const Vector3d& pos, const Vector3d& yaw, Vector3d& next_pos, double& next_yaw, bool force_different) const {
@@ -666,21 +763,20 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
     
     bool found_ftr = false;
     
-    //iterar en todas las fronteras
+    //iterar en todas las fronteras guardar las distancias
     for (const auto& ftr : frontier_finder_->getFrontiers()) {
       
       Viewpoint vp = ftr.viewpoints_.front();
       
-      std::vector<Vector3d> path; //camino
-      
       //no brincar fronteras
       //aqui hay infinitos agregar y se deben considerar
+      //origen, destino
       if (!isPositionReachable(pos, vp.pos_)) {
         front1.id = ftr.id_;
-        front1.distance = 1000.0;
+        front1.distance = 10000.0;
         front1.pos = vp.pos_;
         front1.yaw = vp.yaw_;
-
+        
         fronteras.push_back(front1);
       
         ed_->fronteras.push_back(ftr.id_);  
@@ -690,6 +786,8 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
       
       //busqueda basada en A* 
       //llenar tabla con las distancias de las fronteras para los n robots
+      std::vector<Vector3d> path; //camino
+      //calcular bien la distancia
       double distance = ViewNode::searchPath(pos, vp.pos_, path);
       
       // Check if we need to force a new goal
@@ -711,22 +809,19 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
       
     }
 
-    //hasta aqui tengo las fronteras con distancias
-    ROS_WARN_STREAM("[MANAGER] drone ffr: " << ed_->fronteras.size());
+    //hasta aqui tengo las fronteras con distancias exploration data ->fronteras //todos los drones la tienen
+    //ROS_WARN_STREAM("[MANAGER] drone ffr: " << ed_->fronteras.size());
     
-    /*
-    for(auto item: fronteras){
-      ROS_WARN_STREAM("F:" << item.id);
-      ROS_WARN_STREAM("D:" << item.distance);
-    }
-    */
+    
 
     //conseguir la mejor frontera para mi
     //en base a mi informacion
 
     //remplazar con el hungaro con la tabla que se genero
     //algoritmo 2
-    //auto it = std::min_element(fronteras.begin(), fronteras.end(), [](const Frontera& a, const Frontera& b) {return a.distance < b.distance;});
+    /*
+    auto it = std::min_element(fronteras.begin(), fronteras.end(), [](const Frontera& a, const Frontera& b) {return a.distance < b.distance;});
+    
     const Frontera& minFrontera = findMinFrontera(fronteras);
 
     //asignar frontera    
@@ -736,10 +831,103 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
     min_dist = minFrontera.distance;//it->distance;
     next_pos = minFrontera.pos;//it->pos;
     next_yaw = minFrontera.yaw;//it->yaw;
+    */
 
+    
+    std::ofstream outfile("/home/file.txt",std::ios::app);
+    // Write data to the file.
+    outfile << "\nmatriz costo del drone: " << (ep_->drone_id_) << std::endl;
+    const int drone_num = ed_->swarm_state_.size()-1;
+    const int ftr_num = frontier_finder_->getFrontiers().size();
+    // obtener las dimensiones de la matriz original
+    int nRows = drone_num;
+    int nCols = ftr_num;
+  
+    int n = std::max(nRows, nCols);
+    Eigen::MatrixXd mat;
+    mat.resize(n,n);
+  
+    //llenar matriz con infinitos
+    mat.setConstant(10000.0);
+
+    for (int i = 0; i < ed_->swarm_state_.size()-1; ++i) {
+      int index = 0;
+      for (const auto& ftr : frontier_finder_->getFrontiers()) {
+
+        const auto& drone_state = ed_->swarm_state_[i];
+        Viewpoint vj = ftr.viewpoints_.front();
+        //debe ser con la posicion hacia donde va ir el drone
+        std::vector<Vector3d> path;
+        std::vector<Vector3d> path2;
+
+        //function costo va aqui
+        mat(i,index) = ViewNode::searchPath(drone_state.pos_,vj.pos_,path) + ViewNode::searchPath(drone_state.goal_pos_,vj.pos_,path2);//distancia de ultima vez que lo escuche con objetivo;
+        ++index;
+      }
+
+    }
+    
+    const int dimension = mat.rows();
+
+    outfile << "Cardinalidad de VANTS: " << drone_num;
+    outfile << " :: Fronteras: " << fronteras.size();
+    outfile << " :: dimension matriz a crear: " << dimension << std::endl;
+    // Write the matrix to the file:
+    // Iterate over each row.
+    for (int i = 0; i < mat.rows(); i++) {
+        // Iterate over each column in the row.
+        for (int j = 0; j < mat.cols(); j++) {
+            // Write the element followed by a space.
+            outfile << mat(i, j);
+            if (j < mat.cols() - 1)
+                outfile << " "; // Separate elements with a space.
+        }
+        // Write a newline at the end of each row.
+        outfile << std::endl;
+    }
+
+    
+    // for(auto item: fronteras){
+    //   outfile << "frt:" << item.id << std::endl;
+    //   outfile << "dist:" << item.distance << "\n" << std::endl;
+    // }
+    
+
+    //me interesa la pos de mi drone    
+
+    
     //compartir con los demas drones
     //como puedo compartir con los demas drones??
+
+    std::vector<int> assignment = HungarianAlgorithm(mat);
+    //ver el resultado de aqui
+    outfile << "Assignment (robot -> frontier):" << std::endl;
+    for (size_t i = 0; i < assignment.size(); i++) {
+        outfile << "Robot " << i << " assigned to column " << assignment[i] << std::endl;
+    }
+
+    outfile << "Robot " << ep_->drone_id_ << " Assigned to " << assignment[ep_->drone_id_-1] << " : " << mat(ep_->drone_id_-1,assignment[ep_->drone_id_-1]) << std::endl;
+        
+    outfile.close();
+
+    //asignar frontera    
+    // Update flag
+    found_ftr = true;
+
+    int item = assignment[ep_->drone_id_-1];  // We want to get the element at index 1.
     
+    // Use std::next to get an iterator advanced by 'item' positions.
+    auto it = std::next(fronteras.begin(), item);
+    
+    if (it != fronteras.end()) {
+      min_dist = it->distance;
+      next_pos = it->pos;
+      next_yaw = it->yaw;
+
+    } 
+    // Target
+    
+
     //ros::Duration(5.0).sleep();
     return found_ftr;
   }
