@@ -819,112 +819,126 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
 
     //remplazar con el hungaro con la tabla que se genero
     //algoritmo 2
-    /*
-    auto it = std::min_element(fronteras.begin(), fronteras.end(), [](const Frontera& a, const Frontera& b) {return a.distance < b.distance;});
-    
-    const Frontera& minFrontera = findMinFrontera(fronteras);
-
-    //asignar frontera    
-    // Update flag
-    found_ftr = true;
-    // Target
-    min_dist = minFrontera.distance;//it->distance;
-    next_pos = minFrontera.pos;//it->pos;
-    next_yaw = minFrontera.yaw;//it->yaw;
-    */
-
     
     std::ofstream outfile("/home/file.txt",std::ios::app);
-    // Write data to the file.
-    outfile << "\nmatriz costo del drone: " << (ep_->drone_id_) << std::endl;
-    const int drone_num = ed_->swarm_state_.size()-1;
-    const int ftr_num = frontier_finder_->getFrontiers().size();
-    // obtener las dimensiones de la matriz original
-    int nRows = drone_num;
-    int nCols = ftr_num;
-  
-    int n = std::max(nRows, nCols);
-    Eigen::MatrixXd mat;
-    mat.resize(n,n);
-  
-    //llenar matriz con infinitos
-    mat.setConstant(10000.0);
 
-    for (int i = 0; i < ed_->swarm_state_.size()-1; ++i) {
-      int index = 0;
-      for (const auto& ftr : frontier_finder_->getFrontiers()) {
+    if(frontier_finder_->getFrontiers().size() > ed_->swarm_state_.size()){
 
-        const auto& drone_state = ed_->swarm_state_[i];
-        Viewpoint vj = ftr.viewpoints_.front();
-        //debe ser con la posicion hacia donde va ir el drone
-        std::vector<Vector3d> path;
-        std::vector<Vector3d> path2;
+      
+      // Write data to the file.
+      outfile << "\nmatriz costo del drone: " << (ep_->drone_id_) << std::endl;
+      const int drone_num = ed_->swarm_state_.size()-1;
+      const int ftr_num = frontier_finder_->getFrontiers().size();
+      // obtener las dimensiones de la matriz original
+      int nRows = drone_num;
+      int nCols = ftr_num;
+    
+      int n = std::max(nRows, nCols);
+      Eigen::MatrixXd mat;
+      mat.resize(n,n);
+    
+      //llenar matriz con infinitos
+      mat.setConstant(10000.0);
 
-        //function costo va aqui
-        mat(i,index) = ViewNode::searchPath(drone_state.pos_,vj.pos_,path) + ViewNode::searchPath(drone_state.goal_pos_,vj.pos_,path2);//distancia de ultima vez que lo escuche con objetivo;
-        ++index;
+      for (int i = 0; i < ed_->swarm_state_.size()-1; ++i) {
+        int index = 0;
+        for (const auto& ftr : frontier_finder_->getFrontiers()) {
+
+          const auto& drone_state = ed_->swarm_state_[i];
+          Viewpoint vj = ftr.viewpoints_.front();
+          //debe ser con la posicion hacia donde va ir el drone
+          std::vector<Vector3d> path;
+          std::vector<Vector3d> path2;
+
+          //function costo va aqui
+          //como calcular cambio de yaw?? mapearlo de cero a 1
+          //que tan enfrente me puede quedar la frontera
+          mat(i,index) = ViewNode::searchPath(drone_state.pos_,vj.pos_,path) + ViewNode::searchPath(drone_state.goal_pos_,vj.pos_,path2);//distancia de ultima vez que lo escuche con objetivo;
+          ++index;
+        }
+
+      }
+      
+      const int dimension = mat.rows();
+
+      outfile << "Cardinalidad de VANTS: " << drone_num;
+      outfile << " :: Fronteras: " << fronteras.size();
+      outfile << " :: dimension matriz a crear: " << dimension << std::endl;
+      // Write the matrix to the file:
+      // Iterate over each row.
+      for (int i = 0; i < mat.rows(); i++) {
+          // Iterate over each column in the row.
+          for (int j = 0; j < mat.cols(); j++) {
+              // Write the element followed by a space.
+              outfile << mat(i, j);
+              if (j < mat.cols() - 1)
+                  outfile << " "; // Separate elements with a space.
+          }
+          // Write a newline at the end of each row.
+          outfile << std::endl;
       }
 
+      
+      // for(auto item: fronteras){
+      //   outfile << "frt:" << item.id << std::endl;
+      //   outfile << "dist:" << item.distance << "\n" << std::endl;
+      // }
+      
+
+      //me interesa la pos de mi drone    
+
+      
+      //compartir con los demas drones
+      //como puedo compartir con los demas drones??
+
+      std::vector<int> assignment = HungarianAlgorithm(mat);
+      //ver el resultado de aqui
+      outfile << "Assignment (robot -> frontier):" << std::endl;
+      for (size_t i = 0; i < assignment.size(); i++) {
+          outfile << "Robot " << i << " assigned to column " << assignment[i] << std::endl;
+      }
+
+      outfile << "Robot " << ep_->drone_id_ << " Assigned to " << assignment[ep_->drone_id_-1] << " : " << mat(ep_->drone_id_-1,assignment[ep_->drone_id_-1]) << std::endl;
+          
+
+      //asignar frontera    
+      // Update flag
+      found_ftr = true;  
+      
+      int item = assignment[ep_->drone_id_-1];  // We want to get the element at index 1.
+      
+      // Use std::next to get an iterator advanced by 'item' positions.
+      auto it = std::next(fronteras.begin(), item);
+      
+      if (it != fronteras.end()) {
+        min_dist = it->distance;
+        next_pos = it->pos;
+        next_yaw = it->yaw;
+
+      }
+
+      
+    }else{
+
+      outfile << "\nminimi greedyPlan: " << (ep_->drone_id_) << std::endl;
+      auto it = std::min_element(fronteras.begin(), fronteras.end(), [](const Frontera& a, const Frontera& b) {return a.distance < b.distance;});
+      
+      const Frontera& minFrontera = findMinFrontera(fronteras);
+
+      //asignar frontera    
+      // Update flag
+      found_ftr = true;
+      // Target
+      min_dist = minFrontera.distance;//it->distance;
+      next_pos = minFrontera.pos;//it->pos;
+      next_yaw = minFrontera.yaw;//it->yaw;
+      
+
+
     }
     
-    const int dimension = mat.rows();
-
-    outfile << "Cardinalidad de VANTS: " << drone_num;
-    outfile << " :: Fronteras: " << fronteras.size();
-    outfile << " :: dimension matriz a crear: " << dimension << std::endl;
-    // Write the matrix to the file:
-    // Iterate over each row.
-    for (int i = 0; i < mat.rows(); i++) {
-        // Iterate over each column in the row.
-        for (int j = 0; j < mat.cols(); j++) {
-            // Write the element followed by a space.
-            outfile << mat(i, j);
-            if (j < mat.cols() - 1)
-                outfile << " "; // Separate elements with a space.
-        }
-        // Write a newline at the end of each row.
-        outfile << std::endl;
-    }
-
-    
-    // for(auto item: fronteras){
-    //   outfile << "frt:" << item.id << std::endl;
-    //   outfile << "dist:" << item.distance << "\n" << std::endl;
-    // }
-    
-
-    //me interesa la pos de mi drone    
-
-    
-    //compartir con los demas drones
-    //como puedo compartir con los demas drones??
-
-    std::vector<int> assignment = HungarianAlgorithm(mat);
-    //ver el resultado de aqui
-    outfile << "Assignment (robot -> frontier):" << std::endl;
-    for (size_t i = 0; i < assignment.size(); i++) {
-        outfile << "Robot " << i << " assigned to column " << assignment[i] << std::endl;
-    }
-
-    outfile << "Robot " << ep_->drone_id_ << " Assigned to " << assignment[ep_->drone_id_-1] << " : " << mat(ep_->drone_id_-1,assignment[ep_->drone_id_-1]) << std::endl;
-        
     outfile.close();
 
-    //asignar frontera    
-    // Update flag
-    found_ftr = true;
-
-    int item = assignment[ep_->drone_id_-1];  // We want to get the element at index 1.
-    
-    // Use std::next to get an iterator advanced by 'item' positions.
-    auto it = std::next(fronteras.begin(), item);
-    
-    if (it != fronteras.end()) {
-      min_dist = it->distance;
-      next_pos = it->pos;
-      next_yaw = it->yaw;
-
-    } 
     // Target
     
 
