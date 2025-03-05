@@ -12,7 +12,11 @@
 
     Author: Luca Bartolomei, V4RL
 """
-
+"""
+Fig. 4: Exploration rates over different numbers of UAVs in the forest with density
+0.1 trees / m2. The exploration process becomes more efficient as the size of the
+fleet increases.
+"""
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
@@ -84,7 +88,8 @@ def main():
 
     log_dir = Path(args.folder).expanduser()
     if not log_dir.exists():
-        print("\033[93mSpecify existing input folder\033[0m")
+        #print("\033[93mSpecify existing input folder\033[0m")
+        print("\033[93mEspecifica un folder existente\033[0m")
         return
 
     data_plot = {}

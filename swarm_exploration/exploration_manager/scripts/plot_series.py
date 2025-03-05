@@ -17,12 +17,12 @@ import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
 import argparse
-from pathlib import Path
 import pandas as pd
 import statistics
 import numpy as np
-from matplotlib import pyplot as plt
 
+from matplotlib import pyplot as plt
+from pathlib import Path
 
 TIME_THRESHOLD_VALID = 10.0
 
@@ -36,10 +36,10 @@ def parse_args() -> None:
 
 
 def average_series_per_agent(series: dict):
-
+    
     num_runs = len(series)
     num_agents = len(series[0])
-
+    
     # Store the data of each run per agent
     data_per_agent = []
 

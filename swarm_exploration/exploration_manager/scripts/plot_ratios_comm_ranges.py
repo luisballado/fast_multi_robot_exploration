@@ -4,7 +4,11 @@
 
     Author: Luca Bartolomei, V4RL
 """
-
+"""
+Fig. 6: Average mission times under different maximum communication ranges over a varying number of UAVs. The standard deviation is shown as a shaded area.
+We report the average performance in the 5 maps used for testing. The proposed approach outperforms RACER in all cases while showing improved performance with
+increasing connection ranges.
+"""
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
 

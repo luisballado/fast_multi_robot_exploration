@@ -13,7 +13,12 @@
 
     Author: Luca Bartolomei, V4RL
 """
-
+"""
+Fig. 5: Computation times per agent over varying team size during an experiment
+when using the proposed exploration modes and RACER [18]. We measure the
+time required for collaborative map splitting and for selecting a target viewpoint.
+Our approach reduces the total planning time by 70% on average.
+"""
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
 
@@ -119,7 +124,8 @@ def main():
 
     log_dir = Path(args.folder).expanduser()
     if not log_dir.exists():
-        print("\033[93mSpecify existing input folder\033[0m")
+        #print("\033[93mSpecify existing input folder\033[0m")
+        print("\033[93mEspecifica un folder existente\033[0m")
         return
 
     # Analyze the data per planner type    

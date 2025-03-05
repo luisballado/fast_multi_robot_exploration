@@ -13,6 +13,14 @@
 
     Author: Luca Bartolomei, V4RL
 """
+"""
+Fig. 7: Average exploration times in the reconstruction of a real forest [8] over
+5 runs. The standard deviation is shown as a shaded area. We compare the
+proposed strategy (Full) against two variants, namely Explorer Only, where UAVs
+are not allowed to switch to Collector mode, and No Collaboration, where inter-
+agent coordination is ignored. The proposed pipeline shows the best performance.
+"""
+
 
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
@@ -42,6 +50,7 @@ def parse_args() -> None:
 
 def generate_summary(log_dir: Path):
     results = {p: {} for p in VALID_PLANNERS}
+    
     for drones_dir in log_dir.iterdir():
         if not drones_dir.is_dir(): continue
 
@@ -57,7 +66,8 @@ def main():
 
     log_dir = Path(args.folder).expanduser()
     if not log_dir.exists():
-        print("\033[93mSpecify existing input folder\033[0m")
+        print("\033[93mEspecifica un folder existente\033[0m")
+        #print("\033[93mSpecify existing input folder\033[0m")
         return
 
     # Analyze the data per planner type    
