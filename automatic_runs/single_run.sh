@@ -1,5 +1,9 @@
 #!bash/usr/bin/env
 
+# Script para correr un experimento,
+# <num_drones> <planificador> <ruta global a carpeta para guardar los datos> <modelo pcd> <activar vulcan> 
+#bash single_run.sh 10 mvant /home/logg office2 false
+
 # User input
 YELLOW='\033[1;33m'
 RED='\033[0;31m'
@@ -18,7 +22,7 @@ else
   log_folder=${3}
   model=${4}
   vulkan_renderer=${5}
-  
+    
   if [["${planner_type}" != "racer" && "${planner_type}" != "fame" && "${planner_type}" != "mvant"]]; then
     echo -e "${RED}Unknown planner type: ${planner_type}${NC}"
     return
@@ -43,10 +47,10 @@ else
     roslaunch exploration_manager rviz.launch &
     sleep 2s
   fi
-
+  
   # Planner
   cmd_line_args="drone_num:=${drone_num} log_folder:=${log_folder} vulkan_renderer:=${vulkan_renderer} model:=${model} communication_range:=${communication_range}"
-
+  
   if [ ${planner_type} == "explorer" ]; then
     cmd_line_args="${cmd_line_args} role_assigner_fixed:=true planner_type:=fame"
   elif [ ${planner_type} == "no_coll" ]; then
