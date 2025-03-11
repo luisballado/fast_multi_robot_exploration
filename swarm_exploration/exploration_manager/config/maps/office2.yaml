@@ -1,13 +1,13 @@
-sdf_map/box_min_x: -65.0
-sdf_map/box_min_y: -45.0
+sdf_map/box_min_x: -20.0
+sdf_map/box_min_y: -20.0
 sdf_map/box_min_z: 0.7
 
-sdf_map/box_max_x: 65.0
-sdf_map/box_max_y: 45.0
+sdf_map/box_max_x: 20.0
+sdf_map/box_max_y: 20.0
 sdf_map/box_max_z: 1.7
 
-sdf_map/map_size_x: 65.0
-sdf_map/map_size_y: 45.0
+sdf_map/map_size_x: 20.0
+sdf_map/map_size_y: 20.0
 sdf_map/map_size_z: 3.0
 
 sdf_map/resolution: 0.15

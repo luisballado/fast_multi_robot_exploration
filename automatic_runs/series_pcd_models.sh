@@ -1,5 +1,8 @@
 #!bash/usr/bin/env
 
+# Corre experimentos dado el numero de experimentos por modelo pcd
+#
+
 # User input
 YELLOW='\033[1;33m'
 RED='\033[0;31m'
@@ -14,14 +17,14 @@ else
   num_runs=${1}
 
   # Parameters
-  num_planners=2
+  num_planners=3
   output_folder_date=$(date +'%F_%H:%M:%S')
 
   # Clean up
   rosclean purge -y
 
   # Iterate over models and number of agents
-  for (( model_id=1; model_id<=2; model_id++ ))
+  for (( model_id=1; model_id<=1; model_id++ ))
   do
 
     if [ ${model_id} == 1 ]; then
@@ -38,7 +41,7 @@ else
       continue
     fi
 
-    for (( drone_num=1; drone_num<=10; drone_num++ ))
+    for (( drone_num=1; drone_num<=5; drone_num++ ))
     do
       if [ ${drone_num} == 5 ]; then
         continue

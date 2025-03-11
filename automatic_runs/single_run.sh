@@ -23,7 +23,7 @@ else
   model=${4}
   vulkan_renderer=${5}
     
-  if [["${planner_type}" != "racer" && "${planner_type}" != "fame" && "${planner_type}" != "mvant"]]; then
+  if [[ "${planner_type}" != "racer" && "${planner_type}" != "fame" && "${planner_type}" != "mvant" ]]; then
     echo -e "${RED}Unknown planner type: ${planner_type}${NC}"
     return
   fi

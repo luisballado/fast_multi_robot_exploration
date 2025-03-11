@@ -110,11 +110,11 @@ def main():
     }
 
     for planner_folder in planners_folders:
-        # print(f"-Planner: {planner_folder.name.upper()}")
+        print(f"-Planner: {planner_folder.name.upper()}")
         runs_folders = [f for f in planner_folder.iterdir() if f.is_dir()]
         assert num_runs == len(runs_folders), f"Number of runs does not match {num_runs} / {len(runs_folders)}"
         for run_id, run_folder in enumerate(runs_folders):
-            # print(f"\t{run_folder.name}")
+            print(f"\t{run_folder.name}")
 
             # Read files with timings, exploration rate and odometry info
             times = pd.read_csv(run_folder.joinpath('summary_times.csv')).to_numpy()
@@ -204,17 +204,17 @@ def main():
         
         # Plotting (FIXME: This data is per agent!)
         planner_name = entry[0].upper()
-        if planner_name == "FAME": planner_name += " (Ours)"
+        #if planner_name == "FAME": planner_name += " (Ours)"
 
         # Explored volume
         volume_times = volume_per_agent[0]['time'][idx0_vol:] - t0_vol
         volume_avg = volume_per_agent[0]['avg'][idx0_vol:]
         volume_std = volume_per_agent[0]['std'][idx0_vol:]
 
-        axs[0].plot(volume_times, volume_avg, label=planner_name, linewidth=0.7)
+        axs[0].plot(volume_times.to_numpy(), volume_avg.to_numpy(), label=planner_name, linewidth=0.7)
         axs[0].fill_between(volume_times, (volume_avg - volume_std), (volume_avg + volume_std), alpha=.3)
         axs[0].grid(b=True, which='major')
-        axs[0].set_ylabel('Explored Volume [m$^3$]')
+        axs[0].set_ylabel('Volumen Explorado [m$^3$]')
         axs[0].legend(loc='lower right')
         axs[0].autoscale(tight=True)
 
@@ -224,27 +224,29 @@ def main():
         velocity_avg, velocity_std = np.zeros((num_velocity_entries)), np.zeros((num_velocity_entries))
         for k in range(num_velocity_entries):
             velocity_avg[k], velocity_std[k] = running_statistics(velocity_per_agent[0]['avg'], k)
+
         
-        axs[1].plot(velocity_times, velocity_avg, label=planner_name, linewidth=0.7)
+        axs[1].plot(np.array(velocity_times), np.array(velocity_avg), label=planner_name, linewidth=0.7)
         axs[1].fill_between(velocity_times, (velocity_avg - velocity_std), (velocity_avg + velocity_std), alpha=.3)
         axs[1].grid(b=True, which='major')
-        axs[1].set_ylabel('Velocity Norm [m/s]')
-        axs[1].set_xlabel('Time [s]')
+        axs[1].set_ylabel('Velocidad [m/s]')
+        axs[1].set_xlabel('Tiempo [s]')
         axs[1].legend(loc='lower right')
         axs[1].autoscale(tight=True)
-
+        
     # Store timings to file
     with open(log_dir.joinpath('timings.csv'), 'w') as output_file:
         output_file.write("Planner,Success Rate [-],Time Avg [s],Time Std [s],Velocity Avg [m/s],Velocity Std [m/s],Trav Dist Avg [m],Trav Dist Std [m]\n")
         for (items_time, items_vel, items_dist) in zip(final_timings.items(), final_velocities.items(), final_trav_dist.items()):
             planner_name = items_time[0]
-            if planner_name == "fame": planner_name += " (ours)"
+            #if planner_name == "fame": planner_name += " (ours)"
             output_file.write(f"{planner_name},{success_rates[items_time[0]]},{items_time[1][0]},{items_time[1][1]}," \
                 f"{items_vel[1][0]},{items_vel[1][1]},{items_dist[1][0]},{items_dist[1][1]}\n")
 
     # Storing plot
-    fig.suptitle("Summarized Results")
+    fig.suptitle("Resultados")
     plt.savefig(log_dir.joinpath('performance.pdf'), dpi=1200, format='pdf')
+    #plt.show()
 
 if __name__ == "__main__":
     main()

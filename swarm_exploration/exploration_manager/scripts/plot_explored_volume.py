@@ -94,8 +94,9 @@ def main():
 
     data_plot = {}
     for num_agents in VALID_NUM_AGENTS:
-
+        print("Drones: " + str(num_agents))
         drones_folder = log_dir.joinpath(f"{num_agents}_drones")
+        print(drones_folder)
         if not drones_folder.exists(): continue
 
         for planner_folder in drones_folder.iterdir():

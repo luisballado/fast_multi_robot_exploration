@@ -1,5 +1,8 @@
 #!bash/usr/bin/env
 
+# Evalua los resultados dada la carpeta del experimento
+# creado bajo el script series_pcd_models.sh
+
 # User input
 YELLOW='\033[1;33m'
 RED='\033[0;31m'
@@ -26,7 +29,7 @@ do
     do
 
         eval_folder="${exp_folder}/${n_drones}_drones"
-
+	echo ${eval_folder}
         echo "Number of drones: ${n_drones}"
         python3 ../../swarm_exploration/exploration_manager/scripts/plot_series.py -f ${eval_folder} --num-agents ${n_drones} --num-runs ${num_runs}
 
