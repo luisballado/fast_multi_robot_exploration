@@ -53,7 +53,8 @@ def generate_summary(log_dir: Path):
     
     for drones_dir in log_dir.iterdir():
         if not drones_dir.is_dir(): continue
-
+        print(drones_dir)
+        
         data = pd.read_csv(drones_dir.joinpath("timings.csv")).to_numpy()
         for i in range(len(data)):
             results[data[i][0]][drones_dir.name.split("_")[0]] = {'avg_times': data[i][2], 'std_times': data[i][3]}

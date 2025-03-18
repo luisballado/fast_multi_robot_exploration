@@ -1,7 +1,7 @@
 <launch>
   <!-- size of map, change the size in x, y, z according to your application -->
-  <arg name="map_size_x" default="55.0"/>
-  <arg name="map_size_y" default="35.0"/>
+  <arg name="map_size_x" default="15.0"/>
+  <arg name="map_size_y" default="15.0"/>
   <arg name="map_size_z" default=" 3.5"/>
     
   <!-- Global odom prefix -->

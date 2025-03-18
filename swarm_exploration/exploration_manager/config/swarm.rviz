@@ -5,7 +5,12 @@ Panels:
     Property Tree Widget:
       Expanded:
         - /ExplorePlanner1/frontier11/Namespaces1
+        - /Maps1
         - /Maps1/occupied_all11/Autocompute Value Bounds1
+        - /Maps1/occupied_local11
+        - /Maps1/occupied_local31
+        - /Simulators1/simulation_map1
+        - /Simulators1/MoreRobot1
       Splitter Ratio: 0.6411764621734619
     Tree Height: 905
   - Class: rviz/Selection
@@ -100,7 +105,7 @@ Visualization Manager:
           Marker Topic: /planning/travel_traj_3
           Name: executed_traj3
           Namespaces:
-            {}
+            "": true
           Queue Size: 100
           Value: true
         - Class: rviz/Marker
@@ -108,7 +113,7 @@ Visualization Manager:
           Marker Topic: /planning/position_cmd_vis_3
           Name: position_cmd3
           Namespaces:
-            {}
+            current_pose: true
           Queue Size: 100
           Value: true
         - Class: rviz/Marker
@@ -116,7 +121,7 @@ Visualization Manager:
           Marker Topic: /planning/travel_traj_4
           Name: executed_traj4
           Namespaces:
-            {}
+            "": true
           Queue Size: 100
           Value: true
         - Class: rviz/Marker
@@ -124,7 +129,7 @@ Visualization Manager:
           Marker Topic: /planning/position_cmd_vis_4
           Name: position_cmd4
           Namespaces:
-            {}
+            current_pose: true
           Queue Size: 100
           Value: true
       Enabled: true
@@ -185,7 +190,7 @@ Visualization Manager:
           Marker Topic: /planning_vis/trajectory_3
           Name: traj3
           Namespaces:
-            {}
+            B-Spline: true
           Queue Size: 100
           Value: true
         - Class: rviz/Marker
@@ -193,7 +198,7 @@ Visualization Manager:
           Marker Topic: /planning_vis/trajectory_4
           Name: traj4
           Namespaces:
-            {}
+            B-Spline: true
           Queue Size: 100
           Value: true
         - Class: rviz/Marker
@@ -201,7 +206,7 @@ Visualization Manager:
           Marker Topic: /planning_vis/trajectory_5
           Name: traj1
           Namespaces:
-            {}
+            B-Spline: true
           Queue Size: 100
           Value: true
         - Class: rviz/Marker
@@ -353,7 +358,7 @@ Visualization Manager:
           Queue Size: 10
           Selectable: true
           Size (Pixels): 15
-          Size (m): 0.125
+          Size (m): 0.15000000596046448
           Style: Boxes
           Topic: /sdf_map/occupancy_all_1
           Unreliable: false
@@ -381,7 +386,7 @@ Visualization Manager:
           Queue Size: 10
           Selectable: true
           Size (Pixels): 15
-          Size (m): 0.125
+          Size (m): 0.15000000596046448
           Style: Boxes
           Topic: /sdf_map/occupancy_all_2
           Unreliable: false
@@ -409,7 +414,7 @@ Visualization Manager:
           Queue Size: 10
           Selectable: true
           Size (Pixels): 15
-          Size (m): 0.125
+          Size (m): 0.15000000596046448
           Style: Boxes
           Topic: /sdf_map/occupancy_all_3
           Unreliable: false
@@ -437,7 +442,7 @@ Visualization Manager:
           Queue Size: 10
           Selectable: true
           Size (Pixels): 3
-          Size (m): 0.10000000149011612
+          Size (m): 0.15000000596046448
           Style: Boxes
           Topic: /sdf_map/occupancy_local_2
           Unreliable: false
@@ -465,7 +470,7 @@ Visualization Manager:
           Queue Size: 10
           Selectable: true
           Size (Pixels): 3
-          Size (m): 0.10000000149011612
+          Size (m): 0.15000000596046448
           Style: Boxes
           Topic: /sdf_map/occupancy_local_1
           Unreliable: false
@@ -493,7 +498,7 @@ Visualization Manager:
           Queue Size: 10
           Selectable: true
           Size (Pixels): 3
-          Size (m): 0.10000000149011612
+          Size (m): 0.15000000596046448
           Style: Boxes
           Topic: /sdf_map/occupancy_local_3
           Unreliable: false
@@ -572,7 +577,7 @@ Visualization Manager:
           Color: 161; 161; 161
           Color Transformer: FlatColor
           Decay Time: 0
-          Enabled: false
+          Enabled: true
           Invert Rainbow: false
           Max Color: 255; 255; 255
           Min Color: 0; 0; 0
@@ -581,13 +586,13 @@ Visualization Manager:
           Queue Size: 10
           Selectable: true
           Size (Pixels): 3
-          Size (m): 0.10000000149011612
-          Style: Boxes
+          Size (m): 0.20000000298023224
+          Style: Points
           Topic: /map_generator/global_cloud
           Unreliable: false
           Use Fixed Frame: true
           Use rainbow: true
-          Value: false
+          Value: true
         - Class: rviz/Marker
           Enabled: true
           Marker Topic: /odom_visualization_1/robot
@@ -609,7 +614,7 @@ Visualization Manager:
           Marker Topic: /odom_visualization_3/robot
           Name: robot3
           Namespaces:
-            {}
+            mesh: true
           Queue Size: 100
           Value: true
         - Class: rviz/Marker
@@ -617,7 +622,7 @@ Visualization Manager:
           Marker Topic: /odom_visualization_4/robot
           Name: robot4
           Namespaces:
-            {}
+            mesh: true
           Queue Size: 100
           Value: true
         - Class: rviz/Group
@@ -627,7 +632,7 @@ Visualization Manager:
               Marker Topic: /odom_visualization_5/robot
               Name: robot4
               Namespaces:
-                {}
+                mesh: true
               Queue Size: 100
               Value: true
             - Class: rviz/Marker
@@ -675,7 +680,7 @@ Visualization Manager:
               Marker Topic: /planning/travel_traj_5
               Name: executed_traj1
               Namespaces:
-                {}
+                "": true
               Queue Size: 100
               Value: true
             - Class: rviz/Marker
@@ -723,7 +728,7 @@ Visualization Manager:
               Marker Topic: /planning/position_cmd_vis_5
               Name: position_cmd1
               Namespaces:
-                {}
+                current_pose: true
               Queue Size: 100
               Value: true
             - Class: rviz/Marker
@@ -797,7 +802,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/ThirdPersonFollower
-      Distance: 59.565982818603516
+      Distance: 38.216102600097656
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -813,9 +818,9 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.6253986358642578
+      Pitch: 1.469795823097229
       Target Frame: <Fixed Frame>
-      Yaw: 3.1235804557800293
+      Yaw: 3.3435769081115723
     Saved:
       - Class: rviz/ThirdPersonFollower
         Distance: 17.48538589477539

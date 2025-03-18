@@ -105,7 +105,7 @@ def main():
             if planner_folder.is_file(): continue
 
             # Plot only FAME
-            if planner_folder.name != "fame": continue
+            if planner_folder.name != "mvant": continue
 
             # Get the data for plotting
             runs_folders = [f for f in planner_folder.iterdir() if f.is_dir()]
@@ -127,6 +127,8 @@ def main():
 
             # Summarize data for number of agents
             data_raw = average_series_per_agent(data_raw)
+            for i, d in enumerate(data_raw):
+                print(f"Item {i} shape:", np.array(d['avg']).shape)
             data_plot[num_agents] = {
                 'avg': np.mean( np.array([ data_raw[i]['avg'] for i in range(len(data_raw)) ]), axis=0 ),
                 'std': np.mean( np.array([ data_raw[i]['std'] for i in range(len(data_raw)) ]), axis=0 ),
@@ -145,7 +147,7 @@ def main():
     for data in data_plot.items():
         # Label
         num_agents = data[0]
-        label = f"{num_agents} drones" if num_agents > 1 else f"{num_agents} drone"
+        label = f"{num_agents} VANTS" if num_agents > 1 else f"{num_agents} VANT"
 
         # Remove nans
         valid_ids = np.isfinite(data[1]['avg'])
@@ -170,15 +172,15 @@ def main():
         plt.plot(time_data, avg_data, label=label)
         plt.fill_between(time_data, (avg_data - std_data), (avg_data + std_data), alpha=.15)
 
-    plt.xlabel("Time [s]")
-    plt.ylabel("Explored Fraction [\%]")
+    plt.xlabel("Tiempo [s]")
+    plt.ylabel("Fracción explorada [%]")
 
     plt.grid()
-    plt.legend(loc='best', fontsize=8)
+    plt.legend(loc='lower right', fontsize=8)
 
     # plt.show()
     # Save figure
-    plt.savefig(log_dir.joinpath('exploration_rate.pdf'), dpi=1200, format='pdf')
+    plt.savefig(log_dir.joinpath('exploration_rate_mvant.pdf'), dpi=1200, format='pdf')
         
 
 if __name__ == "__main__":
