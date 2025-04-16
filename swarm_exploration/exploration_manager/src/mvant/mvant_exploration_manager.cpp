@@ -190,11 +190,14 @@ int MvantExplorationManager::planExploreMotion(const Vector3d& pos, const Vector
   std::cout << "start pos: " << pos.transpose() << ", vel: " << vel.transpose()
       << ", acc: " << acc.transpose() << std::endl;
 
+  ROS_WARN_STREAM("start pos: " << pos.transpose() << ", vel: " << vel.transpose() << ", acc: " << acc.transpose());
+  ROS_WARN_STREAM("vel: " << vel.transpose() << ", acc: " << acc.transpose());
+  
   Vector3d next_pos;
   double next_yaw;
   
   //modificar la velocidad
-  updateVelocities(1.0);
+  //updateVelocities(1.0);
 
   bool success = false;
   
@@ -752,6 +755,26 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
   }
 
 
+  // Compute yaw and pitch from robot to frontier
+  std::pair<double, double> compute_yaw_pitch_to_frontier(const Eigen::Vector3d& robot_position, const Eigen::Vector3d& frontier_position) {
+    // Compute difference in position (frontier - robot)
+    Eigen::Vector3d delta = frontier_position - robot_position;
+    
+    // Extract the differences in x, y, z components
+    double dx = delta.x();
+    double dy = delta.y();
+    double dz = delta.z();
+    
+    // Calculate yaw (horizontal rotation) in radians
+    double yaw_target = std::atan2(dy, dx);  // atan2 gives result in the range [-π, π]
+    
+    // Calculate pitch (vertical rotation) in radians
+    double horizontal_distance = std::sqrt(dx * dx + dy * dy);  // Distance on the XY plane
+    double pitch_target = std::atan2(dz, horizontal_distance);  // atan2 gives result in the range [-π/2, π/2]
+    
+    return std::make_pair(yaw_target, pitch_target);  // Return yaw and pitch as a pair
+  }
+  
   //Funcion principal de exploración con todos los elementos
   bool MvantExplorationManager::closestGreedyFrontier(const Vector3d& pos, const Vector3d& yaw, Vector3d& next_pos, double& next_yaw, bool force_different) const {
 
@@ -763,7 +786,6 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
     
     bool found_ftr = false;
     
-    //iterar en todas las fronteras guardar las distancias
     for (const auto& ftr : frontier_finder_->getFrontiers()) {
       
       Viewpoint vp = ftr.viewpoints_.front();
@@ -810,7 +832,7 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
     }
 
     //hasta aqui tengo las fronteras con distancias exploration data ->fronteras //todos los drones la tienen
-    //ROS_WARN_STREAM("[MANAGER] drone ffr: " << ed_->fronteras.size());
+    ROS_WARN_STREAM("[MANAGER] drone ffr: " << ed_->fronteras.size());
     
     
 
@@ -822,13 +844,13 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
     
     std::ofstream outfile("/home/file.txt",std::ios::app);
 
-    if(frontier_finder_->getFrontiers().size() > ed_->swarm_state_.size()){
-
+    if(frontier_finder_->getFrontiers().size() >= ed_->swarm_state_.size()){
       
       // Write data to the file.
       outfile << "\nmatriz costo del drone: " << (ep_->drone_id_) << std::endl;
-      const int drone_num = ed_->swarm_state_.size()-1;
+      const int drone_num = ed_->swarm_state_.size() - 1;
       const int ftr_num = frontier_finder_->getFrontiers().size();
+      
       // obtener las dimensiones de la matriz original
       int nRows = drone_num;
       int nCols = ftr_num;
@@ -850,10 +872,22 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
           std::vector<Vector3d> path;
           std::vector<Vector3d> path2;
 
+	  // Distance
+	  //double distance_cost = (vj.pos_ - drone_state.pos_).head(2).norm();
+	  // Compute yaw and pitch to the frontier
+	  auto [yaw, pitch] = compute_yaw_pitch_to_frontier(drone_state.pos_, vj.pos_);
+	  auto delta_yaw = std::abs(yaw - drone_state.yaw_);
+	  delta_yaw = std::fmod(delta_yaw + 3.1416, 2*3.1416)-3.1416;
+	  auto yaw_cost = (delta_yaw / 3.1416);
+	  // Direction
+	  auto direction = (vj.pos_ - drone_state.pos_).head(2).normalized();
+	  double direction_cost = ViewNode::w_dir_ * acos(drone_state.vel_.head(2).normalized().dot(direction));
+	  
           //function costo va aqui
           //como calcular cambio de yaw?? mapearlo de cero a 1
           //que tan enfrente me puede quedar la frontera
-          mat(i,index) = ViewNode::searchPath(drone_state.pos_,vj.pos_,path) + ViewNode::searchPath(drone_state.goal_pos_,vj.pos_,path2);//distancia de ultima vez que lo escuche con objetivo;
+	  mat(i,index) = ViewNode::searchPath(drone_state.pos_,vj.pos_,path) + ViewNode::searchPath(drone_state.goal_pos_,vj.pos_,path2) + (direction_cost) + (yaw_cost);//distancia de ultima vez que lo escuche con objetivo;
+	  //mat(i,index) = ViewNode::searchPath(drone_state.pos_,vj.pos_,path) + ViewNode::searchPath(drone_state.goal_pos_,vj.pos_,path2);//distancia de ultima vez que lo escuche con objetivo;
           ++index;
         }
 

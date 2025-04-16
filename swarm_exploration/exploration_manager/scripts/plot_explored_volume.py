@@ -33,7 +33,7 @@ except ImportError:
     pass
 
 
-VALID_NUM_AGENTS = [1, 2, 3, 4, 6, 8, 10]
+VALID_NUM_AGENTS = [1, 2, 3, 4]#, 6, 8, 10]
 
 def average_series_per_agent(data_raw: dict):
 

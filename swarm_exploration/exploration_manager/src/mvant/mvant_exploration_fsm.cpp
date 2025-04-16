@@ -332,7 +332,7 @@ namespace fast_planner {
         } else if (res == NO_GRID) {
           fd_->static_state_ = true;
           fd_->last_check_frontier_time_ = ros::Time::now();
-          // ROS_WARN("No grid (drone %d)", getId());
+          ROS_WARN("No grid (drone %d)", getId());
           transitState(IDLE, "FSM");
     
           // Emergency
