@@ -68,7 +68,7 @@ void MvantExplorationManager::initialize(ros::NodeHandle& nh) {
   //role_assigner_.reset(new RoleAssigner(nh));
   
   // view_finder_.reset(new ViewFinder(edt_environment_, nh));
-
+  
   ed_.reset(new ExplorationData);
   ep_.reset(new ExplorationParam);
 
@@ -275,7 +275,7 @@ int MvantExplorationManager::planTrajToView(const Vector3d& pos, const Vector3d&
 
 
   //modificar la velocidad
-  updateVelocities(1.0);
+  //updateVelocities(1.0);
   // Plan trajectory (position and yaw) to the next viewpoint
   auto t1 = ros::Time::now();
   
@@ -844,12 +844,13 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
     
     std::ofstream outfile("/home/file.txt",std::ios::app);
 
+    //hacer la matriz cuadrada cuando la cardinalidad de vants sea diferente a la de fronteras
     if(frontier_finder_->getFrontiers().size() >= ed_->swarm_state_.size()){
       
       // Write data to the file.
       outfile << "\nmatriz costo del drone: " << (ep_->drone_id_) << std::endl;
-      const int drone_num = ed_->swarm_state_.size() - 1;
-      const int ftr_num = frontier_finder_->getFrontiers().size();
+      const int drone_num = ed_->swarm_state_.size() - 1;            //numero de vants
+      const int ftr_num = frontier_finder_->getFrontiers().size();   //numero de fronteras
       
       // obtener las dimensiones de la matriz original
       int nRows = drone_num;
@@ -857,13 +858,15 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
     
       int n = std::max(nRows, nCols);
       Eigen::MatrixXd mat;
-      mat.resize(n,n);
+      mat.resize(n,n);  //matriz cuadrada
     
       //llenar matriz con infinitos
       mat.setConstant(10000.0);
 
       for (int i = 0; i < ed_->swarm_state_.size()-1; ++i) {
+
         int index = 0;
+        
         for (const auto& ftr : frontier_finder_->getFrontiers()) {
 
           const auto& drone_state = ed_->swarm_state_[i];
@@ -872,22 +875,22 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
           std::vector<Vector3d> path;
           std::vector<Vector3d> path2;
 
-	  // Distance
-	  //double distance_cost = (vj.pos_ - drone_state.pos_).head(2).norm();
-	  // Compute yaw and pitch to the frontier
-	  auto [yaw, pitch] = compute_yaw_pitch_to_frontier(drone_state.pos_, vj.pos_);
-	  auto delta_yaw = std::abs(yaw - drone_state.yaw_);
-	  delta_yaw = std::fmod(delta_yaw + 3.1416, 2*3.1416)-3.1416;
-	  auto yaw_cost = (delta_yaw / 3.1416);
-	  // Direction
-	  auto direction = (vj.pos_ - drone_state.pos_).head(2).normalized();
-	  double direction_cost = ViewNode::w_dir_ * acos(drone_state.vel_.head(2).normalized().dot(direction));
+      	  // Distance
+      	  //double distance_cost = (vj.pos_ - drone_state.pos_).head(2).norm();
+      	  // Compute yaw and pitch to the frontier
+      	  auto [yaw, pitch] = compute_yaw_pitch_to_frontier(drone_state.pos_, vj.pos_);
+      	  auto delta_yaw = std::abs(yaw - drone_state.yaw_);
+      	  delta_yaw = std::fmod(delta_yaw + 3.1416, 2*3.1416)-3.1416;
+      	  auto yaw_cost = (delta_yaw / 3.1416);
+      	  // Direction
+      	  auto direction = (vj.pos_ - drone_state.pos_).head(2).normalized();
+      	  double direction_cost = ViewNode::w_dir_ * acos(drone_state.vel_.head(2).normalized().dot(direction));
 	  
           //function costo va aqui
           //como calcular cambio de yaw?? mapearlo de cero a 1
           //que tan enfrente me puede quedar la frontera
-	  mat(i,index) = ViewNode::searchPath(drone_state.pos_,vj.pos_,path) + ViewNode::searchPath(drone_state.goal_pos_,vj.pos_,path2) + (direction_cost) + (yaw_cost);//distancia de ultima vez que lo escuche con objetivo;
-	  //mat(i,index) = ViewNode::searchPath(drone_state.pos_,vj.pos_,path) + ViewNode::searchPath(drone_state.goal_pos_,vj.pos_,path2);//distancia de ultima vez que lo escuche con objetivo;
+      	  mat(i,index) = ViewNode::searchPath(drone_state.pos_,vj.pos_,path) + ViewNode::searchPath(drone_state.goal_pos_,vj.pos_,path2) + (direction_cost) + (yaw_cost);//distancia de ultima vez que lo escuche con objetivo;
+      	  //mat(i,index) = ViewNode::searchPath(drone_state.pos_,vj.pos_,path) + ViewNode::searchPath(drone_state.goal_pos_,vj.pos_,path2);//distancia de ultima vez que lo escuche con objetivo;
           ++index;
         }
 
@@ -955,13 +958,16 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
     }else{
 
       outfile << "\nminimi greedyPlan: " << (ep_->drone_id_) << std::endl;
+
+      //obtener la frontera con menor distancia
       auto it = std::min_element(fronteras.begin(), fronteras.end(), [](const Frontera& a, const Frontera& b) {return a.distance < b.distance;});
       
       const Frontera& minFrontera = findMinFrontera(fronteras);
 
-      //asignar frontera    
+      // asignar frontera    
       // Update flag
       found_ftr = true;
+      
       // Target
       min_dist = minFrontera.distance;//it->distance;
       next_pos = minFrontera.pos;//it->pos;
@@ -980,14 +986,21 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
     return found_ftr;
   }
   
+  //Calcular un campo de potencial atractivo basado en la distancia a
+  //un objetivo. Devuelve un valor negativo que representa que tan
+  //atractivo es un punto a una cierta distancia.
+  //Cuanto más negativo, más atractivo
   double MvantExplorationManager::attractivePotentialField(double distance) const {
     // NOTE: Here function returns a negative value (the lower the distance, the better),
     // since we are selecting the target with LOWEST cost
     if (distance >= 0 && distance <= pf_params_->d0) {
       return 0.0;
     } else if (distance > pf_params_->d0 && distance <= pf_params_->df) {
+      //cuanto más lejos, mayor atracción
       return -(distance - pf_params_->d0) * (distance - pf_params_->d0);
     } else {
+      //Cuando la distancia ya es muy grande, se cambia la forma a una función
+      //arco tangente suaviza la pendiente para evitar que la atracción crezca indefinidamente
       double lambda = (pf_params_->df - pf_params_->d0) * (pf_params_->df - pf_params_->d0) /
                       atan(0.1 * pf_params_->df);
       return -lambda * atan(distance - 0.9 * pf_params_->df);

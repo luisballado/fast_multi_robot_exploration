@@ -284,28 +284,29 @@ namespace fast_planner {
         break;
       }
         
+        //Planificar trayectoria
       case PLAN_TRAJ: {
         
         //Planificar si viene de un estado hover
         if (fd_->static_state_) {
-          fd_->start_pt_ = fd_->odom_pos_;
-          fd_->start_vel_ = fd_->odom_vel_;
-          fd_->start_acc_.setZero();
-          fd_->start_yaw_ << fd_->odom_yaw_, 0, 0;
+          fd_->start_pt_ = fd_->odom_pos_;         //posicion del odometro
+          fd_->start_vel_ = fd_->odom_vel_;        //velocidad actual
+          fd_->start_acc_.setZero();               //aceleracion actual
+          fd_->start_yaw_ << fd_->odom_yaw_, 0, 0; //yaw actual
         } else {
         // Replan from non-static state, starting from 'replan_time' seconds later
         //LocalTrajData esta dentro de plan_container.hpp
           LocalTrajData* info = &planner_manager_->local_data_;
           double t_r = (ros::Time::now() - info->start_time_).toSec() + fp_->replan_time_;
-          fd_->start_pt_ = info->position_traj_.evaluateDeBoorT(t_r);
-          fd_->start_vel_ = info->velocity_traj_.evaluateDeBoorT(t_r);
-          fd_->start_acc_ = info->acceleration_traj_.evaluateDeBoorT(t_r);
+          fd_->start_pt_ = info->position_traj_.evaluateDeBoorT(t_r);      //posicion
+          fd_->start_vel_ = info->velocity_traj_.evaluateDeBoorT(t_r);     //velocidad
+          fd_->start_acc_ = info->acceleration_traj_.evaluateDeBoorT(t_r); //aceleracion
           fd_->start_yaw_(0) = info->yaw_traj_.evaluateDeBoorT(t_r)[0];
           fd_->start_yaw_(1) = info->yawdot_traj_.evaluateDeBoorT(t_r)[0];
           fd_->start_yaw_(2) = info->yawdotdot_traj_.evaluateDeBoorT(t_r)[0];
         }
         
-        // Inform traj_server the replanning
+        // Informar al traj_server sobre el replanning
         replan_pub_.publish(std_msgs::Empty());
         
         //buscar una frontera acudir y su trayectoria hacia ella en el grid
@@ -491,7 +492,7 @@ namespace fast_planner {
       ROS_WARN_STREAM("*********************planTrajToView**************************");
       
       //planificar una trayectoria respecto a dos puntos
-      //se hace con a* 
+      //se hace con A* 
       res = expl_manager_->planTrajToView(fd_->start_pt_, fd_->start_vel_, fd_->start_acc_, fd_->start_yaw_, expl_manager_->ed_->next_pos_, expl_manager_->ed_->next_yaw_);
 
       fd_->avoid_collision_ = false;
@@ -766,39 +767,39 @@ namespace fast_planner {
   void MvantExplorationFSM::frontierCallback(const ros::TimerEvent& e) {
     
     if (state_ != WAIT_TRIGGER) {
-
+      
       auto ed = expl_manager_->ed_;
-
+      
       expl_manager_->updateFrontierStruct(fd_->odom_pos_, fd_->odom_yaw_, fd_->odom_vel_);
-            
+      
       // Draw frontier and bounding box
       auto res = expl_manager_->sdf_map_->getResolution();
-            
+      
       for (int i = 0; i < ed->frontiers_.size(); ++i) {
-
-  auto color = visualization_->getColor(double(i) / ed->frontiers_.size(), 0.4);
-  visualization_->drawCubes(ed->frontiers_[i], res, color, "frontier", i, 4);
-  
-  Vector3d centroid(0.0, 0.0, 0.0);
-  int count = 0;
-  
-  centroid = ed->views_[i];
-    
-  // mostrar el numero de frontera
-  auto id_str = std::to_string(ed->fronters_ids_[i]);
-  //ROS_WARN_STREAM("Frontera:: " << id_str);
-  //ROS_WARN_STREAM("Frontera:: " << centroid.transpose());
-  
-  visualization_->drawText(centroid, "F-"+id_str, 0.8, Eigen::Vector4d(0.0, 0.0, 0.0, 1.0), "id", ed->frontiers_.size() + i, 4);
-  
+	
+	auto color = visualization_->getColor(double(i) / ed->frontiers_.size(), 0.4);
+	visualization_->drawCubes(ed->frontiers_[i], res, color, "frontier", i, 4);
+	
+	Vector3d centroid(0.0, 0.0, 0.0);
+	int count = 0;
+	
+	centroid = ed->views_[i];
+	
+	// mostrar el numero de frontera
+	auto id_str = std::to_string(ed->fronters_ids_[i]);
+	//ROS_WARN_STREAM("Frontera:: " << id_str);
+	//ROS_WARN_STREAM("Frontera:: " << centroid.transpose());
+	
+	visualization_->drawText(centroid, "F-"+id_str, 0.8, Eigen::Vector4d(0.0, 0.0, 0.0, 1.0), "id", ed->frontiers_.size() + i, 4);
+	
       }
       
       for (int i = ed->frontiers_.size(); i < 50; ++i) {
-  visualization_->drawCubes({}, res, Vector4d(0, 0, 0, 1), "frontier", i, 4);
-  visualization_->drawText({}, "", 0.8, Eigen::Vector4d(0.0, 0.0, 0.0, 1.0), "id", ed->frontiers_.size() + i, 4);
-    
+	visualization_->drawCubes({}, res, Vector4d(0, 0, 0, 1), "frontier", i, 4);
+	visualization_->drawText({}, "", 0.8, Eigen::Vector4d(0.0, 0.0, 0.0, 1.0), "id", ed->frontiers_.size() + i, 4);
+	
       }
-            
+      
       visualize(2);
       // if (status)
       //   visualize(2);
@@ -1139,18 +1140,18 @@ namespace fast_planner {
       bool safe = planner_manager_->checkTrajCollision(dist);
       //si no es seguro
       if (!safe) {
-  ROS_WARN_STREAM("Replan: collision detected=======================");
-  fd_->avoid_collision_ = true;
-  transitState(PLAN_TRAJ, "safetyCallback");
+        ROS_WARN_STREAM("Replan: collision detected=======================");
+        fd_->avoid_collision_ = true;
+        transitState(PLAN_TRAJ, "safetyCallback");
       }
       
       static auto time_check = ros::Time::now();
       if (expl_manager_->sdf_map_->getOccupancy(fd_->odom_pos_) != SDFMap::OCCUPANCY::FREE) {
-  if ((ros::Time::now() - time_check).toSec() > 20.) {
-    sendStopMsg(-1);
-  }
+        if ((ros::Time::now() - time_check).toSec() > 20.) {
+          sendStopMsg(-1);
+        }
       } else {
-  time_check = ros::Time::now();
+        time_check = ros::Time::now();
       }
     }
   }
@@ -1413,8 +1414,8 @@ namespace fast_planner {
       expl_manager_->ed_->reallocated_ = true;
       
       if (state_ == IDLE && !state2.grid_ids_.empty()) {
-  transitState(PLAN_TRAJ, "optMsgCallback");
-  // ROS_WARN("Restart after opt!");
+        transitState(PLAN_TRAJ, "optMsgCallback");
+        // ROS_WARN("Restart after opt!");
       }
       
       // if (!check_consistency(tmp1, tmp2)) {
@@ -1470,8 +1471,7 @@ namespace fast_planner {
     if (msg->drone_id == sdat.drone_id_) return;
     
     // Ignore outdated trajectory
-    if (sdat.receive_flags_[msg->drone_id - 1] == true &&
-  msg->start_time.toSec() <= sdat.swarm_trajs_[msg->drone_id - 1].start_time_ + 1e-3)
+    if (sdat.receive_flags_[msg->drone_id - 1] == true && msg->start_time.toSec() <= sdat.swarm_trajs_[msg->drone_id - 1].start_time_ + 1e-3)
       return;
     
     // Convert the msg to B-spline
@@ -1506,10 +1506,10 @@ namespace fast_planner {
     if (state_ == EXEC_TRAJ) {
       // Check collision with received trajectory
       if (!planner_manager_->checkSwarmCollision(msg->drone_id)) {
-  ROS_ERROR("Drone %d collide with drone %d.", sdat.drone_id_, msg->drone_id);
-  fd_->avoid_collision_ = true;
-  //forzar a volver a planear una trajectoria
-  transitState(PLAN_TRAJ, "swarmTrajCallback");
+        ROS_ERROR("Drone %d collide with drone %d.", sdat.drone_id_, msg->drone_id);
+        fd_->avoid_collision_ = true;
+        //forzar a volver a planear una trajectoria
+        transitState(PLAN_TRAJ, "swarmTrajCallback");
       }
     }
   }
@@ -1532,17 +1532,17 @@ namespace fast_planner {
       for (int i = 0; i < 4; ++i) pos_pts.row(i) = fd_->odom_pos_.transpose();
       
       for (int i = 0; i < pos_pts.rows(); ++i) {
-  geometry_msgs::Point pt;
-  pt.x = pos_pts(i, 0);
-  pt.y = pos_pts(i, 1);
-  pt.z = pos_pts(i, 2);
-  bspline.pos_pts.push_back(pt);
+        geometry_msgs::Point pt;
+        pt.x = pos_pts(i, 0);
+        pt.y = pos_pts(i, 1);
+        pt.z = pos_pts(i, 2);
+        bspline.pos_pts.push_back(pt);
       }
       
       NonUniformBspline tmp(pos_pts, planner_manager_->pp_.bspline_degree_, 1.0);
       Eigen::VectorXd knots = tmp.getKnot();
       for (int i = 0; i < knots.rows(); ++i) {
-  bspline.knots.push_back(knots(i));
+        bspline.knots.push_back(knots(i));
       }
       bspline.drone_id = expl_manager_->ep_->drone_id_;
       swarm_traj_pub_.publish(bspline);

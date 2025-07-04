@@ -186,6 +186,7 @@ void FrontierFinder::expandFrontier(
   }
 }
 
+//dividir fronteras 
 void FrontierFinder::splitLargeFrontiers(list<Frontier>& frontiers) {
   list<Frontier> splits, tmps;
   for (auto it = frontiers.begin(); it != frontiers.end(); ++it) {
@@ -201,7 +202,7 @@ void FrontierFinder::splitLargeFrontiers(list<Frontier>& frontiers) {
 
 bool FrontierFinder::splitHorizontally(const Frontier& frontier, list<Frontier>& splits) {
   // Split a frontier into small piece if it is too large
-  auto mean = frontier.average_.head<2>();
+  auto mean = frontier.average_.head<2>(); //x,y del centro de la frontera
   bool need_split = false;
   for (const auto& cell : frontier.filtered_cells_) {
     if ((cell.head<2>() - mean).norm() > cluster_size_xy_) {

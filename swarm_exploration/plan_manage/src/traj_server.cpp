@@ -318,7 +318,7 @@ void cmdCallback(const ros::TimerEvent& e) {
   if (!receive_traj_) return;
 
   if (emergency_) {
-    ROS_WARN("Emergency manuever");
+    ROS_WARN("Emergency manuever -- err");
 
     quadrotor_msgs::PositionCommand cmd;
     cmd.header.stamp = ros::Time::now();
