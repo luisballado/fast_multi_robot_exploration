@@ -9,6 +9,7 @@ Panels:
         - /Maps1/occupied_all11/Autocompute Value Bounds1
         - /Maps1/occupied_local11
         - /Maps1/occupied_local31
+        - /Simulators1
         - /Simulators1/simulation_map1
         - /Simulators1/MoreRobot1
       Splitter Ratio: 0.6411764621734619
@@ -206,7 +207,7 @@ Visualization Manager:
           Marker Topic: /planning_vis/trajectory_5
           Name: traj1
           Namespaces:
-            B-Spline: true
+            {}
           Queue Size: 100
           Value: true
         - Class: rviz/Marker
@@ -577,7 +578,7 @@ Visualization Manager:
           Color: 161; 161; 161
           Color Transformer: FlatColor
           Decay Time: 0
-          Enabled: true
+          Enabled: false
           Invert Rainbow: false
           Max Color: 255; 255; 255
           Min Color: 0; 0; 0
@@ -592,7 +593,7 @@ Visualization Manager:
           Unreliable: false
           Use Fixed Frame: true
           Use rainbow: true
-          Value: true
+          Value: false
         - Class: rviz/Marker
           Enabled: true
           Marker Topic: /odom_visualization_1/robot
@@ -632,7 +633,7 @@ Visualization Manager:
               Marker Topic: /odom_visualization_5/robot
               Name: robot4
               Namespaces:
-                mesh: true
+                {}
               Queue Size: 100
               Value: true
             - Class: rviz/Marker
@@ -680,7 +681,7 @@ Visualization Manager:
               Marker Topic: /planning/travel_traj_5
               Name: executed_traj1
               Namespaces:
-                "": true
+                {}
               Queue Size: 100
               Value: true
             - Class: rviz/Marker
@@ -728,7 +729,7 @@ Visualization Manager:
               Marker Topic: /planning/position_cmd_vis_5
               Name: position_cmd1
               Namespaces:
-                current_pose: true
+                {}
               Queue Size: 100
               Value: true
             - Class: rviz/Marker
@@ -802,7 +803,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/ThirdPersonFollower
-      Distance: 38.216102600097656
+      Distance: 73.70989990234375
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -818,9 +819,9 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.469795823097229
+      Pitch: 0.704796314239502
       Target Frame: <Fixed Frame>
-      Yaw: 3.3435769081115723
+      Yaw: 3.1035728454589844
     Saved:
       - Class: rviz/ThirdPersonFollower
         Distance: 17.48538589477539

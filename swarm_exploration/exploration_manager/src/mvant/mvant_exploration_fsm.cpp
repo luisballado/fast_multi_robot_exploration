@@ -410,6 +410,7 @@ namespace fast_planner {
         } else {
           // Check if reach goal
           auto pos = info->position_traj_.evaluateDeBoorT(t_cur);
+
           if ((pos - expl_manager_->ed_->next_pos_).norm() < 1.0) {
             replan_pub_.publish(std_msgs::Empty());
             clearVisMarker();
@@ -1360,11 +1361,11 @@ namespace fast_planner {
     // Remove allocated ones
     for (auto state : expl_manager_->ed_->swarm_state_) {
       for (auto id : state.grid_ids_) {
-  if (active_map.find(id) != active_map.end()) {
-    active_map.erase(id);
-  } else {
-    // ROS_ERROR("Inactive grid %d is allocated.", id);
-  }
+        if (active_map.find(id) != active_map.end()) {
+          active_map.erase(id);
+        } else {
+          // ROS_ERROR("Inactive grid %d is allocated.", id);
+        }
       }
     }
     
@@ -1514,7 +1515,7 @@ namespace fast_planner {
     }
   }
 
-  //No debo mandar trayectorias
+  //Timer donde se envian las trayectorias a los demas drones
   void MvantExplorationFSM::swarmTrajTimerCallback(const ros::TimerEvent& e) {
     // Broadcast newest traj of this drone to others
     //Programa se llama cada cierto tiempo

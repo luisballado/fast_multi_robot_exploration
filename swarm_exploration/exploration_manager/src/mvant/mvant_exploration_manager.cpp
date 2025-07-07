@@ -845,7 +845,8 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
     std::ofstream outfile("/home/file.txt",std::ios::app);
 
     //hacer la matriz cuadrada cuando la cardinalidad de vants sea diferente a la de fronteras
-    if(frontier_finder_->getFrontiers().size() >= ed_->swarm_state_.size()){
+    if(true){
+    //if(frontier_finder_->getFrontiers().size() >= ed_->swarm_state_.size()){
       
       // Write data to the file.
       outfile << "\nmatriz costo del drone: " << (ep_->drone_id_) << std::endl;
@@ -889,8 +890,8 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
           //function costo va aqui
           //como calcular cambio de yaw?? mapearlo de cero a 1
           //que tan enfrente me puede quedar la frontera
-      	  mat(i,index) = ViewNode::searchPath(drone_state.pos_,vj.pos_,path) + ViewNode::searchPath(drone_state.goal_pos_,vj.pos_,path2) + (direction_cost) + (yaw_cost);//distancia de ultima vez que lo escuche con objetivo;
-      	  //mat(i,index) = ViewNode::searchPath(drone_state.pos_,vj.pos_,path) + ViewNode::searchPath(drone_state.goal_pos_,vj.pos_,path2);//distancia de ultima vez que lo escuche con objetivo;
+      	  //mat(i,index) = ViewNode::searchPath(drone_state.pos_,vj.pos_,path) + ViewNode::searchPath(drone_state.goal_pos_,vj.pos_,path2) + (direction_cost) + (yaw_cost);//distancia de ultima vez que lo escuche con objetivo;
+      	  mat(i,index) = ViewNode::searchPath(drone_state.pos_,vj.pos_,path) + ViewNode::searchPath(drone_state.goal_pos_,vj.pos_,path2);//distancia de ultima vez que lo escuche con objetivo;
           ++index;
         }
 
