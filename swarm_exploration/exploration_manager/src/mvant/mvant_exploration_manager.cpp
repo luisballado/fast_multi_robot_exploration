@@ -849,7 +849,7 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
     std::ofstream outfile("/home/file.txt",std::ios::app);
 
     //hacer la matriz cuadrada cuando la cardinalidad de vants sea diferente a la de fronteras
-    if(frontier_finder_->getFrontiers().size() >= ed_->swarm_state_.size()){
+    if(frontier_finder_->getFrontiers().size() >= ed_->swarm_state_.size()-1){
       
       // Write data to the file.
       outfile << "\nmatriz costo del drone: " << (ep_->drone_id_) << std::endl;
@@ -870,10 +870,10 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
       for (int i = 0; i < ed_->swarm_state_.size()-1; ++i) {
 
         int index = 0;
-        
+        const auto& drone_state = ed_->swarm_state_[i];
+
         for (const auto& ftr : frontier_finder_->getFrontiers()) {
 
-          const auto& drone_state = ed_->swarm_state_[i];
           Viewpoint vj = ftr.viewpoints_.front();
           //debe ser con la posicion hacia donde va ir el drone
           std::vector<Vector3d> path;
@@ -949,9 +949,7 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
           //que tan enfrente me puede quedar la frontera
       	  mat(i,index) = ViewNode::searchPath(drone_state.pos_,vj.pos_,path) 
                   + ViewNode::searchPath(drone_state.goal_pos_,vj.pos_,path2)
-                  + (direction_cost) 
-                  + (yaw_cost) 
-                  + (cohesion_penalty)
+                  + (direction_cost) + (yaw_cost) + (cohesion_penalty) 
                   - dispersion_cost; // ¡SE RESTA porque más disperso = mejor!
           ++index;
         }
