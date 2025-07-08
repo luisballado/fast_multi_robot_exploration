@@ -105,6 +105,7 @@ public:
   shared_ptr<SDFMap> sdf_map_;
   shared_ptr<RoleAssigner> role_assigner_;
   // shared_ptr<UniformGrid> uniform_grid_;
+  shared_ptr<FSMParam> fp_; //para obtener el comm_range
 
   // Parameters
   shared_ptr<ExplorerParams> explorer_params_;

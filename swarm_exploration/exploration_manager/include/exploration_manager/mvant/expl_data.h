@@ -49,7 +49,6 @@ struct FSMParam {
   int repeat_send_num_;
 
   // Communication
-  //depreciado!
   double communication_range_;
 
   //Coordination
