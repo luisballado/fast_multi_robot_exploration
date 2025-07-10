@@ -325,6 +325,7 @@ namespace fast_planner {
           // Check if we need to send a message
           if (num_fail_ > 10) {
             sendEmergencyMsg(true);
+            sendStopMsg(1); //<-- ha fallado muchas veces parar
             num_fail_ = 0;
           } else {
             ++num_fail_;
