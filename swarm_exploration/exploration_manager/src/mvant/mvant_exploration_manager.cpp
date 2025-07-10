@@ -205,12 +205,8 @@ int MvantExplorationManager::planExploreMotion(const Vector3d& pos, const Vector
   //updateVelocities(1.0);
 
   bool success = false;
-  
-  // If we haven't found a goal, then get the first viewpoint (this happens
-  //when the goal is farther away)
-  // Aqui poner la estrategia
-  // obtener los objetivos de los demas robots
-  // calcular distancias
+
+  //obtener una frontera que atender
   success = closestGreedyFrontier(pos, yaw, next_pos, next_yaw);
   
   // Update goal
@@ -219,7 +215,7 @@ int MvantExplorationManager::planExploreMotion(const Vector3d& pos, const Vector
     //ROS_WARN_STREAM("Next view: " << next_pos.transpose() << ", " << next_yaw);
     
     // Check if we have been trying to access them too often
-    const double kMinDistGoals = 0.2;
+    const double kMinDistGoals = 1.0; //0.2;
 
     if ((next_pos - ed_->next_pos_).norm() < kMinDistGoals) {
       ++ed_->num_attempts_;
@@ -239,7 +235,6 @@ int MvantExplorationManager::planExploreMotion(const Vector3d& pos, const Vector
 
   } else {
 
-    //Que valores tiene aqui??
     next_pos = ed_->next_pos_;
     next_yaw = ed_->next_yaw_;
     return FAIL;
@@ -850,7 +845,7 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
 
     //hacer la matriz cuadrada cuando la cardinalidad de vants sea diferente a la de fronteras
     if(frontier_finder_->getFrontiers().size() >= ed_->swarm_state_.size()-1){
-      
+    
       // Write data to the file.
       outfile << "\nmatriz costo del drone: " << (ep_->drone_id_) << std::endl;
       const int drone_num = ed_->swarm_state_.size() - 1;            //numero de vants
@@ -917,7 +912,7 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
           //***************
           //la posicion de mi robot
           //la posicion de los otros robots
-          
+          /*
           Eigen::Vector3d centroid(0.0, 0.0, 0.0);
           int count2 = 0;
 
@@ -941,16 +936,17 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
               cohesion_penalty = std::min(1.0, (excess * excess) / (max_excess * max_excess));
           }
           outfile << "\ncosto comm: " << (cohesion_penalty) << std::endl;
-          
+          */
           //***************
           double exploitation_cost = (drone_state.pos_ - vj.pos_).norm();
           //function costo va aqui
           //como calcular cambio de yaw?? mapearlo de cero a 1
           //que tan enfrente me puede quedar la frontera
       	  mat(i,index) = ViewNode::searchPath(drone_state.pos_,vj.pos_,path) 
-                  + ViewNode::searchPath(drone_state.goal_pos_,vj.pos_,path2)
-                  + (direction_cost) + (yaw_cost) + (cohesion_penalty) 
-                  - dispersion_cost; // ¡SE RESTA porque más disperso = mejor!
+	    + ViewNode::searchPath(drone_state.goal_pos_,vj.pos_,path2)
+	    + (direction_cost) + (yaw_cost)
+	    - dispersion_cost; //¡SE RESTA porque más disperso = mejor!
+	  //+ (cohesion_penalty)   
           ++index;
         }
 
@@ -981,7 +977,7 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
       //   outfile << "dist:" << item.distance << "\n" << std::endl;
       // }
       
-
+      
       //me interesa la pos de mi drone    
 
       
@@ -1014,7 +1010,6 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
 
       }
 
-      
     } else {
 
       outfile << "\nminimi greedyPlan: " << (ep_->drone_id_) << std::endl;
