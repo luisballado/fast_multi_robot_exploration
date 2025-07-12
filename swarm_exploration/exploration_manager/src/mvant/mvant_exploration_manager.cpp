@@ -754,12 +754,22 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
     return assignment;
   }
 
+  //calcular costo yaw
+  double compute_yaw_cost(double desired_yaw, double current_yaw) {
+  
+    double delta_yaw = std::atan2(std::sin(desired_yaw - current_yaw), std::cos(desired_yaw - current_yaw));
+    return (1.0 - std::cos(delta_yaw)) / 2.0; //[0,1]
+
+  }
+  
   // Compute yaw and pitch from robot to frontier
   std::pair<double, double> compute_yaw_pitch_to_frontier(const Eigen::Vector3d& robot_position, const Eigen::Vector3d& frontier_position) {
     // Compute difference in position (frontier - robot)
+    //calculo de direccion
     Eigen::Vector3d delta = frontier_position - robot_position;
     
     // Extract the differences in x, y, z components
+    // componentes para calcular angulos
     double dx = delta.x();
     double dy = delta.y();
     double dz = delta.z();
@@ -848,21 +858,22 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
     
       // Write data to the file.
       outfile << "\nmatriz costo del drone: " << (ep_->drone_id_) << std::endl;
-      const int drone_num = ed_->swarm_state_.size() - 1;            //numero de vants
-      const int ftr_num = frontier_finder_->getFrontiers().size();   //numero de fronteras
+
+      const int drone_num = ed_->swarm_state_.size() - 1;
+      const int ftr_num = frontier_finder_->getFrontiers().size();
       
-      // obtener las dimensiones de la matriz original
       int nRows = drone_num;
       int nCols = ftr_num;
-    
       int n = std::max(nRows, nCols);
       Eigen::MatrixXd mat;
-      mat.resize(n,n);  //matriz cuadrada
+      
+      //matriz cuadrada respecto a la cardinalidad mas alta
+      mat.resize(n,n);  
     
       //llenar matriz con infinitos
       mat.setConstant(10000.0);
 
-      for (int i = 0; i < ed_->swarm_state_.size()-1; ++i) {
+      for (int i = 0; i < drone_num; ++i) {
 
         int index = 0;
         const auto& drone_state = ed_->swarm_state_[i];
@@ -870,22 +881,32 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
         for (const auto& ftr : frontier_finder_->getFrontiers()) {
 
           Viewpoint vj = ftr.viewpoints_.front();
+
           //debe ser con la posicion hacia donde va ir el drone
           std::vector<Vector3d> path;
           std::vector<Vector3d> path2;
 
-      	  // Distance
-      	  //double distance_cost = (vj.pos_ - drone_state.pos_).head(2).norm();
-      	  // Compute yaw and pitch to the frontier
+          // Compute yaw and pitch to the frontier
       	  auto [yaw, pitch] = compute_yaw_pitch_to_frontier(drone_state.pos_, vj.pos_);
-      	  //auto delta_yaw = std::abs(yaw - drone_state.yaw_);
-      	  //delta_yaw = std::fmod(delta_yaw + 3.1416, 2*3.1416)-3.1416;
-      	  double delta_yaw = std::atan2(std::sin(yaw - drone_state.yaw_), std::cos(yaw - drone_state.yaw_));
-          auto yaw_cost = (1.0 - std::cos(delta_yaw)) / 2.0; //[0,1] //(delta_yaw / 3.1416);
+          double yaw_cost = compute_yaw_cost(yaw,drone_state.yaw_);
+          outfile << "\ncosto yaw: " << (yaw_cost) << std::endl;
+
       	  // Direction
       	  auto direction = (vj.pos_ - drone_state.pos_).head(2).normalized();
-      	  double direction_cost = ViewNode::w_dir_ * (1.0 - (drone_state.vel_.head(2).normalized().dot(direction.normalized())));
-          outfile << "\ncosto yaw: " << (yaw_cost) << std::endl;
+      	  //double dot = drone_state.vel_.head(2).normalized().dot(direction);
+          //double direction_cost = ViewNode::w_dir_ * (1.0 - (drone_state.vel_.head(2).normalized().dot(direction.normalized())));
+          double direction_cost = 0.0;
+          Eigen::Vector2d vel2d = drone_state.vel_.head(2);
+          if (vel2d.norm() < 1e-3) {
+              direction_cost = 0.5;  // o máximo, o neutro
+          } else {
+              double dot = vel2d.normalized().dot(direction);
+              dot = std::max(-1.0, std::min(1.0, dot));
+
+              direction_cost = (1.0 - dot) / 2.0;
+          }
+
+
           outfile << "\ncosto direction: " << (direction_cost) << std::endl;
           //calculo dispersion
           double sum_inverse_dispersion = 0.0;
@@ -902,7 +923,10 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
               ++count;
           }
 
-          double dispersion_cost = (count > 0) ? (sum_inverse_dispersion / static_cast<double>(count)) : 0.0;
+          //double dispersion_cost = (count > 0) ? (sum_inverse_dispersion / static_cast<double>(count)) : 0.0;
+          double avg_inverse = sum_inverse_dispersion / static_cast<double>(count);
+          double dispersion_cost = 1.0 - std::exp(-avg_inverse);  // entre 0 y 1
+
           outfile << "\ncosto dispersion: " << (dispersion_cost) << std::endl;
 
 
@@ -912,7 +936,6 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
           //***************
           //la posicion de mi robot
           //la posicion de los otros robots
-          /*
           Eigen::Vector3d centroid(0.0, 0.0, 0.0);
           int count2 = 0;
 
@@ -936,17 +959,26 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
               cohesion_penalty = std::min(1.0, (excess * excess) / (max_excess * max_excess));
           }
           outfile << "\ncosto comm: " << (cohesion_penalty) << std::endl;
-          */
+
+          double dist_ = ViewNode::searchPath(drone_state.pos_,vj.pos_,path);
+          outfile << "\ncosto distance: " << dist_ << std::endl;
+
+          double norm_path_len = std::min(dist_ / 20.0, 1.0);
+
           //***************
           double exploitation_cost = (drone_state.pos_ - vj.pos_).norm();
           //function costo va aqui
           //como calcular cambio de yaw?? mapearlo de cero a 1
           //que tan enfrente me puede quedar la frontera
-      	  mat(i,index) = ViewNode::searchPath(drone_state.pos_,vj.pos_,path) 
-	    + ViewNode::searchPath(drone_state.goal_pos_,vj.pos_,path2)
-	    + (direction_cost) + (yaw_cost)
-	    - dispersion_cost; //¡SE RESTA porque más disperso = mejor!
-	  //+ (cohesion_penalty)   
+      	  double w_yaw  = 1.5;
+          double w_dist = 2.0;
+          double w_disp = 1.0;
+          double w_dir  = 1.0;
+          double total_cost = (w_yaw * yaw_cost + w_dist * dist_ + w_disp * dispersion_cost + w_dir * direction_cost) / (w_yaw + w_dir + w_dist + w_disp);;
+
+          mat(i,index) = total_cost;
+      	  //+ ViewNode::searchPath(drone_state.goal_pos_,vj.pos_,path2)
+      	  
           ++index;
         }
 

@@ -16,7 +16,7 @@ fi
 
 folder=${1}
 num_runs=${2}
-max_n_drones=10
+max_n_drones=4 #10
 
 for dir in ${folder}/*/     # list directories in the form "/tmp/dirname/"
 do
