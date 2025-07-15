@@ -325,7 +325,6 @@ namespace fast_planner {
           // Check if we need to send a message
           if (num_fail_ > 10) {
             sendEmergencyMsg(true);
-            sendStopMsg(1); //<-- ha fallado muchas veces parar
             num_fail_ = 0;
           } else {
             ++num_fail_;
@@ -433,9 +432,9 @@ namespace fast_planner {
 
            //Estado final
       case FINISH: {
+        sendStopMsg(1);
         ROS_INFO_THROTTLE(1.0, "FINISH STATE");
         ROS_INFO_THROTTLE(1.0, "-- exploracion terminada --");
-        sendStopMsg(1);
         break;
       }
         
@@ -448,9 +447,9 @@ namespace fast_planner {
     
           ROS_WARN_THROTTLE(1.0, "-- No fronteras para agente %d", getId());
     
-          //sendStopMsg(1);
+          sendStopMsg(1);
     
-          transitState(FINISH, "FSM");
+          //transitState(FINISH, "FSM");
     
           //ros::Duration(1).sleep();
     
