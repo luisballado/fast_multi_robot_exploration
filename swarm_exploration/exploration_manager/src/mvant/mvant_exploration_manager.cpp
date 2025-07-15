@@ -854,7 +854,7 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
 
     //hacer la matriz cuadrada cuando la cardinalidad de vants sea diferente a la de fronteras
     if(frontier_finder_->getFrontiers().size() >= ed_->swarm_state_.size()-1){
-    
+      
       // Write data to the file.
       outfile << "\nmatriz costo para el drone: " << (ep_->drone_id_) << std::endl;
 
@@ -1047,18 +1047,18 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
       outfile << "\nminimi greedyPlan: " << (ep_->drone_id_) << std::endl;
 
       //obtener la frontera con menor distancia
-      auto it = std::min_element(fronteras.begin(), fronteras.end(), [](const Frontera& a, const Frontera& b) {return a.distance < b.distance;});
+      //auto it = std::min_element(fronteras.begin(), fronteras.end(), [](const Frontera& a, const Frontera& b) {return a.distance < b.distance;});
       
-      //const Frontera& minFrontera = findMinFrontera(fronteras);
+      const Frontera& minFrontera = findMinFrontera(fronteras);
 
       // asignar frontera    
       // Update flag
       found_ftr = true;
       
       // Target
-      min_dist = it->distance; //minFrontera.distance;
-      next_pos = it->pos; //minFrontera.pos;
-      next_yaw = it->yaw; //minFrontera.yaw;
+      min_dist = minFrontera.distance; // it->distance; 
+      next_pos = minFrontera.pos; // it->pos;
+      next_yaw = minFrontera.yaw; // it->yaw;
       
 
 
