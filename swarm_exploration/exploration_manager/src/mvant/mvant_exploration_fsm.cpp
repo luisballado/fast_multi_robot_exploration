@@ -325,7 +325,9 @@ namespace fast_planner {
           // Check if we need to send a message
           if (num_fail_ > 10) {
             sendEmergencyMsg(true);
+
             num_fail_ = 0;
+            transitState(IDLE, "FSM");
           } else {
             ++num_fail_;
           }
@@ -449,10 +451,6 @@ namespace fast_planner {
     
           sendStopMsg(1);
     
-          //transitState(FINISH, "FSM");
-    
-          //ros::Duration(1).sleep();
-    
           break;
     
         }
@@ -490,7 +488,7 @@ namespace fast_planner {
     
     //replan trajectory por posibles colisiones    
     if (fd_->avoid_collision_ || fd_->go_back_) {  // Only replan trajectory
-      ROS_WARN_STREAM("*********************planTrajToView**************************");
+      //ROS_WARN_STREAM("*********************planTrajToView**************************");
       
       //planificar una trayectoria respecto a dos puntos
       //se hace con A* 
@@ -499,7 +497,7 @@ namespace fast_planner {
       fd_->avoid_collision_ = false;
     } else {
       // Do full planning normally
-      ROS_WARN_STREAM("********************planExploreMotion********************");
+      //ROS_WARN_STREAM("********************planExploreMotion********************");
 
       //planificar respecto a mi ubicacion
       //busqueda greedy

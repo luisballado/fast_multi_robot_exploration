@@ -201,7 +201,7 @@ int MvantExplorationManager::planExploreMotion(const Vector3d& pos, const Vector
   Vector3d next_pos;
   double next_yaw;
   
-  bool success = false;
+  bool success;
 
   //obtener una frontera que atender
   success = closestGreedyFrontier(pos, yaw, next_pos, next_yaw);
@@ -647,8 +647,9 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
   public:
     int id;   
     float distance;
-    Vector3d pos;
-    double yaw;
+    Vector3d pos_;
+    double yaw_;
+    int edad;
   };
   
   //algoritmo 2
@@ -790,9 +791,10 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
     
     return std::make_pair(yaw_target, pitch_target);  // Return yaw and pitch as a pair
   }
-  
+
+
   //Funcion principal de exploración con todos los elementos
-  bool MvantExplorationManager::closestGreedyFrontier(const Vector3d& pos, const Vector3d& yaw, Vector3d& next_pos, double& next_yaw, bool force_different) const {
+  bool MvantExplorationManager::closestGreedyFrontier(const Vector3d& pos, const Vector3d& yaw, Vector3d& next_pos, double& next_yaw, bool force_different)  {
 
     Frontera front1;
     list<Frontera> fronteras = {};
@@ -800,21 +802,50 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
     
     double min_dist = std::numeric_limits<double>::max();
     
+    // Nuevo mapa para actualizar edades esta iteración
+    std::unordered_map<std::string, int> nuevas_edades;
+
     bool found_ftr = false;
-    
+
+    if(frontier_finder_->getFrontiers().size() < 1){
+      return found_ftr;
+    }
+
+    const int edad_max = 10;  // puedes ajustar este valor según tus ciclos
     for (const auto& ftr : frontier_finder_->getFrontiers()) {
       
       Viewpoint vp = ftr.viewpoints_.front();
       
+      //** cosa de edad
+      // 🔑 Generar clave estable basada en posición redondeada
+      int x = std::round(vp.pos_.x() * 10);
+      int y = std::round(vp.pos_.y() * 10);
+      std::string clave = std::to_string(x) + "_" + std::to_string(y);
+
+      // 🕒 Obtener edad desde el mapa persistente
+      int edad = 0;
+      if (edades_fronteras.count(clave)) {
+        edad = edades_fronteras[clave] + 1;
+      }
+
+      double edad_normalizada = static_cast<double>(edad) / static_cast<double>(edad_max);
+      edad_normalizada = std::min(edad_normalizada, 1.0);
+
+      ROS_WARN_STREAM("[MANAGER] edad ftr: " << edad_normalizada);
+
+      // 📝 Guardar edad actualizada para próxima iteración
+      nuevas_edades[clave] = edad;
+      //** cosa de edad
+
       //no brincar fronteras
       //aqui hay infinitos agregar y se deben considerar
       //origen, destino
       if (!isPositionReachable(pos, vp.pos_)) {
         front1.id = ftr.id_;
         front1.distance = 10000.0;
-        front1.pos = vp.pos_;
-        front1.yaw = vp.yaw_;
-        
+        front1.pos_ = vp.pos_;
+        front1.yaw_ = vp.yaw_;
+        front1.edad = edad_normalizada;  // 🧠 Insertamos edad
         fronteras.push_back(front1); //<<<<--- en que lo uso?
       
         ed_->fronteras.push_back(ftr.id_);  //<<<<--- en que lo uso?
@@ -838,8 +869,9 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
       
       front1.id = ftr.id_;
       front1.distance = distance;
-      front1.pos = vp.pos_;
-      front1.yaw = vp.yaw_;
+      front1.pos_ = vp.pos_;
+      front1.yaw_ = vp.yaw_;
+      front1.edad = edad_normalizada;  // 🧠 Insertamos edad
 
       fronteras.push_back(front1);
       
@@ -847,10 +879,14 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
       
     }
 
+    edades_fronteras = nuevas_edades;
+
     //hasta aqui tengo las fronteras con distancias exploration data ->fronteras
     //ROS_WARN_STREAM("[MANAGER] drone ffr: " << ed_->fronteras.size());
     
     std::ofstream outfile("/home/file.txt",std::ios::app);
+
+    std::vector<Frontera> fronteras_vector(fronteras.begin(), fronteras.end());
 
     //hacer la matriz cuadrada cuando la cardinalidad de vants sea diferente a la de fronteras
     if(frontier_finder_->getFrontiers().size() >= ed_->swarm_state_.size()-1){
@@ -877,9 +913,12 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
         int index = 0;
         const auto& drone_state = ed_->swarm_state_[i]; //estado de los demas vants
 
-        for (const auto& ftr : frontier_finder_->getFrontiers()) {
+        //for (const auto& ftr : frontier_finder_->getFrontiers()) {
+        for (int j = 0; j < fronteras_vector.size(); ++j) {
+          const Frontera& vj = fronteras_vector[j];
+          //Viewpoint vj = ftr.viewpoints_.front();
 
-          Viewpoint vj = ftr.viewpoints_.front();
+          int edad = vj.edad;
 
           //debe ser con la posicion hacia donde va ir el drone
           std::vector<Vector3d> path;
@@ -972,15 +1011,31 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
 
           //***************
           double exploitation_cost = (drone_state.pos_ - vj.pos_).norm();
-          //function costo va aqui
-          //como calcular cambio de yaw?? mapearlo de cero a 1
-          //que tan enfrente me puede quedar la frontera
-      	  double w_yaw  = 1.0;   // giros importantes, pero menos que coordinación
-          double w_dist = 2.0;   // que no viaje lejos si no es necesario
-          double w_disp = 1.5;   // evitar aglomeraciones o ir a la misma zona
-          double w_dir  = 1.5;   // mantener coherencia en vuelo
-          double w_info = 5.0;   // explorar zonas nuevas y útiles
-          double total_cost = (w_info * info_gain_cost + w_yaw * yaw_cost + w_dist * norm_path_len + w_disp * dispersion_cost + w_dir * direction_cost) / (w_yaw + w_dir + w_dist + w_disp + w_info);
+
+          // Distancia desde todos los robots a esta frontera
+          double max_dist_to_frontera = 0.0;
+          for (int k = 0; k < ed_->swarm_state_.size()-1; ++k) {
+              if (k == i) continue;  // puedes ignorar el robot actual si ya lo estás asignando
+
+              double d = (fronteras_vector[j].pos_ - ed_->swarm_state_[k].pos_).norm();
+              if (d > max_dist_to_frontera) {
+                  max_dist_to_frontera = d;
+              }
+          }
+
+          // Costo de retorno futuro estimado
+          double future_return_cost = max_dist_to_frontera;
+
+          
+          double w_yaw  = 1.0;   // giros importantes, pero menos que coordinación
+          double w_dist = 1.2;   // que no viaje lejos si no es necesario
+          double w_disp = 3.5;   // evitar aglomeraciones o ir a la misma zona
+          double w_dir  = 1.8;   // mantener coherencia en vuelo
+          double w_info = 4.0;   // explorar zonas nuevas y útiles
+          double w_age  = 0.0;   // prioridad de urgencia
+          double w_future_return = 0.0; // costo de retorno esperado en el futuro
+          double total_cost = (w_future_return * future_return_cost + w_age * edad + w_info * info_gain_cost + w_yaw * yaw_cost + w_dist * norm_path_len + w_disp * dispersion_cost + w_dir * direction_cost) 
+          / (w_yaw + w_dir + w_dist + w_disp + w_info + w_age + w_future_return);
 
           mat(i,index) = total_cost;
       	  //+ ViewNode::searchPath(drone_state.goal_pos_,vj.pos_,path2)
@@ -1037,8 +1092,8 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
       outfile << "Frontera " << item  << std::endl;
       if (it != fronteras.end()) {
         min_dist = it->distance;
-        next_pos = it->pos;
-        next_yaw = it->yaw;
+        next_pos = it->pos_;
+        next_yaw = it->yaw_;
 
       }
 
@@ -1057,8 +1112,8 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
       
       // Target
       min_dist = minFrontera.distance; // it->distance; 
-      next_pos = minFrontera.pos; // it->pos;
-      next_yaw = minFrontera.yaw; // it->yaw;
+      next_pos = minFrontera.pos_; // it->pos;
+      next_yaw = minFrontera.yaw_; // it->yaw;
       
 
 

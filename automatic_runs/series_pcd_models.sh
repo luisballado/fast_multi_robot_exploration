@@ -28,7 +28,7 @@ else
   do
 
     if [ ${model_id} == 1 ]; then
-      model="forest_50x50_01_200" #"office"
+      model="office" # "forest_50x50_01_200"
     elif [ ${model_id} == 2 ]; then
       model="forest_50x50_01_300" #"office2"
     elif [ ${model_id} == 3 ]; then

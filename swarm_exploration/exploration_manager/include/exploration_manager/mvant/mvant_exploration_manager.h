@@ -5,6 +5,7 @@
 #include <Eigen/Eigen>
 #include <memory>
 #include <vector>
+#include <unordered_map>
 
 #include <exploration_manager/mvant/role_assigner.h>
 
@@ -142,7 +143,9 @@ private:
       Vector3d& next_pos, double& next_yaw) const;
 
   bool closestGreedyFrontier(const Vector3d& pos, const Vector3d& yaw, Vector3d& next_pos,
-      double& next_yaw, bool force_different = false) const;
+      double& next_yaw, bool force_different = false) ;
+
+  std::unordered_map<std::string, int> edades_fronteras;
 
   double attractivePotentialField(double distance) const;
 
