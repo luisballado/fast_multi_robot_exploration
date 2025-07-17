@@ -320,14 +320,19 @@ namespace fast_planner {
           sendEmergencyMsg(false);
     
         } else if (res == FAIL) {  // Keep trying to replan
+          if (expl_manager_->ed_->frontiers_.size()<=1) {
+            ROS_WARN("No quedan fronteras. Finalizando exploración.");
+            clearVisMarker();
+            sendStopMsg(1);  // Para detener al dron
+            transitState(FINISH, "FSM");
+            return;
+          }
           fd_->static_state_ = true;
           ROS_WARN_THROTTLE(1.0, "-- Plan fail (drone %d) --", getId());
           // Check if we need to send a message
           if (num_fail_ > 10) {
             sendEmergencyMsg(true);
-
             num_fail_ = 0;
-            transitState(IDLE, "FSM");
           } else {
             ++num_fail_;
           }
@@ -451,6 +456,10 @@ namespace fast_planner {
     
           sendStopMsg(1);
     
+          //transitState(FINISH, "FSM");
+    
+          //ros::Duration(1).sleep();
+    
           break;
     
         }
@@ -488,7 +497,7 @@ namespace fast_planner {
     
     //replan trajectory por posibles colisiones    
     if (fd_->avoid_collision_ || fd_->go_back_) {  // Only replan trajectory
-      //ROS_WARN_STREAM("*********************planTrajToView**************************");
+      ROS_WARN_STREAM("*********************planTrajToView**************************");
       
       //planificar una trayectoria respecto a dos puntos
       //se hace con A* 
@@ -497,7 +506,7 @@ namespace fast_planner {
       fd_->avoid_collision_ = false;
     } else {
       // Do full planning normally
-      //ROS_WARN_STREAM("********************planExploreMotion********************");
+      ROS_WARN_STREAM("********************planExploreMotion********************");
 
       //planificar respecto a mi ubicacion
       //busqueda greedy
@@ -559,109 +568,53 @@ namespace fast_planner {
 
       for (int i = 0; i < ed_ptr->frontiers_.size(); ++i) {
 
-  auto color = visualization_->getColor(double(i) / ed_ptr->frontiers_.size(), 1);
+        auto color = visualization_->getColor(double(i) / ed_ptr->frontiers_.size(), 1);
 
-  visualization_->drawCubes(ed_ptr->frontiers_[i], res, color, "frontier", i, 0.9);
+        visualization_->drawCubes(ed_ptr->frontiers_[i], res, color, "frontier", i, 0.9);
 
-  // getColorVal(i, expl_manager_->ep_->drone_num_, expl_manager_->ep_->drone_id_)
-  // double(i) / ed_ptr->frontiers_.size()
-  
-  // visualization_->drawBox(ed_ptr->frontier_boxes_[i].first,
-  // ed_ptr->frontier_boxes_[i].second,
-  //   color, "frontier_boxes", i, 4);
+        // getColorVal(i, expl_manager_->ep_->drone_num_, expl_manager_->ep_->drone_id_)
+        // double(i) / ed_ptr->frontiers_.size()
+        
+        // visualization_->drawBox(ed_ptr->frontier_boxes_[i].first,
+        // ed_ptr->frontier_boxes_[i].second,
+        //   color, "frontier_boxes", i, 4);
 
-  //obtener centroide
-  //puntos
+        //obtener centroide
+        //puntos
         Vector3d centroid(0.0, 0.0, 0.0);
-  int count = 0;
+        int count = 0;
+        
+        vector<Vector3d> points = ed_ptr->frontiers_[i];
+        
+        for (const auto& point : points) {
+          centroid += point;
+          count++;
+        }
+        
+        if (count > 0) {
+          centroid /= count;
+        }
   
-  vector<Vector3d> points = ed_ptr->frontiers_[i];
-  
-  for (const auto& point : points) {
-    centroid += point;
-    count++;
-  }
-  
-  if (count > 0) {
-    centroid /= count;
-  }
-  
-  //Mostrar el numero de frontera
-  auto id_str = std::to_string(ed_ptr->fronters_ids_[i]);
+        //Mostrar el numero de frontera
+        auto id_str = std::to_string(ed_ptr->fronters_ids_[i]);
 
-  ROS_WARN_STREAM("Frontera:: " << id_str);
-  //ROS_WARN_STREAM("Frontera:: " << ed_ptr->frontiers_[i][0]);
-  ROS_WARN_STREAM("Frontera:: " << centroid.transpose());
-  //visualization_->drawText(ed_ptr->frontiers_[i][0] - Eigen::Vector3d(0., 0., 0.), id_str, 0.5, Eigen::Vector4d::Ones(), "id", ed_ptr->frontiers_.size() + i, 4);
-  visualization_->drawText(centroid - Eigen::Vector3d(0., 0., 0.), id_str, 0.5, Eigen::Vector4d::Ones(), "id", ed_ptr->frontiers_.size() + i, 4);
+        ROS_WARN_STREAM("Frontera:: " << id_str);
+        //ROS_WARN_STREAM("Frontera:: " << ed_ptr->frontiers_[i][0]);
+        ROS_WARN_STREAM("Frontera:: " << centroid.transpose());
+        //visualization_->drawText(ed_ptr->frontiers_[i][0] - Eigen::Vector3d(0., 0., 0.), id_str, 0.5, Eigen::Vector4d::Ones(), "id", ed_ptr->frontiers_.size() + i, 4);
+        visualization_->drawText(centroid, id_str, 0.5, Eigen::Vector4d::Ones(), "frontier", i, 4);
       }
       
       for (int i = ed_ptr->frontiers_.size(); i < last_ftr_num; ++i) {
-  visualization_->drawCubes({}, res, Vector4d(0, 0, 0, 1), "frontier", i, 4);
-  // visualization_->drawBox(Vector3d(0, 0, 0), Vector3d(0, 0, 0), Vector4d(1, 0, 0, 0.3),
-  //   "frontier_boxes", i, 4);
-  // visualization_->drawText(ed_ptr->frontiers_[i][0] - Eigen::Vector3d(0., 0., 0.), "", 0.5,
-  // Eigen::Vector4d::Ones(), "id", i + 1, 4);
+        visualization_->drawCubes({}, res, Vector4d(0, 0, 0, 1), "frontier", i, 4);
+        // visualization_->drawBox(Vector3d(0, 0, 0), Vector3d(0, 0, 0), Vector4d(1, 0, 0, 0.3),
+        //   "frontier_boxes", i, 4);
+        // visualization_->drawText(ed_ptr->frontiers_[i][0] - Eigen::Vector3d(0., 0., 0.), "", 0.5,
+        // Eigen::Vector4d::Ones(), "id", i + 1, 4);
+        visualization_->drawText(Vector3d(0, 0, 0), "", 0.5, Eigen::Vector4d(0, 0, 0, 0), "frontier", i, 4);
       }
       
       last_ftr_num = ed_ptr->frontiers_.size();
-      
-      // Draw labeled frontier
-      static size_t last_ftr_num_labeled = 0;
-      
-      for (size_t i = 0; i < ed_ptr->labeled_frontiers_.size(); ++i) {
-  Eigen::Vector4d color(0, 0, 0, 0.5);
-  if (ed_ptr->labeled_frontiers_[i].first == 0) {
-    color[0] = 1.;
-  } else if (ed_ptr->labeled_frontiers_[i].first == LABEL::FRONTIER) {
-    color[1] = 1.;
-  } else {
-    color[2] = 1.;
-  }
-  visualization_->drawCubes(
-          ed_ptr->labeled_frontiers_[i].second, res, color, "labeled_frontier", i, 7);
-      }
-      
-      for (size_t i = ed_ptr->labeled_frontiers_.size(); i < last_ftr_num_labeled; ++i) {
-  visualization_->drawCubes({}, res, Eigen::Vector4d(0, 0, 0, 1), "labeled_frontier", i, 7);
-      }
-      
-      last_ftr_num_labeled = ed_ptr->labeled_frontiers_.size();
-      
-      // Draw frontiers in front
-      static size_t last_ftr_num_infront = 0;
-      
-      for (size_t i = 0; i < ed_ptr->infront_frontiers_.size(); ++i) {
-  Eigen::Vector4d color(1, 1, 0, 0.5);
-  visualization_->drawCubes(
-          ed_ptr->infront_frontiers_[i].second, res, color, "infront_frontiers", i, 10);
-      }
-      
-      for (size_t i = ed_ptr->infront_frontiers_.size(); i < last_ftr_num_labeled; ++i) {
-  visualization_->drawCubes({}, res, Eigen::Vector4d(0, 0, 0, 1), "infront_frontiers", i, 10);
-      }
-      
-      last_ftr_num_infront = ed_ptr->infront_frontiers_.size();
-      
-      // Publish role
-      const std::string role_str = roleToString(expl_manager_->role_);
-      visualization_->drawText(fd_->odom_pos_ - Eigen::Vector3d(1., 0., 0.), role_str, 0.4,
-             Eigen::Vector4d::Ones(), "role", 0, 8);
-      
-      // Publish current goal
-      auto color =
-  PlanningVisualization::getColor((getId() - 1) / double(expl_manager_->ep_->drone_num_));
-      visualization_->drawArrow(expl_manager_->ed_->next_pos_, expl_manager_->ed_->next_yaw_,
-        Eigen::Vector3d(0.75, 0.3, 0.75), color, "goal", 0, 9);
-      
-      // Publish trails tour
-      if (expl_manager_->role_ == ROLE::GARBAGE_COLLECTOR) {
-  std::vector<Eigen::Vector3d> tour;
-  for (const auto& p : expl_manager_->ed_->trails_tour_) tour.push_back(p.first);
-  visualization_->drawLines(tour, 0.07, color, "trails_tour", 0, 11);
-      } else {
-  visualization_->drawLines({}, 0.07, Eigen::Vector4d::Zero(), "trails_tour", 0, 11);
-      }
       
     } else if (content == 2) {
       
@@ -672,41 +625,41 @@ namespace fast_planner {
       // 6);
       
       if (expl_manager_->ep_->drone_id_ == 1) {
-  vector<Eigen::Vector3d> pts1, pts2;
-  expl_manager_->hgrid_->getGridMarker(pts1, pts2);
-  visualization_->drawLines(pts1, pts2, 0.05, Eigen::Vector4d(1, 0, 1, 0.5), "partition", 1, 6);
+        vector<Eigen::Vector3d> pts1, pts2;
+        expl_manager_->hgrid_->getGridMarker(pts1, pts2);
+        visualization_->drawLines(pts1, pts2, 0.05, Eigen::Vector4d(1, 0, 1, 0.5), "partition", 1, 6);
+        
+        vector<Eigen::Vector3d> pts;
+        vector<string> texts;
+        expl_manager_->hgrid_->getGridMarker2(pts, texts);
+        static int last_text_num = 0;
+
+        for (int i = 0; i < pts.size(); ++i) {
+          visualization_->drawText(pts[i], texts[i], 1, Eigen::Vector4d(0, 0, 0, 1), "text", i, 6);
+        }
+
+        for (int i = pts.size(); i < last_text_num; ++i) {
+          visualization_->drawText(
+                 Eigen::Vector3d(0, 0, 0), string(""), 1, Eigen::Vector4d(0, 0, 0, 1), "text", i, 6);
+        }
+
+        last_text_num = pts.size();
   
-  vector<Eigen::Vector3d> pts;
-  vector<string> texts;
-  expl_manager_->hgrid_->getGridMarker2(pts, texts);
-  static int last_text_num = 0;
-
-  for (int i = 0; i < pts.size(); ++i) {
-    visualization_->drawText(pts[i], texts[i], 1, Eigen::Vector4d(0, 0, 0, 1), "text", i, 6);
-  }
-
-  for (int i = pts.size(); i < last_text_num; ++i) {
-    visualization_->drawText(
-           Eigen::Vector3d(0, 0, 0), string(""), 1, Eigen::Vector4d(0, 0, 0, 1), "text", i, 6);
-  }
-
-  last_text_num = pts.size();
-  
-  // // Pub hgrid to ground node
-  // exploration_manager::HGrid hgrid;
-  // hgrid.stamp = ros::Time::now().toSec();
-  // for (int i = 0; i < pts1.size(); ++i) {
-  //   geometry_msgs::Point pt1, pt2;
-  //   pt1.x = pts1[i][0];
-  //   pt1.y = pts1[i][1];
-  //   pt1.z = pts1[i][2];
-  //   hgrid.points1.push_back(pt1);
-  //   pt2.x = pts2[i][0];
-  //   pt2.y = pts2[i][1];
-  //   pt2.z = pts2[i][2];
-  //   hgrid.points2.push_back(pt2);
-  // }
-  // hgrid_pub_.publish(hgrid);
+        // // Pub hgrid to ground node
+        // exploration_manager::HGrid hgrid;
+        // hgrid.stamp = ros::Time::now().toSec();
+        // for (int i = 0; i < pts1.size(); ++i) {
+        //   geometry_msgs::Point pt1, pt2;
+        //   pt1.x = pts1[i][0];
+        //   pt1.y = pts1[i][1];
+        //   pt1.z = pts1[i][2];
+        //   hgrid.points1.push_back(pt1);
+        //   pt2.x = pts2[i][0];
+        //   pt2.y = pts2[i][1];
+        //   pt2.z = pts2[i][2];
+        //   hgrid.points2.push_back(pt2);
+        // }
+        // hgrid_pub_.publish(hgrid);
       }
       
       auto grid_tour = expl_manager_->ed_->grid_tour_;
@@ -719,11 +672,11 @@ namespace fast_planner {
       exploration_manager::GridTour tour;
 
       for (int i = 0; i < grid_tour.size(); ++i) {
-  geometry_msgs::Point point;
-  point.x = grid_tour[i][0];
-  point.y = grid_tour[i][1];
-  point.z = grid_tour[i][2];
-  tour.points.push_back(point);
+        geometry_msgs::Point point;
+        point.x = grid_tour[i][0];
+        point.y = grid_tour[i][1];
+        point.z = grid_tour[i][2];
+        tour.points.push_back(point);
       }
 
       tour.drone_id = expl_manager_->ep_->drone_id_;
@@ -743,13 +696,12 @@ namespace fast_planner {
       // visualization_->drawBox(Vector3d(0, 0, 0), Vector3d(0, 0, 0), Vector4d(1, 0, 0, 0.3),
       //   "frontier_boxes", i, 4);
     }
+
+    // 🔽 Agrega aquí la limpieza de textos "id"
+    /*for (int i = 0; i < 10; ++i) {
+      visualization_->drawText(Vector3d(0, 0, 0), "", 0.5, Vector4d(0, 0, 0, 0), "frontier", i, 4);
+    }*/
     
-    for (int i = 0; i < 10; ++i) {
-      visualization_->drawCubes({}, 0.1, Vector4d(0, 0, 0, 1), "labeled_frontier", i, 7);
-      // visualization_->drawCubes({}, 0.1, Vector4d(0, 0, 0, 1), "dead_frontier", i, 4);
-      // visualization_->drawBox(Vector3d(0, 0, 0), Vector3d(0, 0, 0), Vector4d(1, 0, 0, 0.3),
-      //   "frontier_boxes", i, 4);
-    }
     // visualization_->drawSpheres({}, 0.2, Vector4d(0, 0.5, 0, 1), "points", 0, 6);
     visualization_->drawLines({}, 0.07, Vector4d(0, 0.5, 0, 1), "frontier_tour", 0, 6);
     visualization_->drawLines({}, 0.07, Vector4d(0, 0.5, 0, 1), "grid_tour", 0, 6);
@@ -766,9 +718,15 @@ namespace fast_planner {
   void MvantExplorationFSM::frontierCallback(const ros::TimerEvent& e) {
     
     if (state_ != WAIT_TRIGGER) {
-      
+      auto ft = expl_manager_->frontier_finder_;
       auto ed = expl_manager_->ed_;
-      
+
+      auto getColorVal = [&](const int& id, const int& num, const int& drone_id) {
+        double a = (drone_id - 1) / double(num + 1);
+        double b = 1 / double(num + 1);
+        return a + b * double(id) / ed->frontiers_.size();
+      };
+
       expl_manager_->updateFrontierStruct(fd_->odom_pos_, fd_->odom_yaw_, fd_->odom_vel_);
       
       // Draw frontier and bounding box
@@ -776,26 +734,26 @@ namespace fast_planner {
       
       for (int i = 0; i < ed->frontiers_.size(); ++i) {
 	
-	auto color = visualization_->getColor(double(i) / ed->frontiers_.size(), 0.4);
-	visualization_->drawCubes(ed->frontiers_[i], res, color, "frontier", i, 4);
-	
-	Vector3d centroid(0.0, 0.0, 0.0);
-	int count = 0;
-	
-	centroid = ed->views_[i];
-	
-	// mostrar el numero de frontera
-	auto id_str = std::to_string(ed->fronters_ids_[i]);
-	//ROS_WARN_STREAM("Frontera:: " << id_str);
-	//ROS_WARN_STREAM("Frontera:: " << centroid.transpose());
-	
-	visualization_->drawText(centroid, "F-"+id_str, 0.8, Eigen::Vector4d(0.0, 0.0, 0.0, 1.0), "id", ed->frontiers_.size() + i, 4);
-	
+      	auto color = visualization_->getColor(double(i) / ed->frontiers_.size(), 0.4);
+      	visualization_->drawCubes(ed->frontiers_[i], res, color, "frontier", i, 4);
+      	
+      	Vector3d centroid(0.0, 0.0, 0.0);
+      	int count = 0;
+      	
+      	centroid = ed->views_[i];
+      	
+      	// mostrar el numero de frontera
+      	auto id_str = std::to_string(ed->fronters_ids_[i]);
+      	//ROS_WARN_STREAM("Frontera:: " << id_str);
+      	//ROS_WARN_STREAM("Frontera:: " << centroid.transpose());
+      	
+      	visualization_->drawText(centroid, id_str, 1, Eigen::Vector4d(0.0, 0.0, 0.0, 1.0), "id", ed->frontiers_.size() + i, 4);
+      	
       }
       
       for (int i = ed->frontiers_.size(); i < 50; ++i) {
-	visualization_->drawCubes({}, res, Vector4d(0, 0, 0, 1), "frontier", i, 4);
-	visualization_->drawText({}, "", 0.8, Eigen::Vector4d(0.0, 0.0, 0.0, 1.0), "id", ed->frontiers_.size() + i, 4);
+      	visualization_->drawCubes({}, res, Vector4d(0, 0, 0, 1), "frontier", i, 4);
+      	visualization_->drawText({}, "", 0.8, Eigen::Vector4d(0.0, 0.0, 0.0, 1.0), "id", ed->frontiers_.size() + i, 4);
 	
       }
       
@@ -1195,7 +1153,6 @@ namespace fast_planner {
 
   // enviar informacion
   // de un drone
-  // cambiar esto a un topico
   void MvantExplorationFSM::droneStateTimerCallback(const ros::TimerEvent& e) {
     
     // Broadcast own state periodically

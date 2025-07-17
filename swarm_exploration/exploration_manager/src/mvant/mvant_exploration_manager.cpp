@@ -201,7 +201,7 @@ int MvantExplorationManager::planExploreMotion(const Vector3d& pos, const Vector
   Vector3d next_pos;
   double next_yaw;
   
-  bool success;
+  bool success = false;
 
   //obtener una frontera que atender
   success = closestGreedyFrontier(pos, yaw, next_pos, next_yaw);
@@ -806,11 +806,6 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
     std::unordered_map<std::string, int> nuevas_edades;
 
     bool found_ftr = false;
-
-    if(frontier_finder_->getFrontiers().size() < 1){
-      return found_ftr;
-    }
-
     const int edad_max = 10;  // puedes ajustar este valor según tus ciclos
     for (const auto& ftr : frontier_finder_->getFrontiers()) {
       
