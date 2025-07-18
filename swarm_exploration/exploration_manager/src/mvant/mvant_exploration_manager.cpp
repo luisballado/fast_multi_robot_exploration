@@ -186,51 +186,45 @@ void MvantExplorationManager::initialize(ros::NodeHandle& nh) {
   // fout.close();
 }
 
-//buscar una frontera 
+// Planificar una nueva frontera 
 int MvantExplorationManager::planExploreMotion(const Vector3d& pos, const Vector3d& vel, const Vector3d& acc, const Vector3d& yaw) {
   
   ros::Time t1 = ros::Time::now();
   auto t2 = t1;
   
-  std::cout << "start pos: " << pos.transpose() << ", vel: " << vel.transpose()
-      << ", acc: " << acc.transpose() << std::endl;
+  //std::cout << "start pos: " << pos.transpose() << ", vel: " << vel.transpose() << ", acc: " << acc.transpose() << std::endl;
 
-  ROS_WARN_STREAM("start pos: " << pos.transpose() << ", vel: " << vel.transpose() << ", acc: " << acc.transpose());
-  ROS_WARN_STREAM("vel: " << vel.transpose() << ", acc: " << acc.transpose());
+  //ROS_WARN_STREAM("start pos: " << pos.transpose() << ", vel: " << vel.transpose() << ", acc: " << acc.transpose());
+  //ROS_WARN_STREAM("vel: " << vel.transpose() << ", acc: " << acc.transpose());
   
   Vector3d next_pos;
   double next_yaw;
   
   bool success = false;
 
-  //obtener una frontera que atender
+  // obtener una frontera que atender
+  // se le pasa la posicion y yaw del robot
+  // regresa la posicion de la nueva frontera
+  // aqui solo se busca la nueva frontera
   success = closestGreedyFrontier(pos, yaw, next_pos, next_yaw);
-  /*
-  double dist = (next_pos - pos).norm();
-  double max_vel = 1.0;  // velocidad máxima
-  double min_vel = 0.3;  // velocidad mínima
   
-  double speed = std::max(min_vel, std::min(0.3 + 0.5 * dist, max_vel));
-
-  //modificar la velocidad
-  updateVelocities(speed);
-  */
-
-  // Update goal
+  // obtuvimos un nuevo objetivo (posicion de la frontera)
   if (success) {
     
-    //ROS_WARN_STREAM("Next view: " << next_pos.transpose() << ", " << next_yaw);
+    //ROS_WARN_STREAM("Nueva ubicacion: " << next_pos.transpose() << ", " << next_yaw);
     
     // Check if we have been trying to access them too often
-    const double kMinDistGoals = 1.0; //0.2;
-
+    // evita quedar en un minimo local
+    const double kMinDistGoals = 0.2;
+    // si el nuevo objetivo esta muy cerca iremos manejando un
+    // contador para evitar quedarnos atrapados aqui
     if ((next_pos - ed_->next_pos_).norm() < kMinDistGoals) {
       ++ed_->num_attempts_;
     } else {
       ed_->num_attempts_ = 0;
     }
 
-    //forzar frontera diferente despues de tres intentos de llegar
+    //forzar frontera diferente despues de tres intentos
     const size_t kMaxAttempts = 10;
     if (ed_->num_attempts_ > kMaxAttempts) {
       bool force_different = true;
@@ -242,11 +236,16 @@ int MvantExplorationManager::planExploreMotion(const Vector3d& pos, const Vector
 
   } else {
 
+    //quedarse en hover
+    //regreso falla
     next_pos = ed_->next_pos_;
     next_yaw = ed_->next_yaw_;
     return FAIL;
   }
 
+  // planificar la trayectoria que seguira el robot
+  // si no se puede llegar regresara fallido
+  // Algoritmo A* llega a su fin de explorar y no encuentre nada
   if (planTrajToView(pos, vel, acc, yaw, next_pos, next_yaw) == FAIL) {
     return FAIL;
   }
@@ -276,10 +275,10 @@ bool MvantExplorationManager::isPositionReachable(const Vector3d& from, const Ve
   }
 }
 
-//me regresa un camino hacia un siguiente punto siempre que exista
+// me regresa un camino hacia un siguiente 
+// punto siempre que exista
 // se usa para replanificar
 int MvantExplorationManager::planTrajToView(const Vector3d& pos, const Vector3d& vel, const Vector3d& acc, const Vector3d& yaw, const Vector3d& next_pos, const double& next_yaw) {
-
 
   //modificar la velocidad
   //updateVelocities(1.0);
@@ -299,7 +298,7 @@ int MvantExplorationManager::planTrajToView(const Vector3d& pos, const Vector3d&
   //reseteo de planner
   planner_manager_->path_finder_->reset();
   
-  //busqueda 
+  //busqueda con A* hacia el siguiente objetivo
   if (planner_manager_->path_finder_->search(pos, next_pos, optimistic) != Astar::REACH_END) {
     ROS_ERROR("No path to next viewpoint");
     return FAIL;
@@ -315,6 +314,9 @@ int MvantExplorationManager::planTrajToView(const Vector3d& pos, const Vector3d&
   //distancia
   const double len = Astar::pathLength(ed_->path_next_goal_);
   
+  //si la proxima posicion esta cerca - va hacia ella
+  //si la proxima posicion esta lejos - usa una posicion del path para lidear con caminos sin salida
+
   if (len < radius_close || optimistic) {
     // Next viewpoint is very close, no need to search kinodynamic path, just use waypoints-based
     // optimization
@@ -804,20 +806,24 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
     
     // Nuevo mapa para actualizar edades esta iteración
     std::unordered_map<std::string, int> nuevas_edades;
-
-    bool found_ftr = false;
     const int edad_max = 10;  // puedes ajustar este valor según tus ciclos
+    
+    bool found_ftr = false;
+    
+    /**
+     * Inicializar lista de valores de fronteras
+     */
     for (const auto& ftr : frontier_finder_->getFrontiers()) {
       
+      //obtener el vp de la frontera
       Viewpoint vp = ftr.viewpoints_.front();
       
-      //** cosa de edad
       // 🔑 Generar clave estable basada en posición redondeada
       int x = std::round(vp.pos_.x() * 10);
       int y = std::round(vp.pos_.y() * 10);
       std::string clave = std::to_string(x) + "_" + std::to_string(y);
 
-      // 🕒 Obtener edad desde el mapa persistente
+      //Obtener edad desde el mapa persistente
       int edad = 0;
       if (edades_fronteras.count(clave)) {
         edad = edades_fronteras[clave] + 1;
@@ -828,10 +834,9 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
 
       ROS_WARN_STREAM("[MANAGER] edad ftr: " << edad_normalizada);
 
-      // 📝 Guardar edad actualizada para próxima iteración
+      //Guardar edad actualizada para próxima iteración
       nuevas_edades[clave] = edad;
-      //** cosa de edad
-
+      
       //no brincar fronteras
       //aqui hay infinitos agregar y se deben considerar
       //origen, destino
@@ -874,6 +879,8 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
       
     }
 
+    // se actualizan las edades de las fronteras
+    // cada que se un robot calcula una nueva frontera
     edades_fronteras = nuevas_edades;
 
     //hasta aqui tengo las fronteras con distancias exploration data ->fronteras
@@ -992,7 +999,9 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
           //outfile << "\ncosto comm: " << (cohesion_penalty) << std::endl;
 
           double dist_ = ViewNode::searchPath(drone_state.pos_,vj.pos_,path);
-          
+          double goal_to_frontier = ViewNode::searchPath(drone_state.goal_pos_,vj.pos_,path2); //(drone_state.pos_ - vj.pos_).norm();
+          //***************
+          double exploitation_cost = std::min(((dist_ + goal_to_frontier) / 20.0) , 1.0);
 
           double norm_path_len = std::min(dist_ / 20.0, 1.0);
           //outfile << "\ncosto distance: " << norm_path_len << std::endl;
@@ -1004,8 +1013,7 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
           double info_gain_cost = 1.0 - info_gain_score;
           //outfile << "\ncosto info: " << info_gain_cost << std::endl;
 
-          //***************
-          double exploitation_cost = (drone_state.pos_ - vj.pos_).norm();
+          
 
           // Distancia desde todos los robots a esta frontera
           double max_dist_to_frontera = 0.0;
@@ -1020,20 +1028,53 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
 
           // Costo de retorno futuro estimado
           double future_return_cost = max_dist_to_frontera;
+          double w_disp;
 
+
+          // evitar aglomeraciones o ir a la misma zona
+          if (ed_->frontiers_.size() < 3) {
+            double w_disp = 1.0;  // Permite reagruparse si ya casi no hay fronteras
+          }else{
+            double w_disp = 2.5;
+          }
           
+          //antes
+          double w_expl = 2.5;
           double w_yaw  = 1.0;   // giros importantes, pero menos que coordinación
-          double w_dist = 1.2;   // que no viaje lejos si no es necesario
-          double w_disp = 3.5;   // evitar aglomeraciones o ir a la misma zona
-          double w_dir  = 1.8;   // mantener coherencia en vuelo
-          double w_info = 4.0;   // explorar zonas nuevas y útiles
+          double w_dist = 2.0;   // que no viaje lejos si no es necesario
+          double w_dir  = 1.5;   // mantener coherencia en vuelo
+          double w_info = 2.0;   // explorar zonas nuevas y útiles
+          double w_age  = 0.5;   // prioridad de urgencia
+          double w_future_return = 0.0; // costo de retorno esperado en el futuro
+          
+          /*
+          double w_expl = 2.5;
+          double w_yaw  = 0.0;   // giros importantes, pero menos que coordinación
+          double w_dist = 0.0;   // que no viaje lejos si no es necesario
+          double w_dir  = 0.0;   // mantener coherencia en vuelo
+          double w_info = 0.0;   // explorar zonas nuevas y útiles
           double w_age  = 0.0;   // prioridad de urgencia
           double w_future_return = 0.0; // costo de retorno esperado en el futuro
-          double total_cost = (w_future_return * future_return_cost + w_age * edad + w_info * info_gain_cost + w_yaw * yaw_cost + w_dist * norm_path_len + w_disp * dispersion_cost + w_dir * direction_cost) 
-          / (w_yaw + w_dir + w_dist + w_disp + w_info + w_age + w_future_return);
-
+          */
+          //segun calcular el otro valor
+          /*
+          double avg_rj_aj = 0;
+          for (int j = 0; j < drone_num; ++j) {
+            std::vector<Vector3d> path_;
+            std::vector<Vector3d> path2_;
+            if (j == i) continue;
+            avg_rj_aj += ViewNode::searchPath(ed_->swarm_state_[j].pos_,vj.pos_,path_) +
+             + ed_->swarm_state_[j].goal_pos_;
+          }
+          avg_rj_aj /= (drone_num - 1);
+          */
+          
+          double total_cost = (w_expl * exploitation_cost + w_future_return * future_return_cost + w_age * edad + w_info * info_gain_cost + w_yaw * yaw_cost + w_dist * norm_path_len + w_disp * dispersion_cost + w_dir * direction_cost) 
+          / (w_expl + w_yaw + w_dir + w_dist + w_disp + w_info + w_age + w_future_return);
+          
+          //double total_cost = exploitation_cost;
           mat(i,index) = total_cost;
-      	  //+ ViewNode::searchPath(drone_state.goal_pos_,vj.pos_,path2)
+      	  
       	  
           ++index;
         }

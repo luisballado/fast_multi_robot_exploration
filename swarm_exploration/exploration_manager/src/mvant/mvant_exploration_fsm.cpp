@@ -309,24 +309,27 @@ namespace fast_planner {
         // Informar al traj_server sobre el replanning
         replan_pub_.publish(std_msgs::Empty());
         
-        //buscar una frontera acudir y su trayectoria hacia ella en el grid
-        //itera y se queda con la dist min y hace la trayectoria A*
+        // detener cuando no mas fronteras
+        if (expl_manager_->ed_->frontiers_.empty()) {
+          sendEmergencyMsg(false);
+          transitState(FINISH, "FSM");
+        }
+
+        // buscar una frontera acudir y su trayectoria hacia ella en el grid
+        // itera y se queda con la dist min y hace la trayectoria A*
         int res = callExplorationPlanner();
         
         if (res == SUCCEED) {
+          //transitar a publicar trayectoria,
+          //el siguiente objetivo esta en los apuntadores
           transitState(PUB_TRAJ, "FSM");
           // Emergency
           num_fail_ = 0;
-          sendEmergencyMsg(false);
-    
+          
+
         } else if (res == FAIL) {  // Keep trying to replan
-          if (expl_manager_->ed_->frontiers_.size()<=1) {
-            ROS_WARN("No quedan fronteras. Finalizando exploración.");
-            clearVisMarker();
-            sendStopMsg(1);  // Para detener al dron
-            transitState(FINISH, "FSM");
-            return;
-          }
+          //puede ser falso si no hay camino hacia frontera
+          
           fd_->static_state_ = true;
           ROS_WARN_THROTTLE(1.0, "-- Plan fail (drone %d) --", getId());
           // Check if we need to send a message
@@ -363,11 +366,12 @@ namespace fast_planner {
           // fd_->newest_traj_.drone_id = planner_manager_->swarm_traj_data_.drone_id_;
           fd_->newest_traj_.drone_id = expl_manager_->ep_->drone_id_;
 
-          //informar a los drones
+          //informar a los drones mi trayectoria
           swarm_traj_pub_.publish(fd_->newest_traj_);
     
           thread vis_thread(&MvantExplorationFSM::visualize, this, 2);
           vis_thread.detach();
+
           transitState(EXEC_TRAJ, "FSM");
         }
         break;
@@ -456,10 +460,6 @@ namespace fast_planner {
     
           sendStopMsg(1);
     
-          //transitState(FINISH, "FSM");
-    
-          //ros::Duration(1).sleep();
-    
           break;
     
         }
@@ -489,7 +489,9 @@ namespace fast_planner {
     }
   }
 
-      
+  // buscar un nuevo objetivo
+  // lo llama plan traj en FSM
+  // regresa una trayectoria
   int MvantExplorationFSM::callExplorationPlanner() {
     ros::Time time_r = ros::Time::now() + ros::Duration(fp_->replan_time_);
     
@@ -497,25 +499,22 @@ namespace fast_planner {
     
     //replan trajectory por posibles colisiones    
     if (fd_->avoid_collision_ || fd_->go_back_) {  // Only replan trajectory
-      ROS_WARN_STREAM("*********************planTrajToView**************************");
+      //ROS_WARN_STREAM("*********************planTrajToView**************************");
       
-      //planificar una trayectoria respecto a dos puntos
+      //replanificar, ya conozco mi objetivo
       //se hace con A* 
       res = expl_manager_->planTrajToView(fd_->start_pt_, fd_->start_vel_, fd_->start_acc_, fd_->start_yaw_, expl_manager_->ed_->next_pos_, expl_manager_->ed_->next_yaw_);
 
       fd_->avoid_collision_ = false;
     } else {
       // Do full planning normally
-      ROS_WARN_STREAM("********************planExploreMotion********************");
+      //ROS_WARN_STREAM("********************planExploreMotion********************");
 
       //planificar respecto a mi ubicacion
-      //busqueda greedy
-      //es la que se debe trabajar para que sea multi agente
+      //buscar un objetivo
       res = expl_manager_->planExploreMotion(fd_->start_pt_, fd_->start_vel_, fd_->start_acc_, fd_->start_yaw_);
     }
 
-    //informar a los demas robots mi pos, pos_obj, mapa
-    //si hay un camino
     if (res == SUCCEED) {
       auto info = &planner_manager_->local_data_;
       info->start_time_ = (ros::Time::now() - time_r).toSec() > 0 ? ros::Time::now() : time_r;
