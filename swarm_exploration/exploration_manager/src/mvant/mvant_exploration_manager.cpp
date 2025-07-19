@@ -841,8 +841,26 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
     for (const auto& ftr : frontier_finder_->getFrontiers()) {
       
       //obtener el vp de la frontera
-      Viewpoint vp = ftr.viewpoints_.front();
-      
+      Viewpoint vp;// = ftr.viewpoints_.front();
+      double distance;
+      for (const auto& vp_ : ftr.viewpoints_) {
+      // Check that the position is valid
+        if (!isPositionReachable(pos, vp_.pos_)) {
+          continue;
+        }
+
+        std::vector<Vector3d> path;
+        distance = ViewNode::searchPath(pos, vp_.pos_, path);
+        if (distance < min_dist) {
+          // Check if we need to force a new goal
+          const double kMinDistGoals = 1.0;
+          if (force_different && (vp_.pos_ - ed_->next_pos_).norm() < kMinDistGoals) {
+            continue;
+          }
+          vp = vp_;
+        }
+      }
+
       // 🔑 Generar clave estable basada en posición redondeada
       int x = std::round(vp.pos_.x() * 10);
       int y = std::round(vp.pos_.y() * 10);
@@ -856,7 +874,7 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
 
       double edad_normalizada = static_cast<double>(edad) / static_cast<double>(edad_max);
       edad_normalizada = std::min(edad_normalizada, 1.0);
-
+      edad_normalizada = 1.0 - edad_normalizada;
       //ROS_WARN_STREAM("[MANAGER] edad ftr: " << edad_normalizada);
 
       //Guardar edad actualizada para próxima iteración
@@ -877,21 +895,8 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
         continue;
       }
       
-      
-      //busqueda basada en A* 
-      //llenar tabla con las distancias de las fronteras para los n robots
-      std::vector<Vector3d> path; //camino
-      //calcular bien la distancia
-      double distance = ViewNode::searchPath(pos, vp.pos_, path);
       double distance_cost = std::min(distance / 20.0, 1.0);
-      // Check if we need to force a new goal
-      const double kMinDistGoals = 1.0;
-      //para no caer en minimos locales
-      //si esto ocurre tener infinitos, no se debe brincar fronteras
-      if (force_different && (vp.pos_ - ed_->next_pos_).norm() < kMinDistGoals) {
-        continue;
-      }
-      
+            
       double yaw_cost = compute_yaw_cost(vp.yaw_,ed_->swarm_state_[ep_->drone_id_].yaw_);
       //outfile << "\ncosto yaw: " << (yaw_cost) << std::endl;
 
@@ -899,7 +904,7 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
       double direction_cost = compute_direction_cost(pos,ed_->swarm_state_[ep_->drone_id_].vel_, vp.pos_);
 
       front1.id = ftr.id_;
-      front1.distance = 2.5 * distance_cost + 3.0 * yaw_cost + 2.0 * direction_cost;
+      front1.distance = 0.5 * distance_cost + 0.4 * yaw_cost + 0.1 * direction_cost;
       front1.pos_ = vp.pos_;
       front1.yaw_ = vp.yaw_;
       front1.edad = edad_normalizada;  // 🧠 Insertamos edad
