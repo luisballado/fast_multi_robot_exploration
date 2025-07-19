@@ -137,11 +137,14 @@ namespace fast_planner {
     
     // Swarm, timer, pub and sub
     //broadcast own state periodically
+    //cada cierto tiempo manda el mensaje de info con el topico drone_state_pub_
     drone_state_timer_ = nh.createTimer(ros::Duration(0.04), &MvantExplorationFSM::droneStateTimerCallback, this);
-    
     drone_state_pub_   = nh.advertise<exploration_manager::DroneState>("/swarm_expl/drone_state_send", 10);
+
+    //recibe el mensaje de los drones y descarta el suyo
     drone_state_sub_   = nh.subscribe("/swarm_expl/drone_state_recv", 10, &MvantExplorationFSM::droneStateMsgCallback, this);
     
+    //yo no utilizo esto es de fame y racer, pero deberia usarlo
     opt_timer_ = nh.createTimer(ros::Duration(0.05), &MvantExplorationFSM::optTimerCallback, this);
     opt_pub_   = nh.advertise<exploration_manager::PairOpt>("/swarm_expl/pair_opt_send", 10);
     opt_sub_   = nh.subscribe("/swarm_expl/pair_opt_recv", 100, &MvantExplorationFSM::optMsgCallback,this, ros::TransportHints().tcpNoDelay());
@@ -310,10 +313,11 @@ namespace fast_planner {
         replan_pub_.publish(std_msgs::Empty());
         
         // detener cuando no mas fronteras
-        if (expl_manager_->ed_->frontiers_.empty()) {
+        // sigo teniendo el error
+        /*if (expl_manager_->ed_->frontiers_.empty()) {
           sendEmergencyMsg(false);
           transitState(FINISH, "FSM");
-        }
+        }*/
 
         // buscar una frontera acudir y su trayectoria hacia ella en el grid
         // itera y se queda con la dist min y hace la trayectoria A*
@@ -336,6 +340,7 @@ namespace fast_planner {
           if (num_fail_ > 10) {
             sendEmergencyMsg(true);
             num_fail_ = 0;
+
           } else {
             ++num_fail_;
           }
@@ -601,7 +606,7 @@ namespace fast_planner {
         //ROS_WARN_STREAM("Frontera:: " << ed_ptr->frontiers_[i][0]);
         ROS_WARN_STREAM("Frontera:: " << centroid.transpose());
         //visualization_->drawText(ed_ptr->frontiers_[i][0] - Eigen::Vector3d(0., 0., 0.), id_str, 0.5, Eigen::Vector4d::Ones(), "id", ed_ptr->frontiers_.size() + i, 4);
-        visualization_->drawText(centroid, id_str, 0.5, Eigen::Vector4d::Ones(), "frontier", i, 4);
+        visualization_->drawText(centroid, id_str, 0.5, Eigen::Vector4d::Ones(), "id", i, 4);
       }
       
       for (int i = ed_ptr->frontiers_.size(); i < last_ftr_num; ++i) {
@@ -610,7 +615,7 @@ namespace fast_planner {
         //   "frontier_boxes", i, 4);
         // visualization_->drawText(ed_ptr->frontiers_[i][0] - Eigen::Vector3d(0., 0., 0.), "", 0.5,
         // Eigen::Vector4d::Ones(), "id", i + 1, 4);
-        visualization_->drawText(Vector3d(0, 0, 0), "", 0.5, Eigen::Vector4d(0, 0, 0, 0), "frontier", i, 4);
+        visualization_->drawText(Vector3d(0, 0, 0), "", 0.5, Eigen::Vector4d(0, 0, 0, 0), "id", i, 4);
       }
       
       last_ftr_num = ed_ptr->frontiers_.size();
@@ -1180,7 +1185,6 @@ namespace fast_planner {
     msg.vel = { float(state.vel_[0]), float(state.vel_[1]), float(state.vel_[2]) };
     msg.yaw = state.yaw_;
     
-    //creo que aqui plancha el mapa
     for (auto id : state.grid_ids_) msg.grid_ids.push_back(id);
     msg.recent_attempt_time = state.recent_attempt_time_;
     msg.stamp = state.stamp_;
