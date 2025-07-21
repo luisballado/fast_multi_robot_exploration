@@ -811,6 +811,10 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
   //Funcion principal de exploración con todos los elementos
   bool MvantExplorationManager::closestGreedyFrontier(const Vector3d& pos, const Vector3d& yaw, Vector3d& next_pos, double& next_yaw, bool force_different)  {
 
+    //cardinalidad de vants
+    //existe un vant0, no sé por qué
+    const int drone_num = ed_->swarm_state_.size() - 1;
+
     //usado como logg en el programa
     std::time_t now = std::time(nullptr);
     std::string filename = "/home/catkin_ws/logs/file.txt";
@@ -818,18 +822,16 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
 
     outfile << "\n------------------" << std::endl;
     outfile << "Datos para el Drone: " << (ep_->drone_id_) << std::endl;
-    outfile << "tamaño swarm_state_: " << (ed_->swarm_state_.size()-1) << std::endl;
+    outfile << "Cardinalidad VANTS:" << drone_num << std::endl;
     outfile << "numero de fronteras: " << frontier_finder_->getFrontiers().size() << std::endl;
 
     Frontera front1;
     list<Frontera> fronteras = {};
     ed_->fronteras = {};
     
-    double min_dist = std::numeric_limits<double>::max();
-    
     // Nuevo mapa para actualizar edades esta iteración
     std::unordered_map<std::string, int> nuevas_edades;
-    const int edad_max = 10;  // puedes ajustar este valor según tus ciclos
+    const int edad_max = 10;
     
     bool found_ftr = false;
     
@@ -840,24 +842,33 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
 
     for (const auto& ftr : frontier_finder_->getFrontiers()) {
       
-      //obtener el vp de la frontera
-      Viewpoint vp;// = ftr.viewpoints_.front();
-      double distance;
+      //obtener el view point de la frontera
+      Viewpoint vp; // = ftr.viewpoints_.front();
+      double distance_to_ftr;
+      double min_dist = std::numeric_limits<double>::max();  
+      
+      //una frontera tiene multiples viewpoints
+      //iterar para quedarnos con EL MEJOR viewpoint
       for (const auto& vp_ : ftr.viewpoints_) {
-      // Check that the position is valid
+
+        double distance_to_vp = 0;
+
+        // Check that the position is valid
         if (!isPositionReachable(pos, vp_.pos_)) {
           continue;
         }
 
         std::vector<Vector3d> path;
-        distance = ViewNode::searchPath(pos, vp_.pos_, path);
-        if (distance < min_dist) {
+        distance_to_vp = ViewNode::searchPath(pos, vp_.pos_, path);
+
+        if (distance_to_vp < min_dist) {
           // Check if we need to force a new goal
           const double kMinDistGoals = 1.0;
           if (force_different && (vp_.pos_ - ed_->next_pos_).norm() < kMinDistGoals) {
             continue;
           }
           vp = vp_;
+          min_dist = distance_to_vp;
         }
       }
 
@@ -895,21 +906,22 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
         continue;
       }
       
-      double distance_cost = std::min(distance / 20.0, 1.0);
+      double distance_cost = std::min(min_dist / 20.0, 1.0);
             
       double yaw_cost = compute_yaw_cost(vp.yaw_,ed_->swarm_state_[ep_->drone_id_].yaw_);
       //outfile << "\ncosto yaw: " << (yaw_cost) << std::endl;
 
       // Direction
       double direction_cost = compute_direction_cost(pos,ed_->swarm_state_[ep_->drone_id_].vel_, vp.pos_);
-
+      double total_cost = 0.5 * distance_cost + 0.3 * yaw_cost + 0.2 * direction_cost;
+      
       front1.id = ftr.id_;
-      front1.distance = 0.5 * distance_cost + 0.4 * yaw_cost + 0.1 * direction_cost;
+      front1.distance = total_cost;
       front1.pos_ = vp.pos_;
       front1.yaw_ = vp.yaw_;
       front1.edad = edad_normalizada;  // 🧠 Insertamos edad
 
-      outfile << "costo ftr " << ftr.id_ << " :" << distance + yaw_cost + direction_cost << std::endl;
+      outfile << "costo ftr " << ftr.id_ << " : " << total_cost << std::endl;
 
       fronteras.push_back(front1);
       
@@ -926,10 +938,11 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
 
     std::vector<Frontera> fronteras_vector(fronteras.begin(), fronteras.end());
 
+    double min_dist;
+
     //hacer la matriz cuadrada cuando la cardinalidad de vants sea diferente a la de fronteras
-    if(ed_->swarm_state_.size()-1 > frontier_finder_->getFrontiers().size()){
+    if(frontier_finder_->getFrontiers().size() >= drone_num && drone_num > 1){
       
-      const int drone_num = ed_->swarm_state_.size() - 1;  //cardinalidad de vants
       const int ftr_num = frontier_finder_->getFrontiers().size();  //cardinalidad de fronteras
       
       int nRows = drone_num;
@@ -946,6 +959,7 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
       for (int i = 0; i < drone_num; ++i) {
 
         int index = 0;
+
         const auto& drone_state = ed_->swarm_state_[i]; //estado de los demas vants
 
         //for (const auto& ftr : frontier_finder_->getFrontiers()) {
@@ -971,7 +985,7 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
           double sum_inverse_dispersion = 0.0;
           int count = 0;
 
-          for (int j = 0; j < ed_->swarm_state_.size()-1; ++j) {
+          for (int j = 0; j < drone_num; ++j) {
               if (j == i) continue;  // Excluir el robot evaluador
 
               double dist_to_robot = (ed_->swarm_state_[j].pos_ - vj.pos_).norm();
@@ -998,7 +1012,7 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
           Eigen::Vector3d centroid(0.0, 0.0, 0.0);
           int count2 = 0;
 
-          for (int j = 0; j < ed_->swarm_state_.size()-1; ++j) {
+          for (int j = 0; j < drone_num; ++j) {
               if (j == i) continue;
               centroid += ed_->swarm_state_[j].pos_;
               ++count2;
@@ -1038,7 +1052,7 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
 
           // Distancia desde todos los robots a esta frontera
           double max_dist_to_frontera = 0.0;
-          for (int k = 0; k < ed_->swarm_state_.size()-1; ++k) {
+          for (int k = 0; k < drone_num; ++k) {
               if (k == i) continue;  // puedes ignorar el robot actual si ya lo estás asignando
 
               double d = (fronteras_vector[j].pos_ - ed_->swarm_state_[k].pos_).norm();
@@ -1149,6 +1163,8 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
 
     } else {
 
+      //outfile << "Estoy donde no frontier>=drones" << std::endl;
+
       //obtener la frontera con menor distancia
       //auto it = std::min_element(fronteras.begin(), fronteras.end(), [](const Frontera& a, const Frontera& b) {return a.distance < b.distance;});
       
@@ -1164,8 +1180,7 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
       min_dist = minFrontera.distance; // it->distance; 
       next_pos = minFrontera.pos_; // it->pos;
       next_yaw = minFrontera.yaw_; // it->yaw;
-      //outfile << "greedyPos: " << best_f.transpose() << std::endl;
-
+      
       outfile << "greedyPlan: " << minFrontera.id << std::endl;
 
 

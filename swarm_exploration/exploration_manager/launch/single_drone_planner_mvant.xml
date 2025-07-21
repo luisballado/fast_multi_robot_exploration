@@ -104,9 +104,9 @@
     <param name="sdf_map/map_size_y"   value="$(arg map_size_y)" /> 
     <param name="sdf_map/map_size_z"   value="$(arg map_size_z)" /> 
     -->
-    <param name="sdf_map/obstacles_inflation"     value="0.3" /><!--estaba en 0.0 --> 
+    <param name="sdf_map/obstacles_inflation" value="0.0" />
     <!-- <param name="sdf_map/obstacles_inflation"     value="0.0" />  -->
-    <param name="sdf_map/local_bound_inflate"    value="0.8"/> <!-- estaba en 0.5-->
+    <param name="sdf_map/local_bound_inflate" value="0.5"/>
     <param name="sdf_map/local_map_margin" value="50"/>
     <param name="sdf_map/ground_height"        value="-1.0"/>
     <param name="sdf_map/default_dist"        value="0.5"/>
@@ -201,8 +201,8 @@
     <!--Coordination type (MVANT only)-->
     <param name="exploration/coordination/type" value="$(arg coordination_type)" type="string"/>
     
-    <param name="frontier/cluster_min" value="70" type="int"/> <!-- 100 -->
-    <param name="frontier/cluster_size_xy" value="3.0" type="double"/> <!--2.0-->
+    <param name="frontier/cluster_min" value="100" type="int"/>
+    <param name="frontier/cluster_size_xy" value="2.0" type="double"/>
     <param name="frontier/cluster_size_z" value="10.0" type="double"/>
     <param name="frontier/min_candidate_dist" value="0.5" type="double"/>
     <param name="frontier/min_candidate_clearance" value="0.41" type="double"/>
