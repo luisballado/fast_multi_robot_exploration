@@ -145,12 +145,14 @@ namespace fast_planner {
     drone_state_sub_   = nh.subscribe("/swarm_expl/drone_state_recv", 10, &MvantExplorationFSM::droneStateMsgCallback, this);
     
     //yo no utilizo esto es de fame y racer, pero deberia usarlo
+    /*
     opt_timer_ = nh.createTimer(ros::Duration(0.05), &MvantExplorationFSM::optTimerCallback, this);
     opt_pub_   = nh.advertise<exploration_manager::PairOpt>("/swarm_expl/pair_opt_send", 10);
     opt_sub_   = nh.subscribe("/swarm_expl/pair_opt_recv", 100, &MvantExplorationFSM::optMsgCallback,this, ros::TransportHints().tcpNoDelay());
     
     opt_res_pub_ = nh.advertise<exploration_manager::PairOptResponse>("/swarm_expl/pair_opt_res_send", 10);
     opt_res_sub_ = nh.subscribe("/swarm_expl/pair_opt_res_recv", 100, &MvantExplorationFSM::optResMsgCallback, this, ros::TransportHints().tcpNoDelay());
+    */
 
     //topico para mandar traj
     swarm_traj_pub_   = nh.advertise<bspline::Bspline>("/planning/swarm_traj_send", 100);
@@ -282,7 +284,7 @@ namespace fast_planner {
         // Do nothing but wait for trigger
         ROS_WARN_ONCE(" -- esperando lanzador -- ");
         ROS_WARN_ONCE("Exploracion: mvant");
-        ROS_WARN_ONCE("Tipo coordinacion: %s", fp_->coordination_type.c_str());
+        //ROS_WARN_ONCE("Tipo coordinacion: %s", fp_->coordination_type.c_str());
               
         break;
       }
@@ -314,10 +316,10 @@ namespace fast_planner {
         
         // detener cuando no mas fronteras
         // sigo teniendo el error
-        /*if (expl_manager_->ed_->frontiers_.empty()) {
-          sendEmergencyMsg(false);
+        if (expl_manager_->ed_->frontiers_.empty()) {
+          //sendEmergencyMsg(false);
           transitState(FINISH, "FSM");
-        }*/
+        }
 
         // buscar una frontera acudir y su trayectoria hacia ella en el grid
         // itera y se queda con la dist min y hace la trayectoria A*
@@ -328,15 +330,19 @@ namespace fast_planner {
           //el siguiente objetivo esta en los apuntadores
           transitState(PUB_TRAJ, "FSM");
           // Emergency
-          num_fail_ = 0;
+          //num_fail_ = 0;
           
 
         } else if (res == FAIL) {  // Keep trying to replan
           //puede ser falso si no hay camino hacia frontera
-          
+          if (expl_manager_->ed_->frontiers_.size() <= 1) {
+            //sendEmergencyMsg(false);
+            transitState(FINISH, "FSM");
+          }
           fd_->static_state_ = true;
           ROS_WARN_THROTTLE(1.0, "-- Plan fail (drone %d) --", getId());
           // Check if we need to send a message
+          /*
           if (num_fail_ > 10) {
             sendEmergencyMsg(true);
             num_fail_ = 0;
@@ -344,7 +350,7 @@ namespace fast_planner {
           } else {
             ++num_fail_;
           }
-    
+          */
         } else if (res == NO_GRID) {
           fd_->static_state_ = true;
           fd_->last_check_frontier_time_ = ros::Time::now();
@@ -352,8 +358,8 @@ namespace fast_planner {
           transitState(IDLE, "FSM");
     
           // Emergency
-          num_fail_ = 0;
-          sendEmergencyMsg(false);
+          //num_fail_ = 0;
+          //sendEmergencyMsg(false);
         }
         
         //visualize(1);
@@ -402,7 +408,7 @@ namespace fast_planner {
           } else if (t_cur > fp_->replan_thresh3_) {
             // Replan despues de un tiempo
             ROS_WARN("Replan: despues de un tiempo===============================");
-            need_replan = true;
+            need_replan = false;
           }
       
           if (need_replan) {
