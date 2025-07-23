@@ -991,6 +991,15 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
           }
 
           double exploracion = (drone_num > 1) ? suma / (drone_num-1):0.0;
+          
+          auto [yaw, pitch] = compute_yaw_pitch_to_frontier(drone_state.pos_, vj.pos_);
+          
+          double yaw_cost = compute_yaw_cost(yaw,drone_state.yaw_);
+          //outfile << "\ncosto yaw: " << (yaw_cost) << std::endl;
+
+          // Direction
+          double direction_cost = compute_direction_cost(drone_state.pos_,drone_state.vel_, vj.pos_);
+          
           /*
           int edad = vj.edad;
 
@@ -1128,7 +1137,7 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
           / (w_expl + w_yaw + w_dir + w_dist + w_disp + w_info + w_age + w_future_return);
           */
 
-          double total_cost = explotacion - exploracion;
+          double total_cost = explotacion; //- exploracion + yaw_cost + direction_cost;
           mat(i,index) = total_cost;
       	          	  
           ++index;
