@@ -832,7 +832,6 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
 
     Frontera front1;
     list<Frontera> fronteras = {};
-    std::map<double, Frontera> mapFrontera;
     ed_->fronteras = {};
     
     // Nuevo mapa para actualizar edades esta iteración
@@ -901,12 +900,11 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
       //origen, destino
       if (!isPositionReachable(pos, vp.pos_)) {
         front1.id = ftr.id_;
-        front1.distance = std::numeric_limits<double>::infinity();
+        front1.distance = 10000;
         front1.pos_ = vp.pos_;
         front1.yaw_ = vp.yaw_;
         front1.edad = edad_normalizada;  // 🧠 Insertamos edad
         fronteras.push_back(front1); //<<<<--- en que lo uso?
-        mapFrontera[100000.0] = front1;
         ed_->fronteras.push_back(ftr.id_);  //<<<<--- en que lo uso?
         continue;
       }
@@ -921,7 +919,7 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
       double total_cost = 0.5 * distance_cost + 0.3 * yaw_cost + 0.2 * direction_cost;
       
       front1.id = ftr.id_;
-      front1.distance = min_dist;//total_cost;
+      front1.distance = total_cost;
       front1.pos_ = vp.pos_;
       front1.yaw_ = vp.yaw_;
       front1.edad = edad_normalizada;  // 🧠 Insertamos edad
@@ -929,7 +927,6 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
       outfile << "costo ftr " << ftr.id_ << " : " << total_cost << std::endl;
 
       fronteras.push_back(front1);
-      mapFrontera[min_dist] = front1;
       ed_->fronteras.push_back(ftr.id_);
       
     }
@@ -947,20 +944,10 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
 
     //hacer la matriz cuadrada cuando la cardinalidad de vants sea diferente a la de fronteras
     if(frontier_finder_->getFrontiers().size() >= drone_num && drone_num > 1){      
-      //const int ftr_num = frontier_finder_->getFrontiers().size();  //cardinalidad de fronteras
+      const int ftr_num = frontier_finder_->getFrontiers().size();  //cardinalidad de fronteras
       
-      int k = drone_num;
-      std::vector<Frontera> k_cercanas;
-
-      int contador = 0;
-      for (const auto& par : mapFrontera) {
-          if (contador >= k) break;
-          k_cercanas.push_back(par.second);
-          ++contador;
-      }
-
       int nRows = drone_num;
-      int nCols = k_cercanas.size();//ftr_num;
+      int nCols = ftr_num;
       int n = std::max(nRows, nCols);
       Eigen::MatrixXd mat;
       
@@ -968,7 +955,7 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
       mat.resize(n,n);  
     
       //llenar matriz con infinitos
-      mat.setConstant(std::numeric_limits<double>::infinity());
+      mat.setConstant(100000.0);
 
       bool hayAsignacionValida = false;
       const double beta = 10.0;
@@ -983,8 +970,10 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
 
 
         //for (const auto& ftr : frontier_finder_->getFrontiers()) {
-        for (int j = 0; j < k_cercanas.size(); ++j) {
-          const Frontera& vj = k_cercanas[j];
+        for (int j = 0; j < fronteras_vector.size(); ++j) {
+          const Frontera& vj = fronteras_vector[j];
+        //for (int j = 0; j < k_cercanas.size(); ++j) {
+          //const Frontera& vj = k_cercanas[j];
           //Viewpoint vj = ftr.viewpoints_.front();
 
           double rho_k = compute_distance_cost(drone_state.pos_,drone_state.goal_pos_);
@@ -1144,9 +1133,6 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
       	          	  
           ++index;
 
-          if (total_cost < std::numeric_limits<double>::infinity()) {
-              hayAsignacionValida = true;
-          }
         }
 
       

@@ -316,41 +316,43 @@ namespace fast_planner {
         
         // detener cuando no mas fronteras
         // sigo teniendo el error
+        /*
         if (expl_manager_->ed_->frontiers_.empty()) {
           //sendEmergencyMsg(false);
           transitState(FINISH, "FSM");
         }
+        */
 
         // buscar una frontera acudir y su trayectoria hacia ella en el grid
         // itera y se queda con la dist min y hace la trayectoria A*
         int res = callExplorationPlanner();
-        
+        auto colors = visualization_->getColor(2 / 20, 1);
+        visualization_->drawGoal(expl_manager_->ed_->next_pos_,expl_manager_->sdf_map_->getResolution(),colors,5);
+
         if (res == SUCCEED) {
           //transitar a publicar trayectoria,
           //el siguiente objetivo esta en los apuntadores
           transitState(PUB_TRAJ, "FSM");
           // Emergency
-          //num_fail_ = 0;
-          
+          num_fail_ = 0;
+          sendEmergencyMsg(false);
 
         } else if (res == FAIL) {  // Keep trying to replan
           //puede ser falso si no hay camino hacia frontera
-          if (expl_manager_->ed_->frontiers_.size() <= 1) {
-            //sendEmergencyMsg(false);
+          if (expl_manager_->ed_->frontiers_.size() < 1) {
+            sendEmergencyMsg(false);
             transitState(FINISH, "FSM");
           }
           fd_->static_state_ = true;
           ROS_WARN_THROTTLE(1.0, "-- Plan fail (drone %d) --", getId());
           // Check if we need to send a message
-          /*
           if (num_fail_ > 10) {
             sendEmergencyMsg(true);
             num_fail_ = 0;
-
           } else {
             ++num_fail_;
           }
-          */
+
         } else if (res == NO_GRID) {
           fd_->static_state_ = true;
           fd_->last_check_frontier_time_ = ros::Time::now();
@@ -358,8 +360,8 @@ namespace fast_planner {
           transitState(IDLE, "FSM");
     
           // Emergency
-          //num_fail_ = 0;
-          //sendEmergencyMsg(false);
+          num_fail_ = 0;
+          sendEmergencyMsg(false);
         }
         
         //visualize(1);
@@ -408,7 +410,7 @@ namespace fast_planner {
           } else if (t_cur > fp_->replan_thresh3_) {
             // Replan despues de un tiempo
             ROS_WARN("Replan: despues de un tiempo===============================");
-            need_replan = false;
+            need_replan = true;
           }
       
           if (need_replan) {
@@ -454,7 +456,7 @@ namespace fast_planner {
 
            //Estado final
       case FINISH: {
-        sendStopMsg(1);
+        //sendStopMsg(1);
         ROS_INFO_THROTTLE(1.0, "FINISH STATE");
         ROS_INFO_THROTTLE(1.0, "-- exploracion terminada --");
         break;
@@ -756,7 +758,7 @@ namespace fast_planner {
       	auto id_str = std::to_string(ed->fronters_ids_[i]);
       	//ROS_WARN_STREAM("Frontera:: " << id_str);
       	//ROS_WARN_STREAM("Frontera:: " << centroid.transpose());
-      	
+
       	visualization_->drawText(centroid, id_str, 1, Eigen::Vector4d(0.0, 0.0, 0.0, 1.0), "id", ed->frontiers_.size() + i, 4);
       	
       }
@@ -1053,7 +1055,7 @@ namespace fast_planner {
     //----------------------------------------------
     // // Debug traj planner
     //----------------------------------------------
-    /*
+    /**
     Eigen::Vector3d pos;
     pos << msg->pose.position.x, msg->pose.position.y, 1;
     expl_manager_->ed_->next_pos_ = pos;
@@ -1072,7 +1074,7 @@ namespace fast_planner {
     
     transitState(PLAN_TRAJ, "triggerCallback");
     return;
-    */
+    **/
     //----------------------------------------------
     
     //Solo se hace cuando el estado es WAIT_TRIGGER
@@ -1095,7 +1097,6 @@ namespace fast_planner {
       transitState(PLAN_TRAJ, "triggerCallback");
     else
       transitState(FINISH, "triggerCallback");
-    
   }
 
   //Detectar colisiones
