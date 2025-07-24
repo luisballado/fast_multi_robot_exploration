@@ -186,7 +186,7 @@ void MvantExplorationManager::initialize(ros::NodeHandle& nh) {
   // fout.close();
 }
 
-// Planificar una nueva frontera 
+// Planificar hacia una nueva frontera 
 int MvantExplorationManager::planExploreMotion(const Vector3d& pos, const Vector3d& vel, const Vector3d& acc, const Vector3d& yaw) {
   
   ros::Time t1 = ros::Time::now();
@@ -200,14 +200,14 @@ int MvantExplorationManager::planExploreMotion(const Vector3d& pos, const Vector
   Vector3d next_pos;
   double next_yaw;
   
-  bool success = false;
+  bool success;
 
   // obtener una frontera que atender
   // se le pasa la posicion y yaw del robot
   // regresa la posicion de la nueva frontera
   // aqui solo se busca la nueva frontera
   success = closestGreedyFrontier(pos, yaw, next_pos, next_yaw);
-  
+  ROS_WARN_STREAM("closestGreedyFrontier: " << success << " es el resultado");
   // obtuvimos un nuevo objetivo (posicion de la frontera)
   if (success) {
     
@@ -225,7 +225,7 @@ int MvantExplorationManager::planExploreMotion(const Vector3d& pos, const Vector
     }
 
     //forzar frontera diferente despues de tres intentos
-    const size_t kMaxAttempts = 10;
+    const size_t kMaxAttempts = 3;
     if (ed_->num_attempts_ > kMaxAttempts) {
       bool force_different = true;
       closestGreedyFrontier(pos, yaw, next_pos, next_yaw, force_different);
@@ -852,8 +852,9 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
       double distance_to_ftr;
       double min_dist = std::numeric_limits<double>::max();  
       
-      //una frontera tiene multiples viewpoints
-      //iterar para quedarnos con EL MEJOR viewpoint
+      // una frontera tiene multiples viewpoints
+      // iterar para quedarnos con el viewpoint
+      // que aporte mas informacion
       for (const auto& vp_ : ftr.viewpoints_) {
 
         double distance_to_vp = 0;
@@ -862,18 +863,33 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
         if (!isPositionReachable(pos, vp_.pos_)) {
           continue;
         }
+        int max_vox = 0;
 
         distance_to_vp = compute_distance_cost(pos,vp_.pos_);
-        
+        Eigen::Vector3d dir = (pos - vp.pos_).normalized();
+
         if (distance_to_vp < min_dist) {
           // Check if we need to force a new goal
           const double kMinDistGoals = 1.0;
-          if (force_different && (vp_.pos_ - ed_->next_pos_).norm() < kMinDistGoals) {
+          if (force_different && ((vp.pos_+ dir * 0.5) - ed_->next_pos_).norm() < kMinDistGoals) {
             continue;
           }
           vp = vp_;
           min_dist = distance_to_vp;
         }
+
+        /*
+        Eigen::Vector3d dir = (pos - vp.pos_).normalized();
+        if(vp_.visib_num_ > max_vox){
+          // Check if we need to force a new goal
+          const double kMinDistGoals = 1.0;
+          if (force_different && ((vp.pos_+ dir * 1.0) - ed_->next_pos_).norm() < kMinDistGoals) {
+            continue;
+          }
+          vp = vp_;
+          min_dist = distance_to_vp;
+        }*/
+
       }
 
       // 🔑 Generar clave estable basada en posición redondeada
@@ -917,12 +933,13 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
       // Direction
       double direction_cost = compute_direction_cost(pos,ed_->swarm_state_[ep_->drone_id_].vel_, vp.pos_);
       double total_cost = 0.5 * distance_cost + 0.3 * yaw_cost + 0.2 * direction_cost;
-      
+      Eigen::Vector3d dir = (pos - vp.pos_).normalized();
+
       front1.id = ftr.id_;
       front1.distance = total_cost;
-      front1.pos_ = vp.pos_;
+      front1.pos_ = vp.pos_+ dir * 0.5;
       front1.yaw_ = vp.yaw_;
-      front1.edad = edad_normalizada;  // 🧠 Insertamos edad
+      front1.edad = edad_normalizada;  //Insertamos edad
 
       outfile << "costo ftr " << ftr.id_ << " : " << total_cost << std::endl;
 

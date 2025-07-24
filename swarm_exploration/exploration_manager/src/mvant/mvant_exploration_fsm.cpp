@@ -515,7 +515,9 @@ namespace fast_planner {
       //ROS_WARN_STREAM("*********************planTrajToView**************************");
       
       //replanificar, ya conozco mi objetivo
-      //se hace con A* 
+      //se hace con A*
+      //cuando no se encuentra ya que recorrio hasta el final, regresa
+      //FAIL
       res = expl_manager_->planTrajToView(fd_->start_pt_, fd_->start_vel_, fd_->start_acc_, fd_->start_yaw_, expl_manager_->ed_->next_pos_, expl_manager_->ed_->next_yaw_);
 
       fd_->avoid_collision_ = false;
