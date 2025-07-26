@@ -316,7 +316,7 @@ namespace fast_planner {
         
         // detener cuando no mas fronteras
         // sigo teniendo el error
-        /*
+        /**
         if (expl_manager_->ed_->frontiers_.empty()) {
           //sendEmergencyMsg(false);
           transitState(FINISH, "FSM");
@@ -339,10 +339,11 @@ namespace fast_planner {
 
         } else if (res == FAIL) {  // Keep trying to replan
           //puede ser falso si no hay camino hacia frontera
+          /**
           if (expl_manager_->ed_->frontiers_.size() < 1) {
             sendEmergencyMsg(false);
             transitState(FINISH, "FSM");
-          }
+          }*/
           fd_->static_state_ = true;
           ROS_WARN_THROTTLE(1.0, "-- Plan fail (drone %d) --", getId());
           // Check if we need to send a message
@@ -396,13 +397,13 @@ namespace fast_planner {
         
         LocalTrajData* info = &planner_manager_->local_data_;
         double t_cur = (tn - info->start_time_).toSec();
-        
+
         if (!fd_->go_back_) {
           bool need_replan = false;
     
           if (t_cur > fp_->replan_thresh2_ && expl_manager_->frontier_finder_->isFrontierCovered()) {
-              ROS_WARN("Replan: frontera cubierta==================================");
-              need_replan = true;
+            ROS_WARN("Replan: frontera cubierta==================================");
+            need_replan = true;
           } else if (info->duration_ - t_cur < fp_->replan_thresh1_) {
             // Replan si la trayectoria ya se realizo
             ROS_WARN("Replan: trayectoria realizada==============================");
@@ -432,8 +433,12 @@ namespace fast_planner {
             //visualize(1);
           }
         } else {
+
           // Check if reach goal
           auto pos = info->position_traj_.evaluateDeBoorT(t_cur);
+
+          auto dist = (pos - expl_manager_->ed_->next_pos_).norm();
+          ROS_WARN_STREAM("ACA ESTOY CIERTO=========" << dist);
 
           if ((pos - expl_manager_->ed_->next_pos_).norm() < 1.0) {
             replan_pub_.publish(std_msgs::Empty());
@@ -512,7 +517,7 @@ namespace fast_planner {
     
     //replan trajectory por posibles colisiones    
     if (fd_->avoid_collision_ || fd_->go_back_) {  // Only replan trajectory
-      //ROS_WARN_STREAM("*********************planTrajToView**************************");
+      ROS_ERROR("*********************planTrajToView**************************");
       
       //replanificar, ya conozco mi objetivo
       //se hace con A*
@@ -523,7 +528,7 @@ namespace fast_planner {
       fd_->avoid_collision_ = false;
     } else {
       // Do full planning normally
-      //ROS_WARN_STREAM("********************planExploreMotion********************");
+      ROS_ERROR("********************planExploreMotion********************");
 
       //planificar respecto a mi ubicacion
       //buscar un objetivo
@@ -1065,7 +1070,7 @@ namespace fast_planner {
     Eigen::Vector3d dir = pos - fd_->odom_pos_;
     
     expl_manager_->ed_->next_yaw_ = atan2(dir[1], dir[0]);
-    fd_->go_back_ = true;
+    fd_->go_back_ = true; //<-- por eso entra a planTrajToView
     
     ROS_WARN_STREAM("ODOM: " << fd_->odom_pos_.transpose());
     ROS_WARN_STREAM("atan2: " << atan2(dir[1], dir[0]));
@@ -1111,7 +1116,7 @@ namespace fast_planner {
       //si no es seguro
       if (!safe) {
         ROS_WARN_STREAM("Replan: collision detected=======================");
-        fd_->avoid_collision_ = true;
+        fd_->avoid_collision_ = true; //esto forza a que el replan se haga con planView
         transitState(PLAN_TRAJ, "safetyCallback");
       }
       
