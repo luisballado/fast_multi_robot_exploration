@@ -281,9 +281,9 @@ bool MvantExplorationManager::isPositionReachable(const Vector3d& from, const Ve
 // punto siempre que exista
 // se usa para replanificar
 int MvantExplorationManager::planTrajToView(const Vector3d& pos, const Vector3d& vel, const Vector3d& acc, const Vector3d& yaw, const Vector3d& next_pos, const double& next_yaw) {
-  
+
   //modificar la velocidad
-  updateVelocities(1.0);
+  //updateVelocities(1);
   // Plan trajectory (position and yaw) to the next viewpoint
   auto t1 = ros::Time::now();
   
@@ -842,6 +842,14 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
     
     bool found_ftr = false;
     
+    /**iterar en todos los vants para saber donde estan */
+    for (int i = 0; i < drone_num; i++){
+      if(i == ep_->drone_id_ - 1) continue; //saltarme
+      //calcular distancia
+
+      outfile << "DISTANCIA VANT: " << i+1 << " " << (pos - ed_->swarm_state_[i].pos_).norm() << std::endl;
+    }
+
     /**
      * Inicializar lista de valores de fronteras
      * que esta viendo el dron que esta ejecutando 
@@ -920,7 +928,7 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
 
       // Direction
       double direction_cost = compute_direction_cost(pos,ed_->swarm_state_[ep_->drone_id_].vel_, vp.pos_);
-      double total_cost = 0.5 * distance_cost + 0.3 * yaw_cost + 0.2 * direction_cost;
+      double total_cost = 0.3 * distance_cost + 0.2 * yaw_cost + 0.5 * direction_cost;
       
       front1.id = ftr.id_;
       front1.distance = total_cost;
@@ -973,29 +981,26 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
 
         const auto& drone_state = ed_->swarm_state_[i]; //estado de los demas vants
 
+        double rho_k = compute_distance_cost(drone_state.pos_,drone_state.goal_pos_);
 
-        //for (const auto& ftr : frontier_finder_->getFrontiers()) {
         for (int j = 0; j < fronteras_vector.size(); ++j) {
+          
           const Frontera& vj = fronteras_vector[j];
-        //for (int j = 0; j < k_cercanas.size(); ++j) {
-          //const Frontera& vj = k_cercanas[j];
-          //Viewpoint vj = ftr.viewpoints_.front();
-
-          double rho_k = compute_distance_cost(drone_state.pos_,drone_state.goal_pos_);
-          double alpha_k_i = compute_distance_cost(drone_state.pos_,vj.pos_);
-          double explotacion = rho_k + alpha_k_i;
+                    
+          double alpha_ij = compute_distance_cost(drone_state.pos_,vj.pos_);
+          double explotacion = rho_k + alpha_ij;
 
           double suma = 0;
-          for(int k=0; k<drone_num;++k){
-            if(k!=i){
+
+          for(int k=0; k<drone_num; ++k){
+            if (k == i) continue;
               double rho_j = compute_distance_cost(ed_->swarm_state_[k].pos_,ed_->swarm_state_[k].goal_pos_);
               double alpha_j_i = compute_distance_cost(ed_->swarm_state_[k].pos_,vj.pos_);
               suma += rho_j + alpha_j_i;
-            }
-
           }
 
-          double exploracion = (drone_num > 1) ? suma / (drone_num-1):0.0;
+          //double exploracion = (drone_num > 1) ? suma / (drone_num-1) : 0.0;
+          double exploracion = suma / (drone_num - 1);
           
           auto [yaw, pitch] = compute_yaw_pitch_to_frontier(drone_state.pos_, vj.pos_);
           
@@ -1142,7 +1147,7 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
           / (w_expl + w_yaw + w_dir + w_dist + w_disp + w_info + w_age + w_future_return);
           */
 
-          double total_cost = explotacion; //- exploracion + yaw_cost + direction_cost;
+          double total_cost = explotacion - exploracion; //+ yaw_cost + direction_cost;
           mat(i,index) = total_cost;
       	          	  
           ++index;

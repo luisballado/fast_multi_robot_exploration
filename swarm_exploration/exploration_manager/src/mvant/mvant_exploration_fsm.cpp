@@ -440,7 +440,7 @@ namespace fast_planner {
           auto dist = (pos - expl_manager_->ed_->next_pos_).norm();
           ROS_WARN_STREAM("ACA ESTOY CIERTO=========" << dist);
 
-          if ((pos - expl_manager_->ed_->next_pos_).norm() < 1.0) {
+          if ((pos - expl_manager_->ed_->next_pos_).norm() < 1.5) {
             replan_pub_.publish(std_msgs::Empty());
             clearVisMarker();
             transitState(FINISH, "FSM");
