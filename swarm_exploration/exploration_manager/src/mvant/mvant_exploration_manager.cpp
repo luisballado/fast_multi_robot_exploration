@@ -209,7 +209,7 @@ int MvantExplorationManager::planExploreMotion(const Vector3d& pos, const Vector
   // regresa la posicion de la nueva frontera
   // aqui solo se busca la nueva frontera
   success = closestGreedyFrontier(pos, yaw, next_pos, next_yaw);
-  ROS_WARN_STREAM("closestGreedyFrontier: " << success << " es el resultado");
+  
   // obtuvimos un nuevo objetivo (posicion de la frontera)
   if (success) {
     
@@ -677,7 +677,7 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
       return a.distance < b.distance;
     });
     */
-    ROS_WARN_STREAM("DRONE BUSCANDO MINIMO:: ");
+    //ROS_WARN_STREAM("DRONE BUSCANDO MINIMO:: ");
 
     return *frontera; //regresar un apuntador al valor
   }
@@ -843,12 +843,14 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
     bool found_ftr = false;
     
     /**iterar en todos los vants para saber donde estan */
+    /*
     for (int i = 0; i < drone_num; i++){
       if(i == ep_->drone_id_ - 1) continue; //saltarme
       //calcular distancia
 
       outfile << "DISTANCIA VANT: " << i+1 << " " << (pos - ed_->swarm_state_[i].pos_).norm() << std::endl;
     }
+    */
 
     /**
      * Inicializar lista de valores de fronteras
@@ -866,28 +868,27 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
       //iterar para quedarnos con EL MEJOR viewpoint
       for (const auto& vp_ : ftr.viewpoints_) {
 
-        double distance_to_vp = 0;
+        double dist_vp = 0;
 
         // Check that the position is valid
         if (!isPositionReachable(pos, vp_.pos_)) {
           continue;
         }
 
-        std::vector<Vector3d> path;
-        distance_to_vp = ViewNode::searchPath(pos, vp_.pos_, path);
+        dist_vp = compute_distance_cost(pos,vp_.pos_);
 
-        if (distance_to_vp < min_dist) {
+        if (dist_vp < min_dist) {
           // Check if we need to force a new goal
           const double kMinDistGoals = 1.0;
           if (force_different && (vp_.pos_ - ed_->next_pos_).norm() < kMinDistGoals) {
             continue;
           }
           vp = vp_;
-          min_dist = distance_to_vp;
+          min_dist = dist_vp;
         }
       }
 
-      // 🔑 Generar clave estable basada en posición redondeada
+      // Generar clave estable basada en posición redondeada
       int x = std::round(vp.pos_.x() * 10);
       int y = std::round(vp.pos_.y() * 10);
       std::string clave = std::to_string(x) + "_" + std::to_string(y);
@@ -914,22 +915,29 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
         front1.distance = 10000.0;
         front1.pos_ = vp.pos_;
         front1.yaw_ = vp.yaw_;
-        front1.edad = edad_normalizada;  // 🧠 Insertamos edad
-        fronteras.push_back(front1); //<<<<--- en que lo uso?
-      
+        front1.edad = edad_normalizada;  //Insertamos edad
+        fronteras.push_back(front1); 
+        
         ed_->fronteras.push_back(ftr.id_);  //<<<<--- en que lo uso?
         continue;
       }
       
-      double distance_cost = std::min(min_dist / 20.0, 1.0);
+      double distance_cost = pow(std::min(min_dist / 20.0, 1.0), 2.0);
             
       double yaw_cost = compute_yaw_cost(vp.yaw_,ed_->swarm_state_[ep_->drone_id_].yaw_);
       //outfile << "\ncosto yaw: " << (yaw_cost) << std::endl;
 
       // Direction
       double direction_cost = compute_direction_cost(pos,ed_->swarm_state_[ep_->drone_id_].vel_, vp.pos_);
-      double total_cost = 0.3 * distance_cost + 0.2 * yaw_cost + 0.5 * direction_cost;
       
+      double total_cost;// = 0.35 * distance_cost + 0.4 * yaw_cost + 0.25 * direction_cost;
+      
+      if (min_dist < 5.0) {
+          total_cost = 0.6 * distance_cost + 0.25 * yaw_cost + 0.15 * direction_cost;
+      } else {
+          total_cost = 0.35 * distance_cost + 0.4 * yaw_cost + 0.25 * direction_cost;
+      }
+
       front1.id = ftr.id_;
       front1.distance = total_cost;
       front1.pos_ = vp.pos_;
@@ -1219,7 +1227,6 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
       const Frontera& minFrontera = findMinFrontera(fronteras);
       //Eigen::Vector3d best_f = selectGreedyFrontier(frontier_finder_->getInFrontFrontiers(),frontier_finder_->getFrontiers(),pos);
     
-
       // asignar frontera    
       // Update flag
       found_ftr = true;
@@ -1229,6 +1236,8 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
       next_pos = minFrontera.pos_; // it->pos;
       next_yaw = minFrontera.yaw_; // it->yaw;
       
+      updateVelocities(1.0);   // normal
+
       outfile << "greedyPlan: " << minFrontera.id << std::endl;
 
 
@@ -1236,12 +1245,9 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
     }
     
     outfile.close();
-
-    // Target
     
-
-    //ros::Duration(5.0).sleep();
     return found_ftr;
+  
   }
   
   //Calcular un campo de potencial atractivo basado en la distancia a

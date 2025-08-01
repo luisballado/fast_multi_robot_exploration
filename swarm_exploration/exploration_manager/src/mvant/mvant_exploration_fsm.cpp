@@ -402,15 +402,15 @@ namespace fast_planner {
           bool need_replan = false;
     
           if (t_cur > fp_->replan_thresh2_ && expl_manager_->frontier_finder_->isFrontierCovered()) {
-            ROS_WARN("Replan: frontera cubierta==================================");
+            //ROS_WARN("Replan: frontera cubierta==================================");
             need_replan = true;
           } else if (info->duration_ - t_cur < fp_->replan_thresh1_) {
             // Replan si la trayectoria ya se realizo
-            ROS_WARN("Replan: trayectoria realizada==============================");
+            //ROS_WARN("Replan: trayectoria realizada==============================");
             need_replan = true;
           } else if (t_cur > fp_->replan_thresh3_) {
             // Replan despues de un tiempo
-            ROS_WARN("Replan: despues de un tiempo===============================");
+            //ROS_WARN("Replan: despues de un tiempo===============================");
             need_replan = true;
           }
       
@@ -517,7 +517,7 @@ namespace fast_planner {
     
     //replan trajectory por posibles colisiones    
     if (fd_->avoid_collision_ || fd_->go_back_) {  // Only replan trajectory
-      ROS_ERROR("*********************planTrajToView**************************");
+      //ROS_ERROR("*********************planTrajToView**************************");
       
       //replanificar, ya conozco mi objetivo
       //se hace con A*
@@ -528,7 +528,7 @@ namespace fast_planner {
       fd_->avoid_collision_ = false;
     } else {
       // Do full planning normally
-      ROS_ERROR("********************planExploreMotion********************");
+      //ROS_ERROR("********************planExploreMotion********************");
 
       //planificar respecto a mi ubicacion
       //buscar un objetivo
@@ -1162,11 +1162,11 @@ namespace fast_planner {
     int pre_s = int(state_);
     state_ = new_state;
     
-    ROS_WARN_STREAM("[" + pos_call + "]: Drone "
+    /*ROS_WARN_STREAM("[" + pos_call + "]: Drone "
         << getId()
         << " from " + fd_->state_str_[pre_s] +
         " to " + fd_->state_str_[int(new_state)]);
-    
+    */
   }
 
   // enviar informacion
