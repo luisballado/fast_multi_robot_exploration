@@ -656,12 +656,6 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
     int edad;
   };
   
-  //algoritmo 2
-  //entrada: robots r, fronteras F,objetivos de robot,distancia hacia objetivo
-  //salida frontera
-  //j = 0.9
-  //repite
-  // alpha = beta 
   const Frontera& findMinFrontera(const std::list<Frontera>& fronteras){
 
     auto frontera = fronteras.begin();
@@ -822,6 +816,9 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
     //existe un vant0, no sé por qué
     const int drone_num = ed_->swarm_state_.size() - 1;
 
+    //cardinalidad de fronteras
+    const int ftr_num = frontier_finder_->getFrontiers().size();
+
     //usado como logg en el programa
     std::time_t now = std::time(nullptr);
     std::string filename = "/home/catkin_ws/logs/file.txt";
@@ -830,10 +827,10 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
     outfile << "\n------------------" << std::endl;
     outfile << "Datos para el Drone: " << (ep_->drone_id_) << std::endl;
     outfile << "Cardinalidad VANTS:" << drone_num << std::endl;
-    outfile << "numero de fronteras: " << frontier_finder_->getFrontiers().size() << std::endl;
+    outfile << "numero de fronteras: " << ftr_num << std::endl;
 
     Frontera front1;
-    list<Frontera> fronteras = {};
+    list<Frontera> fronteras;
     ed_->fronteras = {};
     
     // Nuevo mapa para actualizar edades esta iteración
@@ -843,14 +840,13 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
     bool found_ftr = false;
     
     /**iterar en todos los vants para saber donde estan */
-    /*
+    //si, pero para que?
     for (int i = 0; i < drone_num; i++){
       if(i == ep_->drone_id_ - 1) continue; //saltarme
       //calcular distancia
-
-      outfile << "DISTANCIA VANT: " << i+1 << " " << (pos - ed_->swarm_state_[i].pos_).norm() << std::endl;
+      outfile << "DISTANCIA VANT " << ep_->drone_id_ << " - " << "VANT " << i+1 << (pos - ed_->swarm_state_[i].pos_).norm() << std::endl;
     }
-    */
+    
 
     /**
      * Inicializar lista de valores de fronteras
@@ -861,7 +857,6 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
       
       //obtener el view point de la frontera
       Viewpoint vp; // = ftr.viewpoints_.front();
-      double distance_to_ftr;
       double min_dist = std::numeric_limits<double>::max();  
       
       //una frontera tiene multiples viewpoints
@@ -886,6 +881,7 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
           vp = vp_;
           min_dist = dist_vp;
         }
+
       }
 
       // Generar clave estable basada en posición redondeada
@@ -922,7 +918,7 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
         continue;
       }
       
-      double distance_cost = pow(std::min(min_dist / 20.0, 1.0), 2.0);
+      double distance_cost = std::min(min_dist / 20.0, 1.0);
             
       double yaw_cost = compute_yaw_cost(vp.yaw_,ed_->swarm_state_[ep_->drone_id_].yaw_);
       //outfile << "\ncosto yaw: " << (yaw_cost) << std::endl;
@@ -942,8 +938,12 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
       front1.distance = total_cost;
       front1.pos_ = vp.pos_;
       front1.yaw_ = vp.yaw_;
-      front1.edad = edad_normalizada;  // 🧠 Insertamos edad
+      front1.edad = edad_normalizada;  //Insertamos edad
 
+      outfile << "min_dist " << min_dist << std::endl;
+      outfile << "distance cost: " << distance_cost << std::endl;
+      outfile << "yaw cost: " << yaw_cost << std::endl;
+      outfile << "direction_cost: " << direction_cost << std::endl;
       outfile << "costo ftr " << ftr.id_ << " : " << total_cost << std::endl;
 
       fronteras.push_back(front1);
@@ -964,12 +964,13 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
     double min_dist;
 
     //hacer la matriz cuadrada cuando la cardinalidad de vants sea diferente a la de fronteras
-    if(frontier_finder_->getFrontiers().size() >= drone_num && drone_num > 1){      
-      const int ftr_num = frontier_finder_->getFrontiers().size();  //cardinalidad de fronteras
+    if(ftr_num >= drone_num && drone_num > 1){      
       
       int nRows = drone_num;
       int nCols = ftr_num;
+      
       int n = std::max(nRows, nCols);
+
       Eigen::MatrixXd mat;
       
       //matriz cuadrada respecto a la cardinalidad mas alta
@@ -977,11 +978,6 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
     
       //llenar matriz con infinitos
       mat.setConstant(100000.0);
-
-      bool hayAsignacionValida = false;
-      const double beta = 10.0;
-      const double DIST_MAX = 60.0;
-      double j = 0.9;
 
       for (int i = 0; i < drone_num; ++i) {
 
@@ -995,21 +991,21 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
           
           const Frontera& vj = fronteras_vector[j];
                     
-          double alpha_ij = compute_distance_cost(drone_state.pos_,vj.pos_);
-          double explotacion = rho_k + alpha_ij;
+          double alpha_ki = compute_distance_cost(drone_state.goal_pos_,vj.pos_);
+          double explotacion = rho_k + alpha_ki;
 
+          /*
           double suma = 0;
 
           for(int k=0; k<drone_num; ++k){
             if (k == i) continue;
-              double rho_j = compute_distance_cost(ed_->swarm_state_[k].pos_,ed_->swarm_state_[k].goal_pos_);
-              double alpha_j_i = compute_distance_cost(ed_->swarm_state_[k].pos_,vj.pos_);
-              suma += rho_j + alpha_j_i;
+            double rho_j = compute_distance_cost(ed_->swarm_state_[k].pos_,vj.pos_);
+            double alpha_ji = compute_distance_cost(ed_->swarm_state_[k].goal_pos_,vj.pos_);
+            suma += rho_j + alpha_ji;
           }
 
-          //double exploracion = (drone_num > 1) ? suma / (drone_num-1) : 0.0;
           double exploracion = suma / (drone_num - 1);
-          
+          */
           auto [yaw, pitch] = compute_yaw_pitch_to_frontier(drone_state.pos_, vj.pos_);
           
           double yaw_cost = compute_yaw_cost(yaw,drone_state.yaw_);
@@ -1018,40 +1014,37 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
           // Direction
           double direction_cost = compute_direction_cost(drone_state.pos_,drone_state.vel_, vj.pos_);
           
-          /*
+          
           int edad = vj.edad;
 
-          //debe ser con la posicion hacia donde va ir el drone
-          std::vector<Vector3d> path;
-          std::vector<Vector3d> path2;
-
-          // Compute yaw and pitch to the frontier
-      	  auto [yaw, pitch] = compute_yaw_pitch_to_frontier(drone_state.pos_, vj.pos_);
-          double yaw_cost = compute_yaw_cost(yaw,drone_state.yaw_);
-          //outfile << "\ncosto yaw: " << (yaw_cost) << std::endl;
-
-      	  // Direction
-      	  double direction_cost = compute_direction_cost(drone_state.pos_,drone_state.vel_, vj.pos_);
-          //outfile << "\ncosto direction: " << (direction_cost) << std::endl;
-          //calculo dispersion
+          
+          //calculo dispersion favorecer las fronteras que estan menos cubiertas por otros robots
+          //si otros robots estan cerca dispersion_cost es grande
+          //si otros robots estan lejos dispersion_cost es pequeño
           double sum_inverse_dispersion = 0.0;
           int count = 0;
 
           for (int j = 0; j < drone_num; ++j) {
               if (j == i) continue;  // Excluir el robot evaluador
 
+              //distancia desde el robot j a la frontera candidata
               double dist_to_robot = (ed_->swarm_state_[j].pos_ - vj.pos_).norm();
+
+              //distancia desde el objetivo actual del robot j a la frontera 
               double dist_to_goal = (ed_->swarm_state_[j].goal_pos_ - vj.pos_).norm(); // O donde almacenes la meta
 
+              //promedio de las distancias
               double avg_dist = (dist_to_robot + dist_to_goal) / 2.0;
+
+              //inversa suavizada evitando division por cero
               sum_inverse_dispersion += 1.0 / (0.1 + avg_dist);
               ++count;
           }
 
-          //double dispersion_cost = (count > 0) ? (sum_inverse_dispersion / static_cast<double>(count)) : 0.0;
           double avg_inverse = sum_inverse_dispersion / static_cast<double>(count);
+          //suavizar el crecimiento del valor [0,1]
           double dispersion_cost = 1.0 - std::exp(-avg_inverse);  // entre 0 y 1
-          */
+          
           //outfile << "\ncosto dispersion: " << (dispersion_cost) << std::endl;
 
 
@@ -1134,28 +1127,13 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
           double w_info = 3.0;   // explorar zonas nuevas y útiles
           double w_age  = 0.5;   // prioridad de urgencia
           double w_future_return = 0.0; // costo de retorno esperado en el futuro
-          
-
-          
-          //segun calcular el otro valor
-          /*
-          double avg_rj_aj = 0;
-          for (int j = 0; j < drone_num; ++j) {
-            std::vector<Vector3d> path_;
-            std::vector<Vector3d> path2_;
-            if (j == i) continue;
-            avg_rj_aj += ViewNode::searchPath(ed_->swarm_state_[j].pos_,vj.pos_,path_) +
-             + ed_->swarm_state_[j].goal_pos_;
-          }
-          avg_rj_aj /= (drone_num - 1);
-          */
-          
+                    
           /*
           double total_cost = (w_expl * exploitation_cost + w_future_return * future_return_cost + w_age * edad + w_info * info_gain_cost + w_yaw * yaw_cost + w_dist * norm_path_len + w_disp * dispersion_cost + w_dir * direction_cost) 
           / (w_expl + w_yaw + w_dir + w_dist + w_disp + w_info + w_age + w_future_return);
           */
 
-          double total_cost = explotacion - exploracion; //+ yaw_cost + direction_cost;
+          double total_cost = 0.4 * explotacion + 0.6 * dispersion_cost; //+ 0.225 * yaw_cost + 0.225 * direction_cost; 
           mat(i,index) = total_cost;
       	          	  
           ++index;
