@@ -840,13 +840,13 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
     bool found_ftr = false;
     
     /**iterar en todos los vants para saber donde estan */
-    //si, pero para que?
+    /**
     for (int i = 0; i < drone_num; i++){
       if(i == ep_->drone_id_ - 1) continue; //saltarme
       //calcular distancia
       outfile << "DISTANCIA VANT " << ep_->drone_id_ << " - " << "VANT " << i+1 << (pos - ed_->swarm_state_[i].pos_).norm() << std::endl;
     }
-    
+    */
 
     /**
      * Inicializar lista de valores de fronteras
@@ -994,18 +994,6 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
           double alpha_ki = compute_distance_cost(drone_state.goal_pos_,vj.pos_);
           double explotacion = rho_k + alpha_ki;
 
-          /*
-          double suma = 0;
-
-          for(int k=0; k<drone_num; ++k){
-            if (k == i) continue;
-            double rho_j = compute_distance_cost(ed_->swarm_state_[k].pos_,vj.pos_);
-            double alpha_ji = compute_distance_cost(ed_->swarm_state_[k].goal_pos_,vj.pos_);
-            suma += rho_j + alpha_ji;
-          }
-
-          double exploracion = suma / (drone_num - 1);
-          */
           auto [yaw, pitch] = compute_yaw_pitch_to_frontier(drone_state.pos_, vj.pos_);
           
           double yaw_cost = compute_yaw_cost(yaw,drone_state.yaw_);
@@ -1045,102 +1033,14 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
           //suavizar el crecimiento del valor [0,1]
           double dispersion_cost = 1.0 - std::exp(-avg_inverse);  // entre 0 y 1
           
-          //outfile << "\ncosto dispersion: " << (dispersion_cost) << std::endl;
-
-
-          //calcular el comm_cost
-          //ROS_WARN_STREAM("COMM_RANGE" << fp_->communication_range_);	       
-          //calcula el costo basado en cuan cerca/lejos esta el robot del resto del grupo
-          //***************
-          //la posicion de mi robot
-          //la posicion de los otros robots
-          /*
-          Eigen::Vector3d centroid(0.0, 0.0, 0.0);
-          int count2 = 0;
-
-          for (int j = 0; j < drone_num; ++j) {
-              if (j == i) continue;
-              centroid += ed_->swarm_state_[j].pos_;
-              ++count2;
-          }
-          centroid /= static_cast<double>(count2);
-
-          // Simular que el robot llega a la frontera
-          double dist_to_centroid = (vj.pos_ - centroid).norm();
-
-          // Penalización si se aleja del centroide más de 0.9 * comunicación
-          double cohesion_penalty = 0.0;
-          double max_dist = 0.9 * fp_->communication_range_;
-
-          if (dist_to_centroid > max_dist) {
-              double excess = dist_to_centroid - max_dist;
-              double max_excess = 0.1 * fp_->communication_range_;  // El peor caso posible
-              cohesion_penalty = std::min(1.0, (excess * excess) / (max_excess * max_excess));
-          }
-          //outfile << "\ncosto comm: " << (cohesion_penalty) << std::endl;
-
-          double dist_ = ViewNode::searchPath(drone_state.pos_,vj.pos_,path);
-          double goal_to_frontier = ViewNode::searchPath(drone_state.goal_pos_,vj.pos_,path2); //(drone_state.pos_ - vj.pos_).norm();
-          //***************
-          double exploitation_cost = std::min(((dist_ + goal_to_frontier) / 20.0) , 1.0);
-
-          double norm_path_len = std::min(dist_ / 20.0, 1.0);
-          //outfile << "\ncosto distance: " << norm_path_len << std::endl;
-          int info_gain = frontier_finder_->computeGainOfView(vj.pos_,vj.yaw_);
-
-          // Normalizar: más gain → menor costo
-          const double max_expected_gain = 200.0;  // ajusta este valor si ves que el gain es mayor
-          double info_gain_score = std::min(info_gain / max_expected_gain, 1.0);
-          double info_gain_cost = 1.0 - info_gain_score;
-          //outfile << "\ncosto info: " << info_gain_cost << std::endl;
-
-          
-
-          // Distancia desde todos los robots a esta frontera
-          double max_dist_to_frontera = 0.0;
-          for (int k = 0; k < drone_num; ++k) {
-              if (k == i) continue;  // puedes ignorar el robot actual si ya lo estás asignando
-
-              double d = (fronteras_vector[j].pos_ - ed_->swarm_state_[k].pos_).norm();
-              if (d > max_dist_to_frontera) {
-                  max_dist_to_frontera = d;
-              }
-          }
-
-          // Costo de retorno futuro estimado
-          double future_return_cost = max_dist_to_frontera;
-          double w_disp;
-
-
-          // evitar aglomeraciones o ir a la misma zona
-          if (ed_->frontiers_.size() < 3) {
-            double w_disp = 1.0;  // Permite reagruparse si ya casi no hay fronteras
-          }else{
-            double w_disp = 2.5;
-          }
-          */
-          //antes
-          double w_expl = 2.5;
-          double w_yaw  = 3.0;   // giros importantes, pero menos que coordinación
-          double w_dist = 3.0;   // que no viaje lejos si no es necesario
-          double w_dir  = 3.5;   // mantener coherencia en vuelo
-          double w_info = 3.0;   // explorar zonas nuevas y útiles
-          double w_age  = 0.5;   // prioridad de urgencia
-          double w_future_return = 0.0; // costo de retorno esperado en el futuro
-                    
-          /*
-          double total_cost = (w_expl * exploitation_cost + w_future_return * future_return_cost + w_age * edad + w_info * info_gain_cost + w_yaw * yaw_cost + w_dist * norm_path_len + w_disp * dispersion_cost + w_dir * direction_cost) 
-          / (w_expl + w_yaw + w_dir + w_dist + w_disp + w_info + w_age + w_future_return);
-          */
-
           double total_cost = 0.4 * explotacion + 0.6 * dispersion_cost; //+ 0.225 * yaw_cost + 0.225 * direction_cost; 
-          mat(i,index) = total_cost;
+          mat(i,index) = total_cost; //cambio con pos-goal , y goal a frontera
+          //probar con searchPath
       	          	  
           ++index;
 
         }
 
-      
       }
             
       const int dimension = mat.rows();
