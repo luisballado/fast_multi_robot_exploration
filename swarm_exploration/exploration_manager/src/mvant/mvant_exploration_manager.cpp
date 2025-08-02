@@ -983,60 +983,40 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
 
         int index = 0;
 
-        const auto& drone_state = ed_->swarm_state_[i]; //estado de los demas vants
+        //const auto& drone_state = ed_->swarm_state_[i]; //estado de los demas vants
 
-        double rho_k = compute_distance_cost(drone_state.pos_,drone_state.goal_pos_);
+        //double rho_k = compute_distance_cost(drone_state.pos_,drone_state.goal_pos_);
 
-        for (int j = 0; j < fronteras_vector.size(); ++j) {
+        for (const auto& ftr : frontier_finder_->getFrontiers()) {
           
-          const Frontera& vj = fronteras_vector[j];
-                    
+          const auto& drone_state = ed_->swarm_state_[i];
+          Viewpoint vj = ftr.viewpoints_.front();
+          
+          double rho_k = compute_distance_cost(drone_state.pos_,vj.pos_);
           double alpha_ki = compute_distance_cost(drone_state.goal_pos_,vj.pos_);
+          
           double explotacion = rho_k + alpha_ki;
 
-          auto [yaw, pitch] = compute_yaw_pitch_to_frontier(drone_state.pos_, vj.pos_);
+          double sum = 0.0;
           
-          double yaw_cost = compute_yaw_cost(yaw,drone_state.yaw_);
-          //outfile << "\ncosto yaw: " << (yaw_cost) << std::endl;
-
-          // Direction
-          double direction_cost = compute_direction_cost(drone_state.pos_,drone_state.vel_, vj.pos_);
-          
-          
-          int edad = vj.edad;
-
-          
-          //calculo dispersion favorecer las fronteras que estan menos cubiertas por otros robots
-          //si otros robots estan cerca dispersion_cost es grande
-          //si otros robots estan lejos dispersion_cost es pequeño
-          double sum_inverse_dispersion = 0.0;
-          int count = 0;
-
           for (int j = 0; j < drone_num; ++j) {
               if (j == i) continue;  // Excluir el robot evaluador
 
               //distancia desde el robot j a la frontera candidata
-              double dist_to_robot = (ed_->swarm_state_[j].pos_ - vj.pos_).norm();
+              double rho_j = compute_distance_cost(ed_->swarm_state_[j].pos_,vj.pos_);
 
               //distancia desde el objetivo actual del robot j a la frontera 
-              double dist_to_goal = (ed_->swarm_state_[j].goal_pos_ - vj.pos_).norm(); // O donde almacenes la meta
-
-              //promedio de las distancias
-              double avg_dist = (dist_to_robot + dist_to_goal) / 2.0;
+              double alpha_ji = compute_distance_cost(ed_->swarm_state_[j].goal_pos_,vj.pos_); // O donde almacenes la meta
 
               //inversa suavizada evitando division por cero
-              sum_inverse_dispersion += 1.0 / (0.1 + avg_dist);
-              ++count;
+              sum += rho_j + alpha_ji;
+              
           }
 
-          double avg_inverse = sum_inverse_dispersion / static_cast<double>(count);
-          //suavizar el crecimiento del valor [0,1]
-          double dispersion_cost = 1.0 - std::exp(-avg_inverse);  // entre 0 y 1
-          
-          double total_cost = 0.4 * explotacion + 0.6 * dispersion_cost; //+ 0.225 * yaw_cost + 0.225 * direction_cost; 
-          mat(i,index) = total_cost; //cambio con pos-goal , y goal a frontera
-          //probar con searchPath
-      	          	  
+          double exploracion = sum / (drone_num - 1);
+
+          //function costo va aqui
+          mat(i,index) = explotacion; //- exploracion;
           ++index;
 
         }
