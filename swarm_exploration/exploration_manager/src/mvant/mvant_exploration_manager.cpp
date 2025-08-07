@@ -804,9 +804,14 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
     return direction_cost;
   }
 
-  double compute_distance_cost(const Eigen::Vector3d& robot_position,const Eigen::Vector3d& frontier_position){
-    std::vector<Vector3d> path;
-    return ViewNode::searchPath(robot_position, frontier_position, path);
+  //probar con dist eucl directo**
+  double compute_distance_cost(const Eigen::Vector3d& robot_position,const Eigen::Vector3d& frontier_position,bool euclidean = true){
+    if(!euclidean){
+      std::vector<Vector3d> path;
+      return ViewNode::searchPath(robot_position, frontier_position, path);
+    } else{
+      return (robot_position - frontier_position).norm();
+    }
   }
 
   //Funcion principal de exploración con todos los elementos
@@ -870,7 +875,7 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
           continue;
         }
 
-        dist_vp = compute_distance_cost(pos,vp_.pos_);
+        dist_vp = compute_distance_cost(pos,vp_.pos_,true);
 
         if (dist_vp < min_dist) {
           // Check if we need to force a new goal
@@ -983,34 +988,41 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
 
         int index = 0;
 
-        //const auto& drone_state = ed_->swarm_state_[i]; //estado de los demas vants
+        const auto& drone_state = ed_->swarm_state_[i]; //estado de los demas vants
 
         //double rho_k = compute_distance_cost(drone_state.pos_,drone_state.goal_pos_);
 
         for (const auto& ftr : frontier_finder_->getFrontiers()) {
-          
-          const auto& drone_state = ed_->swarm_state_[i];
+              
+          //no deberia tomar la primera de la lista
+          //no tienen un orden
           Viewpoint vj = ftr.viewpoints_.front();
           
-          double rho_k = compute_distance_cost(drone_state.pos_,vj.pos_);
-          double alpha_ki = compute_distance_cost(drone_state.goal_pos_,vj.pos_);
+          //double rho_k = compute_distance_cost(drone_state.pos_,drone_state.goal_pos_);
+          double rho_k = 0; //compute_distance_cost(drone_state.pos_,vj.pos_);
+      	  double alpha_ki = compute_distance_cost(drone_state.goal_pos_,vj.pos_);
+                
+      	  double explotacion = rho_k + alpha_ki;
+
+          double direction_cost = compute_direction_cost(drone_state.pos_,drone_state.vel_, vj.pos_);
+          auto [yaw, pitch] = compute_yaw_pitch_to_frontier(drone_state.pos_, vj.pos_);
           
-          double explotacion = rho_k + alpha_ki;
+          double yaw_cost = compute_yaw_cost(yaw,drone_state.yaw_);
 
           double sum = 0.0;
-          
           for (int j = 0; j < drone_num; ++j) {
-              if (j == i) continue;  // Excluir el robot evaluador
+            if (j == i) continue;  // Excluir el robot evaluador
 
-              //distancia desde el robot j a la frontera candidata
-              double rho_j = compute_distance_cost(ed_->swarm_state_[j].pos_,vj.pos_);
+            //distancia desde el robot j a la frontera candidata
+            //double rho_j = compute_distance_cost(ed_->swarm_state_[j].pos_,vj.pos_);
+            double rho_j = compute_distance_cost(ed_->swarm_state_[j].pos_,ed_->swarm_state_[j].goal_pos_);
 
-              //distancia desde el objetivo actual del robot j a la frontera 
-              double alpha_ji = compute_distance_cost(ed_->swarm_state_[j].goal_pos_,vj.pos_); // O donde almacenes la meta
 
-              //inversa suavizada evitando division por cero
-              sum += rho_j + alpha_ji;
-              
+            //distancia desde el objetivo actual del robot j a la frontera 
+            double alpha_ji = compute_distance_cost(ed_->swarm_state_[j].goal_pos_,vj.pos_); // O donde almacenes la meta
+
+            //inversa suavizada evitando division por cero
+            sum += rho_j + alpha_ji;  
           }
 
           double exploracion = sum / (drone_num - 1);
