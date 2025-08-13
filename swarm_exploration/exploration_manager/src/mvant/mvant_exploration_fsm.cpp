@@ -411,7 +411,7 @@ namespace fast_planner {
           } else if (t_cur > fp_->replan_thresh3_) {
             // Replan despues de un tiempo
             //ROS_WARN("Replan: despues de un tiempo===============================");
-            need_replan = true;
+            need_replan = false;
           }
       
           if (need_replan) {
@@ -707,6 +707,7 @@ namespace fast_planner {
     }
   }
   
+  //limpiar (borrar) los marcadores de visualización que tu sistema había dibujado antes
   void MvantExplorationFSM::clearVisMarker() {
     
     for (int i = 0; i < 10; ++i) {

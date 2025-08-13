@@ -998,8 +998,8 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
           //no tienen un orden
           Viewpoint vj = ftr.viewpoints_.front();
           
-          //double rho_k = compute_distance_cost(drone_state.pos_,drone_state.goal_pos_);
-          double rho_k = 0; //compute_distance_cost(drone_state.pos_,vj.pos_);
+          double rho_k = 0;//compute_distance_cost(drone_state.pos_,drone_state.goal_pos_);
+          //double rho_k = compute_distance_cost(drone_state.pos_,vj.pos_);
       	  double alpha_ki = compute_distance_cost(drone_state.goal_pos_,vj.pos_);
                 
       	  double explotacion = rho_k + alpha_ki;
@@ -1008,6 +1008,9 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
           auto [yaw, pitch] = compute_yaw_pitch_to_frontier(drone_state.pos_, vj.pos_);
           
           double yaw_cost = compute_yaw_cost(yaw,drone_state.yaw_);
+
+          //enfocarse solamente en distancias
+          //es una heuristica, una idea para inicializarla/guiar la exploracion
 
           double sum = 0.0;
           for (int j = 0; j < drone_num; ++j) {
@@ -1040,17 +1043,17 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
       outfile << "Cardinalidad de VANTS: " << drone_num;
       outfile << " :: Fronteras: " << fronteras.size();
       outfile << " :: dimension matriz a crear: " << dimension << std::endl;
-      // Write the matrix to the file:
-      // Iterate over each row.
+      // Escribit la matriz:
+      // Iterar en las filas
       for (int i = 0; i < mat.rows(); i++) {
-          // Iterate over each column in the row.
+          // Iterar en cada columna dentro de la fila
           for (int j = 0; j < mat.cols(); j++) {
-              // Write the element followed by a space.
+              // Escibir los elementos
               outfile << mat(i, j);
               if (j < mat.cols() - 1)
-                  outfile << " "; // Separate elements with a space.
+                  outfile << " ";
           }
-          // Write a newline at the end of each row.
+          // salto de linea
           outfile << std::endl;
       }
 
@@ -1063,12 +1066,12 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
       
       std::vector<int> assignment = HungarianAlgorithm(mat);
       //ver el resultado de aqui
-      outfile << "Assignment (robot -> frontier):" << std::endl;
+      outfile << "Asignaciones (robot -> frontera):" << std::endl;
       for (size_t i = 0; i < assignment.size(); i++) {
-          outfile << "Robot " << i+1 << " assigned to column " << assignment[i] << std::endl;
+          outfile << "Robot " << i+1 << " asignado columna " << assignment[i] << std::endl;
       }
 
-      outfile << "Robot " << ep_->drone_id_ << " Assigned to " << assignment[ep_->drone_id_-1] << " : " << mat(ep_->drone_id_-1,assignment[ep_->drone_id_-1]) << std::endl;
+      outfile << "Robot " << ep_->drone_id_ << " Asignado a " << assignment[ep_->drone_id_-1] << " : " << mat(ep_->drone_id_-1,assignment[ep_->drone_id_-1]) << std::endl;
           
 
       //asignar frontera    

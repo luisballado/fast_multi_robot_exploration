@@ -108,7 +108,7 @@ double ViewNode::searchPath(const Vector3d& p1, const Vector3d& p2, vector<Vecto
   }
   // Use Astar early termination cost as an estimate
   path = { p1, p2 };
-  return 100;
+  return 10000;
 }
 
 double ViewNode::computeCost(const Vector3d& p1, const Vector3d& p2, const double& y1,
