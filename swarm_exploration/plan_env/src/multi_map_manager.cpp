@@ -24,18 +24,17 @@ namespace fast_planner {
 
     //llamar para copiar el mapa invocar despues de elegir la frontera
     /**
-     * Comunicar solamente cuando yo lo indique
-     * 
+     * Se manda llamar de forma periodica resumenes con
+     * los rangos de IDs de chunks que cada dron ya tiene
+     * publica un mensaje ChunkStamps para cada dron, la lista
+     * de intervalos de los chunks que se conocen
+     * Aqui no se mandan los voxeles; solo los IDs de los chunks disponibles
      */
-    //stampTimerCallback se debe llamar cuando deba cambiar mapa
-    stamp_timer_ = node_.createTimer(ros::Duration(0.1), &MultiMapManager::stampTimerCallback, this); //envia pedazos de mapa
+    stamp_timer_ = node_.createTimer(ros::Duration(0.1), &MultiMapManager::stampTimerCallback, this);
+    stamp_pub_ = node_.advertise<plan_env_msgs::ChunkStamps>("/multi_map_manager/chunk_stamps_send", 10);
 
-
-    //*** LA COMUNICACION PEGA CON LOS DEMAS ESQUEMAS DE EXPLORACION
-
-    //enviar_msg_ = node_.advertise<std_msgs::Empty>("/mapa/enviar",10);
-    //enviar_msg_sub_ = node_.subscribe("/mapa/enviar", 10, &MultiMapManager::stampTimerCallback, this);
-
+    //recibe el mensaje 
+    stamp_sub_ = node_.subscribe("/multi_map_manager/chunk_stamps_recv", 10, &MultiMapManager::stampMsgCallback, this);
 
     //recibo el mensaje - escuchar siempre
     chunk_timer_ = node_.createTimer(ros::Duration(0.1), &MultiMapManager::chunkTimerCallback, this); //incorpora pedazos de mapa
@@ -43,14 +42,11 @@ namespace fast_planner {
     logging_timer_ = node_.createTimer(ros::Duration(5.0), &MultiMapManager::loggingTimerCallback, this);
 
     //publica el mensaje 
-    stamp_pub_ = node_.advertise<plan_env_msgs::ChunkStamps>("/multi_map_manager/chunk_stamps_send", 10);
+    
 
     chunk_pub_ = node_.advertise<plan_env_msgs::ChunkData>("/multi_map_manager/chunk_data_send", 5000);
     marker_pub_ = node_.advertise<visualization_msgs::Marker>("/multi_map_manager/marker_" + std::to_string(drone_id_), 10);
-
-    //recibe el mensaje 
-    stamp_sub_ = node_.subscribe("/multi_map_manager/chunk_stamps_recv", 10, &MultiMapManager::stampMsgCallback, this);
-    
+        
     //recibo el mapa sin delays
     chunk_sub_ = node_.subscribe("/multi_map_manager/chunk_data_recv", 5000, &MultiMapManager::chunkCallback, this, ros::TransportHints().tcpNoDelay());
 
@@ -150,7 +146,7 @@ namespace fast_planner {
   }
 
   //se llama cada cierto tiempo
-  void MultiMapManager::stampTimerCallback(const ros::TimerEvent& e) {//const std_msgs::Empty::ConstPtr& msg_){//const ros::TimerEvent& e) {
+  void MultiMapManager::stampTimerCallback(const ros::TimerEvent& e) {//const std_msgs::Empty::ConstPtr& msg_)
     // Send stamp of chunks to other drones
     plan_env_msgs::ChunkStamps msg;
     msg.from_drone_id = drone_id_;
@@ -212,6 +208,7 @@ namespace fast_planner {
     }
   }
 
+  
   void MultiMapManager::stampMsgCallback(const plan_env_msgs::ChunkStampsConstPtr& msg) {
     if (msg->from_drone_id == drone_id_) return;
     if (drone_id_ == map_num_) return;  // Ground node does not send chunk

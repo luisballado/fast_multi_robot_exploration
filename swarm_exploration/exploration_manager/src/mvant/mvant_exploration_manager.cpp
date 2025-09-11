@@ -826,7 +826,7 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
 
     //usado como logg en el programa
     std::time_t now = std::time(nullptr);
-    std::string filename = "/home/catkin_ws/logs/file.txt";
+    std::string filename = "/home/catkin_ws/logs/file"+ std::to_string(ep_->drone_id_) +".txt";
     std::ofstream outfile(filename,std::ios::app);
 
     outfile << "\n------------------" << std::endl;
@@ -945,11 +945,11 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
       front1.yaw_ = vp.yaw_;
       front1.edad = edad_normalizada;  //Insertamos edad
 
-      outfile << "min_dist " << min_dist << std::endl;
-      outfile << "distance cost: " << distance_cost << std::endl;
-      outfile << "yaw cost: " << yaw_cost << std::endl;
-      outfile << "direction_cost: " << direction_cost << std::endl;
-      outfile << "costo ftr " << ftr.id_ << " : " << total_cost << std::endl;
+      //outfile << "min_dist " << min_dist << std::endl;
+      //outfile << "distance cost: " << distance_cost << std::endl;
+      //outfile << "yaw cost: " << yaw_cost << std::endl;
+      //outfile << "direction_cost: " << direction_cost << std::endl;
+      //outfile << "costo ftr " << ftr.id_ << " : " << total_cost << std::endl;
 
       fronteras.push_back(front1);
       
@@ -990,7 +990,7 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
 
         const auto& drone_state = ed_->swarm_state_[i]; //estado de los demas vants
 
-        //double rho_k = compute_distance_cost(drone_state.pos_,drone_state.goal_pos_);
+        double rho_k = compute_distance_cost(drone_state.pos_,drone_state.goal_pos_);
 
         for (const auto& ftr : frontier_finder_->getFrontiers()) {
               
@@ -998,7 +998,7 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
           //no tienen un orden
           Viewpoint vj = ftr.viewpoints_.front();
           
-          double rho_k = 0;//compute_distance_cost(drone_state.pos_,drone_state.goal_pos_);
+          //double rho_k = 0;//compute_distance_cost(drone_state.pos_,drone_state.goal_pos_);
           //double rho_k = compute_distance_cost(drone_state.pos_,vj.pos_);
       	  double alpha_ki = compute_distance_cost(drone_state.goal_pos_,vj.pos_);
                 
