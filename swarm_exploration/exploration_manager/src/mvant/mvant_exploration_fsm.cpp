@@ -326,7 +326,9 @@ namespace fast_planner {
         // buscar una frontera acudir y su trayectoria hacia ella en el grid
         // itera y se queda con la dist min y hace la trayectoria A*
         int res = callExplorationPlanner();
-        auto colors = visualization_->getColor(2 / 20, 1);
+
+        auto colors = visualization_->getColor(5.0 / 6.0, 1); //amarillo
+        
         visualization_->drawGoal(expl_manager_->ed_->next_pos_,expl_manager_->sdf_map_->getResolution(),colors,5);
 
         if (res == SUCCEED) {
@@ -344,8 +346,10 @@ namespace fast_planner {
             sendEmergencyMsg(false);
             transitState(FINISH, "FSM");
           }*/
-          fd_->static_state_ = true;
+          fd_->static_state_ = true; //hover
+
           ROS_WARN_THROTTLE(1.0, "-- Plan fail (drone %d) --", getId());
+          
           // Check if we need to send a message
           if (num_fail_ > 10) {
             sendEmergencyMsg(true);
@@ -355,17 +359,20 @@ namespace fast_planner {
           }
 
         } else if (res == NO_GRID) {
+          
           fd_->static_state_ = true;
           fd_->last_check_frontier_time_ = ros::Time::now();
+          
           ROS_WARN("No grid (drone %d)", getId());
+          
           transitState(IDLE, "FSM");
-    
+
           // Emergency
           num_fail_ = 0;
           sendEmergencyMsg(false);
         }
         
-        visualize(1);
+        //visualize(1);
         //clearVisMarker();
         break;
       }
@@ -455,7 +462,10 @@ namespace fast_planner {
             vis_thread.detach();
           }
         }
-        
+        //dummy mostrar texto
+        //std::ostringstream ss;
+        //ss << "odom: " << fd_->odom_pos_.transpose();
+        //visualization_->drawText(Vector3d(0, 0, 0), ss.str(), 1, Eigen::Vector4d(0.0, 0.0, 0.0, 1.0), "id", 2, 4);
         break;
       }
 
@@ -517,7 +527,7 @@ namespace fast_planner {
     
     //replan trajectory por posibles colisiones    
     if (fd_->avoid_collision_ || fd_->go_back_) {  // Only replan trajectory
-      //ROS_ERROR("*********************planTrajToView**************************");
+      ROS_ERROR("*********************planTrajToView**************************");
       
       //replanificar, ya conozco mi objetivo
       //se hace con A*
@@ -528,7 +538,7 @@ namespace fast_planner {
       fd_->avoid_collision_ = false;
     } else {
       // Do full planning normally
-      //ROS_ERROR("********************planExploreMotion********************");
+      ROS_ERROR("********************planExploreMotion********************");
 
       //planificar respecto a mi ubicacion
       //buscar un objetivo
@@ -741,27 +751,38 @@ namespace fast_planner {
       auto ft = expl_manager_->frontier_finder_;
       auto ed = expl_manager_->ed_;
 
+      /*
       auto getColorVal = [&](const int& id, const int& num, const int& drone_id) {
         double a = (drone_id - 1) / double(num + 1);
         double b = 1 / double(num + 1);
         return a + b * double(id) / ed->frontiers_.size();
       };
+      */
 
-      expl_manager_->updateFrontierStruct(fd_->odom_pos_, fd_->odom_yaw_, fd_->odom_vel_);
+      //actualizar las fronteras regresa un int de la cardinalidad de las fronteras
+      int num_fronteras = expl_manager_->updateFrontierStruct(fd_->odom_pos_, fd_->odom_yaw_, fd_->odom_vel_);
       
       // Draw frontier and bounding box
       auto res = expl_manager_->sdf_map_->getResolution();
       
+      //iterar sobre las fronteras existentes
+      //fronteras dinamicas se calcula el color de la frontera
+      //mostrarla con drawCubes
       for (int i = 0; i < ed->frontiers_.size(); ++i) {
-      	auto color = visualization_->getColor(double(i) / ed->frontiers_.size(), 0.4);
+      	auto color = visualization_->getColor(double(i) / ed->frontiers_.size(), 0.4); //colorear fronteras
       	visualization_->drawCubes(ed->frontiers_[i], res, color, "frontier", i, 4);
       }
       
+      //Que hace esta parte?
       for (int i = ed->frontiers_.size(); i < 50; ++i) {
       	visualization_->drawCubes({}, res, Vector4d(0, 0, 0, 1), "frontier", i, 4);
       }
       
       visualize(2);
+
+      //mostrar texto de fronteras totales
+      std::string s = "fronteras: " + std::to_string(num_fronteras);
+      visualization_->drawText(Vector3d(5, 5, 5), s, 1, Eigen::Vector4d(0.0, 0.0, 0.0, 1.0), "id", 2, 4);
       // if (status)
       //   visualize(2);
       // else
@@ -1047,7 +1068,7 @@ namespace fast_planner {
     //----------------------------------------------
     // // Debug traj planner
     //----------------------------------------------
-    /**
+    
     Eigen::Vector3d pos;
     pos << msg->pose.position.x, msg->pose.position.y, 1;
     expl_manager_->ed_->next_pos_ = pos;
@@ -1060,13 +1081,16 @@ namespace fast_planner {
     ROS_WARN_STREAM("ODOM: " << fd_->odom_pos_.transpose());
     ROS_WARN_STREAM("atan2: " << atan2(dir[1], dir[0]));
     
+
+
     //pintar un punto - que es el objetivo
-    auto colors = visualization_->getColor(2 / 20, 1);
+    auto colors = visualization_->getColor(1.0/6.0, 1); //violeta
     visualization_->drawGoal(pos,expl_manager_->sdf_map_->getResolution(),colors,1);
-    
+
+    ros::Duration(5.0).sleep();   // pausa 5 s en tiempo ROS
     transitState(PLAN_TRAJ, "triggerCallback");
     return;
-    **/
+    
     //----------------------------------------------
     
     //Solo se hace cuando el estado es WAIT_TRIGGER

@@ -105,6 +105,8 @@ void FrontierFinder::searchFrontiers() {
   }
 
   // Search new frontier within box slightly inflated from updated box
+  // se obtiene la caja total del mapa y luego se genera, para cada caja potencialmente
+  // cambiada, una caja de busqueda ligeramente mas grande
   Vector3d box_min, box_max;
   edt_env_->sdf_map_->getBox(box_min, box_max);
   
@@ -117,31 +119,43 @@ void FrontierFinder::searchFrontiers() {
       search_maxs[i][k] = min(search_maxs[i][k], box_max[k]);
     }
   }
+
+  //convertir esas coordenadas en indices
   vector<Eigen::Vector3i> min_ids(mins.size()), max_ids(mins.size());
   for (int i = 0; i < mins.size(); ++i) {
     edt_env_->sdf_map_->posToIndex(search_mins[i], min_ids[i]);
     edt_env_->sdf_map_->posToIndex(search_maxs[i], max_ids[i]);
   }
   
+  //escaneo voxel a voxel y deteccion de semillas
+  //para cada caja de busqueda, recorren todos los voxeles z,x,y
   for (int i = 0; i < min_ids.size(); ++i) {
     auto min_id = min_ids[i];
     auto max_id = max_ids[i];
 
+    //se procesa por capas, por eso comienza con z
     for (int z = min_id(2); z <= max_id(2); ++z)
       for (int x = min_id(0); x <= max_id(0); ++x)
         for (int y = min_id(1); y <= max_id(1); ++y) {
           // Scanning the updated region to find seeds of frontiers
           Eigen::Vector3i cur(x, y, z);
+          //condicion de semilla (0- no pertenece a ninguna frontera)
           if (frontier_flag_[toadr(cur)] == 0 && knownfree(cur) && isNeighborUnknown(cur)) {
             // Expand from the seed cell to find a complete frontier cluster
+            // Semilla de frontera: libre conocida con vecino desconocido y no marcada
             expandFrontier(cur);
           }
         }
   }
-
+  //post proceso partir fronteras grandes
+  //Por motivos de planificación, navegación o visualización
+  //conviene trocear fronteras enormes en segmentos más pequeños
   splitLargeFrontiers(tmp_frontiers_);
 }
 
+//al encontrar una frontera semilla, expandir con bfs para construir clusters
+//hace un flood-fill/region growing para construir el clúster completo de esa 
+//frontera y marcar sus celdas en frontier_flag_ para evitar duplicados
 void FrontierFinder::expandFrontier(
     const Eigen::Vector3i& first /* , const int& depth, const int& parent_id */) {
 
@@ -150,6 +164,7 @@ void FrontierFinder::expandFrontier(
   vector<pair<LABEL, Eigen::Vector3d>> expanded;
   Vector3d pos;
   
+  //iniciar con la semilla
   edt_env_->sdf_map_->indexToPos(first, pos);
   expanded.push_back({ UNLABELED, pos });
   cell_queue.push(first);
@@ -160,12 +175,14 @@ void FrontierFinder::expandFrontier(
     auto cur = cell_queue.front();
     cell_queue.pop();
     auto nbrs = allNeighbors(cur);
+    //iterando en todos los vecinos
     for (const auto& nbr : nbrs) {
       // Qualified cell should be inside bounding box and frontier cell not clustered
       int adr = toadr(nbr);
 
       if (adr >= frontier_flag_.size()) continue;
 
+      //condicion para decir que es frontera
       if (frontier_flag_[adr] == 1 || !edt_env_->sdf_map_->isInBox(nbr) ||
           !(knownfree(nbr) && isNeighborUnknown(nbr)))
         continue;
@@ -177,6 +194,7 @@ void FrontierFinder::expandFrontier(
       frontier_flag_[adr] = 1;
     }
   }
+  //si el cluster es pequeño, se descarta
   if (expanded.size() > cluster_min_) {
     // Compute detailed info
     Frontier frontier;

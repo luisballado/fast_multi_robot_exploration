@@ -11,7 +11,6 @@ Panels:
         - /Maps1/occupied_local31
         - /Simulators1
         - /Simulators1/simulation_map1
-        - /Simulators1/MoreRobot1
       Splitter Ratio: 0.6411764621734619
     Tree Height: 905
   - Class: rviz/Selection
@@ -151,7 +150,6 @@ Visualization Manager:
           Name: frontier1
           Namespaces:
             frontier: true
-            id: true
           Queue Size: 10000
           Value: true
         - Class: rviz/Marker
@@ -159,6 +157,7 @@ Visualization Manager:
           Marker Topic: /planning_vis/trajectory_1
           Name: traj1
           Namespaces:
+            "": true
             B-Spline: true
           Queue Size: 100
           Value: true
@@ -855,9 +854,9 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.7697960734367371
+      Pitch: 0.5597963929176331
       Target Frame: <Fixed Frame>
-      Yaw: 3.203568458557129
+      Yaw: 3.2485687732696533
     Saved:
       - Class: rviz/ThirdPersonFollower
         Distance: 17.48538589477539

@@ -80,22 +80,22 @@ public:
   
   int updateFrontierStruct(const Eigen::Vector3d& pos, double yaw, const Eigen::Vector3d& vel);
 
-  void allocateGrids(const vector<Eigen::Vector3d>& positions,
+  /*void allocateGrids(const vector<Eigen::Vector3d>& positions,
       const vector<Eigen::Vector3d>& velocities, const vector<vector<int>>& first_ids,
       const vector<vector<int>>& second_ids, const vector<int>& grid_ids, vector<int>& ego_ids,
-      vector<int>& other_ids);
+      vector<int>& other_ids);*/
 
   // Find optimal tour visiting unknown grid
-  bool findGlobalTourOfGrid(const vector<Eigen::Vector3d>& positions,
+  /*bool findGlobalTourOfGrid(const vector<Eigen::Vector3d>& positions,
       const vector<Eigen::Vector3d>& velocities, vector<int>& ids, vector<vector<int>>& others,
       bool init = false);
-
+*/
   void calcMutualCosts(const Eigen::Vector3d& pos, const double& yaw, const Eigen::Vector3d& vel,
       const vector<pair<Eigen::Vector3d, double>>& views, vector<float>& costs);
 
-  double computeGridPathCost(const Eigen::Vector3d& pos, const vector<int>& grid_ids,
+  /*double computeGridPathCost(const Eigen::Vector3d& pos, const vector<int>& grid_ids,
       const vector<int>& first, const vector<vector<int>>& firsts,
-      const vector<vector<int>>& seconds, const double& w_f);
+      const vector<vector<int>>& seconds, const double& w_f);*/
 
   //puntero inteligente que conserva la propiedad compartida de un objeto a traves de un puntero
   shared_ptr<ExplorationData> ed_;
@@ -125,9 +125,9 @@ private:
       vector<int>& indices);
 
   // Refine local tour for next few frontiers, using more diverse viewpoints
-  void refineLocalTour(const Vector3d& cur_pos, const Vector3d& cur_vel, const Vector3d& cur_yaw,
+  /*void refineLocalTour(const Vector3d& cur_pos, const Vector3d& cur_vel, const Vector3d& cur_yaw,
       const vector<vector<Vector3d>>& n_points, const vector<vector<double>>& n_yaws,
-      vector<Vector3d>& refined_pts, vector<double>& refined_yaws);
+      vector<Vector3d>& refined_pts, vector<double>& refined_yaws);*/
 
   // Update role and velocities
   void updateRoleAndVelocities(const ROLE updated_role);
@@ -139,12 +139,19 @@ private:
   bool explorerPlan(const Vector3d& pos, const Vector3d& vel, const Vector3d& yaw,
       Vector3d& next_pos, double& next_yaw);
 
-  bool findPathClosestFrontier(const Vector3d& pos, const Vector3d& vel, const Vector3d& yaw,
-      Vector3d& next_pos, double& next_yaw) const;
+  /*bool findPathClosestFrontier(const Vector3d& pos, const Vector3d& vel, const Vector3d& yaw,
+      Vector3d& next_pos, double& next_yaw) const;*/
 
   bool closestGreedyFrontier(const Vector3d& pos, const Vector3d& yaw, Vector3d& next_pos,
       double& next_yaw, bool force_different = false) ;
 
+  // Optimized versions with performance improvements
+  bool closestGreedyFrontierOptimized(const Vector3d& pos, const Vector3d& yaw, Vector3d& next_pos,
+      double& next_yaw, bool force_different = false);
+  
+  bool closestGreedyFrontierUltraFast(const Vector3d& pos, const Vector3d& yaw, Vector3d& next_pos,
+      double& next_yaw, bool force_different = false);
+  
   std::unordered_map<std::string, int> edades_fronteras;
 
   double attractivePotentialField(double distance) const;
@@ -156,11 +163,11 @@ private:
   double formationCost(const Eigen::Vector3d& target_pos) const;
 
   // Garbage Collector
-  bool collectorPlan(const Vector3d& pos, const Vector3d& vel, const Vector3d& yaw,
-      Vector3d& next_pos, double& next_yaw);
+  /*bool collectorPlan(const Vector3d& pos, const Vector3d& vel, const Vector3d& yaw,
+      Vector3d& next_pos, double& next_yaw);*/
 
-  bool linePlan(const Vector3d& pos, const Vector3d& vel, const Vector3d& yaw, Vector3d& next_pos,
-      double& next_yaw);
+  /*bool linePlan(const Vector3d& pos, const Vector3d& vel, const Vector3d& yaw, Vector3d& next_pos,
+      double& next_yaw);*/
 
   bool greedyPlan(const Vector3d& pos, const Vector3d& vel, const Vector3d& yaw, Vector3d& next_pos,
       double& next_yaw);
@@ -170,8 +177,9 @@ private:
 
   void shortenPath(vector<Vector3d>& path);
 
-  void findTourOfFrontier(const Vector3d& cur_pos, const Vector3d& cur_vel, const Vector3d& cur_yaw,
+  /*void findTourOfFrontier(const Vector3d& cur_pos, const Vector3d& cur_vel, const Vector3d& cur_yaw,
       const vector<int>& ftr_ids, const vector<Eigen::Vector3d>& grid_pos, vector<int>& ids);
+      */
 
 public:
   typedef shared_ptr<MvantExplorationManager> Ptr;
