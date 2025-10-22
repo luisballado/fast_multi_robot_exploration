@@ -773,7 +773,7 @@ namespace fast_planner {
       	visualization_->drawCubes(ed->frontiers_[i], res, color, "frontier", i, 4);
       }
       
-      //Que hace esta parte?
+      //¿?
       for (int i = ed->frontiers_.size(); i < 50; ++i) {
       	visualization_->drawCubes({}, res, Vector4d(0, 0, 0, 1), "frontier", i, 4);
       }
@@ -782,7 +782,7 @@ namespace fast_planner {
 
       //mostrar texto de fronteras totales
       std::string s = "fronteras: " + std::to_string(num_fronteras);
-      visualization_->drawText(Vector3d(5, 5, 5), s, 1, Eigen::Vector4d(0.0, 0.0, 0.0, 1.0), "id", 2, 4);
+      visualization_->drawText(Vector3d(5, 5, 5), s, 1, Eigen::Vector4d(0.0, 0.0, 0.0, 1.0), "idf", 2, 4);
       // if (status)
       //   visualize(2);
       // else
@@ -1068,7 +1068,7 @@ namespace fast_planner {
     //----------------------------------------------
     // // Debug traj planner
     //----------------------------------------------
-    
+    /*
     Eigen::Vector3d pos;
     pos << msg->pose.position.x, msg->pose.position.y, 1;
     expl_manager_->ed_->next_pos_ = pos;
@@ -1090,7 +1090,7 @@ namespace fast_planner {
     ros::Duration(5.0).sleep();   // pausa 5 s en tiempo ROS
     transitState(PLAN_TRAJ, "triggerCallback");
     return;
-    
+    */
     //----------------------------------------------
     
     //Solo se hace cuando el estado es WAIT_TRIGGER

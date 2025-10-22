@@ -400,7 +400,7 @@ int MvantExplorationManager::updateFrontierStruct(
   auto t2 = t1;
   ed_->views_.clear();
   
-  // Search frontiers and group them into clusters
+  // buscar fronteras y agruparlas bfs
   frontier_finder_->searchFrontiers();
   
   // tiempo para calcular fronteras
@@ -421,8 +421,8 @@ int MvantExplorationManager::updateFrontierStruct(
   // Retrieve the updated info
   frontier_finder_->getFrontiers(ed_->frontiers_);
   frontier_finder_->getFrontiersIds(ed_->fronters_ids_);
-  frontier_finder_->getDormantFrontiers(ed_->dead_frontiers_);
-  frontier_finder_->getFrontierBoxes(ed_->frontier_boxes_);
+  //frontier_finder_->getDormantFrontiers(ed_->dead_frontiers_);
+  //frontier_finder_->getFrontierBoxes(ed_->frontier_boxes_);
   //frontier_finder_->getLabeledFrontiers(ed_->labeled_frontiers_);
   frontier_finder_->getInFrontFrontiers(ed_->infront_frontiers_);
   
