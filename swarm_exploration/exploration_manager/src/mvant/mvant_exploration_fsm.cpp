@@ -195,7 +195,7 @@ namespace fast_planner {
     nb_obs_pub_ = nh.advertise<sensor_msgs::PointCloud2>("/sdf_map/obs", 10);
     
     //se ejecuta cada medio segundo
-    prueba_nb = nh.createTimer(ros::Duration(0.2), &MvantExplorationFSM::nearbyObstaclesCallback, this);
+    //prueba_nb = nh.createTimer(ros::Duration(0.2), &MvantExplorationFSM::nearbyObstaclesCallback, this);
     
     //-------------------------------------------------------------------------------------------------
     
@@ -527,7 +527,7 @@ namespace fast_planner {
     
     //replan trajectory por posibles colisiones    
     if (fd_->avoid_collision_ || fd_->go_back_) {  // Only replan trajectory
-      ROS_ERROR("*********************planTrajToView**************************");
+      //ROS_ERROR("*********************planTrajToView**************************");
       
       //replanificar, ya conozco mi objetivo
       //se hace con A*
@@ -538,7 +538,7 @@ namespace fast_planner {
       fd_->avoid_collision_ = false;
     } else {
       // Do full planning normally
-      ROS_ERROR("********************planExploreMotion********************");
+      //ROS_ERROR("********************planExploreMotion********************");
 
       //planificar respecto a mi ubicacion
       //buscar un objetivo
@@ -778,11 +778,12 @@ namespace fast_planner {
       	visualization_->drawCubes({}, res, Vector4d(0, 0, 0, 1), "frontier", i, 4);
       }
       
-      visualize(2);
+      visualize(1); //estaba en 2
 
       //mostrar texto de fronteras totales
       std::string s = "fronteras: " + std::to_string(num_fronteras);
       visualization_->drawText(Vector3d(5, 5, 5), s, 1, Eigen::Vector4d(0.0, 0.0, 0.0, 1.0), "idf", 2, 4);
+      
       // if (status)
       //   visualize(2);
       // else
@@ -825,7 +826,7 @@ namespace fast_planner {
       //next 
       ROS_WARN_STREAM("CASE 0");
 
-      ROS_WARN_STREAM("drone-comm: " << getId() << "--" << ed_ptr->fronteras.size());
+      //ROS_WARN_STREAM("drone-comm: " << getId() << "--" << ed_ptr->fronteras.size());
       ROS_WARN_STREAM("next pos: " << ed_ptr->next_pos_);
       //Envía mi objetivo y el objetivo conocido de los otros robots
       //pub
@@ -895,6 +896,8 @@ namespace fast_planner {
     //ROS_WARN_ONCE("Tipo coordinacion: %s", fp_->coordination_type.c_str());
   }
 
+  // se podria visualizar pero se debe pegar los mapas
+  /*
   void MvantExplorationFSM::timerCallback(const ros::TimerEvent& e) {
     pcl::PointCloud<pcl::PointXYZ> cloud;
     
@@ -933,7 +936,7 @@ namespace fast_planner {
     cloud_msg.header.frame_id = "world";
     cloud_msg.header.stamp = ros::Time::now();
     cloud_pub_.publish(cloud_msg);
-  }
+  }*/
   
 
   /***
@@ -1068,7 +1071,7 @@ namespace fast_planner {
     //----------------------------------------------
     // // Debug traj planner
     //----------------------------------------------
-    /*
+    
     Eigen::Vector3d pos;
     pos << msg->pose.position.x, msg->pose.position.y, 1;
     expl_manager_->ed_->next_pos_ = pos;
@@ -1087,10 +1090,10 @@ namespace fast_planner {
     auto colors = visualization_->getColor(1.0/6.0, 1); //violeta
     visualization_->drawGoal(pos,expl_manager_->sdf_map_->getResolution(),colors,1);
 
-    ros::Duration(5.0).sleep();   // pausa 5 s en tiempo ROS
+    //ros::Duration(5.0).sleep();   // pausa 5 s en tiempo ROS
     transitState(PLAN_TRAJ, "triggerCallback");
     return;
-    */
+    
     //----------------------------------------------
     
     //Solo se hace cuando el estado es WAIT_TRIGGER

@@ -32,7 +32,7 @@ do
 	echo ${eval_folder}
         echo "Number of drones: ${n_drones}"
         python3 ../../swarm_exploration/exploration_manager/scripts/plot_series.py -f ${eval_folder} --num-agents ${n_drones} --num-runs ${num_runs}
-
+	
     done
 
 done

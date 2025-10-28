@@ -14,7 +14,7 @@
 #include <exploration_manager/SearchObstacle.h>
 #include <exploration_manager/PairOpt.h>
 #include <exploration_manager/PairOptResponse.h>
-#include <exploration_manager/mvant/collaboration_assigner.h>
+//#include <exploration_manager/mvant/collaboration_assigner.h>
 #include <bspline/Bspline.h>
 
 #include <algorithm>
@@ -112,7 +112,7 @@ private:
   shared_ptr<FastPlannerManager> planner_manager_;
   shared_ptr<MvantExplorationManager> expl_manager_;
   shared_ptr<PlanningVisualization> visualization_;
-  shared_ptr<CollaborationAssigner> coll_assigner_;
+  //shared_ptr<CollaborationAssigner> coll_assigner_;
 
   shared_ptr<FSMParam> fp_;
   shared_ptr<FSMData> fd_;
@@ -137,6 +137,7 @@ private:
   // ******************************
 
   //objetos
+  /*
   struct Obstacle{
     geometry_msgs::Point position;
     geometry_msgs::Point velocity;
@@ -148,6 +149,7 @@ private:
   float max_velocity_;
   float min_velocity_;
   void timerCallback(const ros::TimerEvent& e);
+  */
   
   //pruebas
   ros::Publisher test_fronteras;

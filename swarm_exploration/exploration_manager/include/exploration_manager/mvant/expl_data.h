@@ -130,7 +130,7 @@ struct ExplorationData {
 
   int plan_num_;
 
-  list<int> fronteras; //segun lista aca
+  //list<int> fronteras; //segun lista aca
   
 };
 

@@ -90,7 +90,6 @@ void MvantExplorationManager::initialize(ros::NodeHandle& nh) {
 
   // Explorer Parameters
   // Quitar, dado a que yo no uso este esquema
-  
   explorer_params_.reset(new ExplorerParams);
   nh.param("explorer/ftr_max_distance", explorer_params_->ftr_max_distance, 15.0);
   nh.param("explorer/max_ang_dist", explorer_params_->max_ang_dist, M_PI / 4.0);
@@ -205,15 +204,20 @@ int MvantExplorationManager::planExploreMotion(const Vector3d& pos, const Vector
 
   //Elegir optimizador basado en el numero de fronteras
   const int ftr_num = frontier_finder_->getFrontiers().size();
-  const int drone_num = ed_->swarm_state_.size() - 1;
+  const int drone_num = ed_->swarm_state_.size() - 1; //cero basado
 
   //Usar diferentes estrategias basado en el tamaño del problema
   if (ftr_num < 10 || drone_num == 1) {
-    success = closestGreedyFrontier(pos, yaw, next_pos, next_yaw);
+    //success = explorerPlan(pos, vel, yaw, next_pos, next_yaw);
+    success = findPathClosestFrontier(pos, vel, yaw, next_pos, next_yaw);
+    ROS_ERROR("**findPathClosestFrontier**");
+    //success = closestGreedyFrontier(pos, yaw, next_pos, next_yaw);
   } else if (ftr_num < 50){
     success = closestGreedyFrontierUltraFast(pos, yaw, next_pos, next_yaw);
+    ROS_ERROR("**UltraFast**");
   } else {
     success = closestGreedyFrontierUltraFast(pos, yaw, next_pos, next_yaw);
+    ROS_ERROR("**UltraFast2**");
   }
   
   // obtuvimos un nuevo objetivo (posicion de la frontera)
@@ -526,7 +530,7 @@ void MvantExplorationManager::updateVelocities(const double factor) {
   role_ = updated_role;
 }*/
 
-/*bool MvantExplorationManager::explorerPlan(const Vector3d& pos, const Vector3d& vel,
+bool MvantExplorationManager::explorerPlan(const Vector3d& pos, const Vector3d& vel,
     const Vector3d& yaw, Vector3d& next_pos, double& next_yaw) {
 
   // If don't have frontiers in front, then go the closest frontier
@@ -628,9 +632,9 @@ void MvantExplorationManager::updateVelocities(const double factor) {
   // } else {
   //   return true;
   // }
-}*/
+}
 
-/*bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const Vector3d& vel,
+bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const Vector3d& vel,
     const Vector3d& yaw, Vector3d& next_pos, double& next_yaw) const {
 
   // Iterate over the frontiers, and compute the path to the top viewpoint of
@@ -670,7 +674,7 @@ void MvantExplorationManager::updateVelocities(const double factor) {
   }
 
   return found_ftr;
-}*/
+}
 
   /*Exploracion principal*/
   
@@ -858,7 +862,7 @@ void MvantExplorationManager::updateVelocities(const double factor) {
 
     Frontera front1;
     list<Frontera> fronteras;
-    ed_->fronteras = {};
+    //ed_->fronteras = {};
     
     // Nuevo mapa para actualizar edades esta iteración
     //std::unordered_map<std::string, int> nuevas_edades;
@@ -882,34 +886,31 @@ void MvantExplorationManager::updateVelocities(const double factor) {
 
     for (const auto& ftr : frontier_finder_->getFrontiers()) {
       
+      Vector3d diff_vec = ftr.average_ - pos;
+      Vector3d direction = diff_vec.normalized();
+      next_yaw = atan2(direction.y(), direction.x());
+
       //obtener el view point de la frontera
-      Viewpoint vp; // = ftr.viewpoints_.front();
+      Viewpoint vp = ftr.viewpoints_.front();
       double min_dist = std::numeric_limits<double>::max();  
       
-      //una frontera tiene multiples viewpoints
-      //iterar para quedarnos con EL MEJOR viewpoint
-      for (const auto& vp_ : ftr.viewpoints_) {
+      double dist_ftr = 0;
 
-        double dist_vp = 0;
+      if (!isPositionReachable(pos,ftr.average_)){
+        continue;
+      }
 
-        // Check that the position is valid
-        if (!isPositionReachable(pos, vp_.pos_)) {
+      dist_ftr = compute_distance_cost(pos,ftr.average_,true);
+
+      if (dist_ftr < min_dist){
+        const double kMinDistGoals = 1.0;
+        if (force_different && (ftr.average_ - ed_->next_pos_).norm() < kMinDistGoals) {
           continue;
         }
-
-        dist_vp = compute_distance_cost(pos,vp_.pos_,true);
-
-        if (dist_vp < min_dist) {
-          // Check if we need to force a new goal
-          const double kMinDistGoals = 1.0;
-          if (force_different && (vp_.pos_ - ed_->next_pos_).norm() < kMinDistGoals) {
-            continue;
-          }
-          vp = vp_;
-          min_dist = dist_vp;
-        }
-
+        min_dist = dist_ftr;
       }
+
+      
 
       /*
       // Generar clave estable basada en posición redondeada
@@ -935,25 +936,25 @@ void MvantExplorationManager::updateVelocities(const double factor) {
       //no brincar fronteras
       //aqui hay infinitos agregar y se deben considerar
       //origen, destino
-      if (!isPositionReachable(pos, vp.pos_)) {
+      if (!isPositionReachable(pos, ftr.average_)) {
         front1.id = ftr.id_;
         front1.distance = 10000.0;
-        front1.pos_ = vp.pos_;
-        front1.yaw_ = vp.yaw_;
+        front1.pos_ = ftr.average_;
+        front1.yaw_ = next_yaw;
         //front1.edad = edad_normalizada;  //Insertamos edad
         fronteras.push_back(front1); 
         
-        ed_->fronteras.push_back(ftr.id_);  //<<<<--- en que lo uso?
+        //ed_->fronteras.push_back(ftr.id_);  //<<<<--- en que lo uso?
         continue;
       }
       
       double distance_cost = std::min(min_dist / 20.0, 1.0);
             
-      double yaw_cost = compute_yaw_cost(vp.yaw_,ed_->swarm_state_[ep_->drone_id_].yaw_);
+      double yaw_cost = compute_yaw_cost(next_yaw,ed_->swarm_state_[ep_->drone_id_].yaw_);
       //outfile << "\ncosto yaw: " << (yaw_cost) << std::endl;
 
       // Direction
-      double direction_cost = compute_direction_cost(pos,ed_->swarm_state_[ep_->drone_id_].vel_, vp.pos_);
+      double direction_cost = compute_direction_cost(pos,ed_->swarm_state_[ep_->drone_id_].vel_, ftr.average_);
       
       double total_cost;// = 0.35 * distance_cost + 0.4 * yaw_cost + 0.25 * direction_cost;
       
@@ -965,8 +966,8 @@ void MvantExplorationManager::updateVelocities(const double factor) {
 
       front1.id = ftr.id_;
       front1.distance = total_cost;
-      front1.pos_ = vp.pos_;
-      front1.yaw_ = vp.yaw_;
+      front1.pos_ = ftr.average_;
+      front1.yaw_ = next_yaw;
       //front1.edad = edad_normalizada;  //Insertamos edad
 
       //outfile << "min_dist " << min_dist << std::endl;
@@ -977,7 +978,8 @@ void MvantExplorationManager::updateVelocities(const double factor) {
 
       fronteras.push_back(front1);
       
-      ed_->fronteras.push_back(ftr.id_);
+      //no lo estoy usando, pero seria interesante usarlo
+      //ed_->fronteras.push_back(ftr.id_);
       
     }
 

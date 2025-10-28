@@ -16,6 +16,8 @@
 Fig. 4: Exploration rates over different numbers of UAVs in the forest with density
 0.1 trees / m2. The exploration process becomes more efficient as the size of the
 fleet increases.
+
+Nota ejecutar este directo, en la carpeta del mapa
 """
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
@@ -104,7 +106,7 @@ def main():
             # Skip files
             if planner_folder.is_file(): continue
 
-            # Plot only FAME
+            # Plot only MVANT
             if planner_folder.name != "mvant": continue
 
             # Get the data for plotting
