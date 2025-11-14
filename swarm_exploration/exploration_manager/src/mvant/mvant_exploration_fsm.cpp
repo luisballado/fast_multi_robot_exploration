@@ -38,12 +38,14 @@ namespace fast_planner {
   void MvantExplorationFSM::init(ros::NodeHandle& nh) {
     
     //replan_thresh1_,..thresh3_, replan_time_, attempt_interval_,
+    // carga el struct al apuntador
     fp_.reset(new FSMParam); //expl_data.h
 
 
     //trigger, have_odom_, static_state_
     //state_str_, odom_pos_, odom_vel_
     //start_pos_, avoid_collision_, go_back_,
+    // carga el struct al apuntador
     fd_.reset(new FSMData);  //expl_data.h
     
     /*  Fsm param  */
@@ -408,7 +410,7 @@ namespace fast_planner {
         if (!fd_->go_back_) {
           bool need_replan = false;
     
-          if (t_cur > fp_->replan_thresh2_ && expl_manager_->frontier_finder_->isFrontierCovered()) {
+          if (t_cur > fp_->replan_thresh2_ || expl_manager_->frontier_finder_->isFrontierCovered()) {
             //ROS_WARN("Replan: frontera cubierta==================================");
             need_replan = true;
           } else if (info->duration_ - t_cur < fp_->replan_thresh1_) {
@@ -442,12 +444,15 @@ namespace fast_planner {
         } else {
 
           // Check if reach goal
+          // esto se ejecuta respecto a la frecuencia en que esta corriendo
+          // no bloquea
           auto pos = info->position_traj_.evaluateDeBoorT(t_cur);
 
           auto dist = (pos - expl_manager_->ed_->next_pos_).norm();
-          ROS_WARN_STREAM("ACA ESTOY CIERTO=========" << dist);
+          //ROS_WARN_STREAM("ACA ESTOY CIERTO=========" << dist);
 
           if ((pos - expl_manager_->ed_->next_pos_).norm() < 1.5) {
+            ROS_WARN_STREAM("Llegue al destino:: " << dist);
             replan_pub_.publish(std_msgs::Empty());
             clearVisMarker();
             transitState(FINISH, "FSM");
@@ -471,9 +476,9 @@ namespace fast_planner {
 
            //Estado final
       case FINISH: {
-        //sendStopMsg(1);
-        ROS_INFO_THROTTLE(1.0, "FINISH STATE");
-        ROS_INFO_THROTTLE(1.0, "-- exploracion terminada --");
+        //sendStopMsg(1); //comentar cuando quiera hacer pruebas
+        ROS_WARN_THROTTLE(1.0, "FINISH STATE");
+        ROS_WARN_THROTTLE(1.0, "-- exploracion terminada --");
         break;
       }
         
@@ -545,6 +550,7 @@ namespace fast_planner {
       res = expl_manager_->planExploreMotion(fd_->start_pt_, fd_->start_vel_, fd_->start_acc_, fd_->start_yaw_);
     }
 
+    //ya tengo un objetivo
     if (res == SUCCEED) {
       auto info = &planner_manager_->local_data_;
       info->start_time_ = (ros::Time::now() - time_r).toSec() > 0 ? ros::Time::now() : time_r;
@@ -1071,7 +1077,7 @@ namespace fast_planner {
     //----------------------------------------------
     // // Debug traj planner
     //----------------------------------------------
-    
+    /*
     Eigen::Vector3d pos;
     pos << msg->pose.position.x, msg->pose.position.y, 1;
     expl_manager_->ed_->next_pos_ = pos;
@@ -1093,7 +1099,7 @@ namespace fast_planner {
     //ros::Duration(5.0).sleep();   // pausa 5 s en tiempo ROS
     transitState(PLAN_TRAJ, "triggerCallback");
     return;
-    
+    */
     //----------------------------------------------
     
     //Solo se hace cuando el estado es WAIT_TRIGGER
@@ -1174,7 +1180,8 @@ namespace fast_planner {
     int pre_s = int(state_);
     state_ = new_state;
     
-    /*ROS_WARN_STREAM("[" + pos_call + "]: Drone "
+    /***
+    ROS_WARN_STREAM("[" + pos_call + "]: Drone "
         << getId()
         << " from " + fd_->state_str_[pre_s] +
         " to " + fd_->state_str_[int(new_state)]);

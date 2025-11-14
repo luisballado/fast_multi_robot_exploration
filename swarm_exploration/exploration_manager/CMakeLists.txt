@@ -90,7 +90,7 @@ add_executable(mvant_node
   src/mvant/mvant_exploration_fsm.cpp
   src/mvant/mvant_exploration_manager.cpp
   src/mvant/hungarian.cpp
-)
+  )
 
 target_link_libraries(mvant_node 
   ${catkin_LIBRARIES}

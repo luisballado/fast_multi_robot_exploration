@@ -1,5 +1,3 @@
-//creo que no se usa
-/*
 #include <exploration_manager/mvant/role_assigner.h>
 
 namespace fast_planner {
@@ -25,7 +23,8 @@ RoleAssigner::RoleAssigner(const ros::NodeHandle& nh) {
 RoleAssigner::~RoleAssigner() {
 }
 
-ROLE RoleAssigner::assignRoleCloseByFrontiers(const Eigen::Vector3d& position, const list<Frontier>& frontiers) const {
+ROLE RoleAssigner::assignRoleCloseByFrontiers(
+    const Eigen::Vector3d& position, const list<Frontier>& frontiers) const {
 
   // Ablation study
   if (fixed_) {
@@ -121,4 +120,3 @@ ROLE RoleAssigner::assignRole(const Eigen::Vector3d& position, int ego_id,
 }
 
 }  // namespace fast_planner
-*/

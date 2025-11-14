@@ -47,6 +47,7 @@ FrontierFinder::FrontierFinder(const EDTEnvironment::Ptr& edt, ros::NodeHandle& 
   edt_env_->sdf_map_->getRegion(origin, size);
   raycaster_->setParams(resolution_, origin);
 
+  //operaciones de transformaciones world-camera
   percep_utils_.reset(new PerceptionUtils(nh));
 }
 

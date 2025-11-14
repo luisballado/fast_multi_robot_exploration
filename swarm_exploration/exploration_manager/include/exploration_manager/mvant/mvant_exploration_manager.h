@@ -130,7 +130,7 @@ private:
       vector<Vector3d>& refined_pts, vector<double>& refined_yaws);*/
 
   // Update role and velocities
-  void updateRoleAndVelocities(const ROLE updated_role);
+  //void updateRoleAndVelocities(const ROLE updated_role);
   
   //Actualizar velocitad
   void updateVelocities(const double factor);

@@ -73,7 +73,7 @@ struct DroneState {
   // FAME MVANT
   Eigen::Vector3d goal_pos_;
   
-  //size_t role_;
+  size_t role_;
   
 };
 
