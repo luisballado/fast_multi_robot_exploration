@@ -301,7 +301,7 @@ namespace fast_planner {
           fd_->start_acc_.setZero();               //aceleracion actual
           fd_->start_yaw_ << fd_->odom_yaw_, 0, 0; //yaw actual
         } else {
-        // Replan from non-static state, starting from 'replan_time' seconds later
+        //Replan from non-static state, starting from 'replan_time' seconds later
         //LocalTrajData esta dentro de plan_container.hpp
           LocalTrajData* info = &planner_manager_->local_data_;
           double t_r = (ros::Time::now() - info->start_time_).toSec() + fp_->replan_time_;
@@ -316,15 +316,6 @@ namespace fast_planner {
         // Informar al traj_server sobre el replanning
         replan_pub_.publish(std_msgs::Empty());
         
-        // detener cuando no mas fronteras
-        // sigo teniendo el error
-        /**
-        if (expl_manager_->ed_->frontiers_.empty()) {
-          //sendEmergencyMsg(false);
-          transitState(FINISH, "FSM");
-        }
-        */
-
         // buscar una frontera acudir y su trayectoria hacia ella en el grid
         // itera y se queda con la dist min y hace la trayectoria A*
         int res = callExplorationPlanner();
