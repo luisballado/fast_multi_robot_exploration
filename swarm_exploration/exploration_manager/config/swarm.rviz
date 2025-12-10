@@ -5,11 +5,9 @@ Panels:
     Property Tree Widget:
       Expanded:
         - /ExplorePlanner1/frontier11/Namespaces1
-        - /Maps1
         - /Maps1/occupied_all11/Autocompute Value Bounds1
         - /Maps1/occupied_local11
         - /Maps1/occupied_local31
-        - /Simulators1
         - /Simulators1/simulation_map1
       Splitter Ratio: 0.6411764621734619
     Tree Height: 905
@@ -73,7 +71,7 @@ Visualization Manager:
           Marker Topic: /planning/travel_traj_1
           Name: executed_traj1
           Namespaces:
-            "": true
+            {}
           Queue Size: 100
           Value: true
         - Class: rviz/Marker
@@ -81,7 +79,7 @@ Visualization Manager:
           Marker Topic: /planning/position_cmd_vis_1
           Name: position_cmd1
           Namespaces:
-            current_pose: true
+            {}
           Queue Size: 100
           Value: true
         - Class: rviz/Marker
@@ -150,6 +148,8 @@ Visualization Manager:
           Name: frontier1
           Namespaces:
             frontier: true
+            id: true
+            idf: true
           Queue Size: 10000
           Value: true
         - Class: rviz/Marker
@@ -157,8 +157,7 @@ Visualization Manager:
           Marker Topic: /planning_vis/trajectory_1
           Name: traj1
           Namespaces:
-            "": true
-            B-Spline: true
+            {}
           Queue Size: 100
           Value: true
         - Class: rviz/Marker
@@ -606,7 +605,7 @@ Visualization Manager:
           Marker Topic: /odom_visualization_2/robot
           Name: robot2
           Namespaces:
-            {}
+            mesh: true
           Queue Size: 100
           Value: true
         - Class: rviz/Marker
@@ -614,7 +613,7 @@ Visualization Manager:
           Marker Topic: /odom_visualization_3/robot
           Name: robot3
           Namespaces:
-            {}
+            mesh: true
           Queue Size: 100
           Value: true
         - Class: rviz/Marker
@@ -838,7 +837,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/ThirdPersonFollower
-      Distance: 27.02591323852539
+      Distance: 41.43227005004883
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -846,9 +845,9 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: 0
-        Y: 0
-        Z: 0
+        X: -4.830690383911133
+        Y: -0.5168204307556152
+        Z: 1.9073486328125e-06
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false

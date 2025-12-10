@@ -231,12 +231,14 @@ int MvantExplorationManager::planExploreMotion(const Vector3d& pos, const Vector
   }
   */
 
-  success = closestGreedyFrontier(pos, yaw, next_pos, next_yaw); //explorerPlan(pos, vel, yaw, next_pos, next_yaw);
+  success = closestGreedyFrontier(pos, yaw, next_pos, next_yaw);//findPathClosestFrontier(pos, vel, yaw, next_pos, next_yaw);explorerPlan(pos, vel, yaw, next_pos, next_yaw); 
 
+  /*
   if (!success) {
-    ROS_ERROR("no hay ftr frente, buscar greedy");
+    ROS_ERROR("explorerPlan- agoto las fronteras");
     success = closestGreedyFrontier(pos, yaw, next_pos, next_yaw);
   }
+  */
 
   // obtuvimos un nuevo objetivo (posicion de la frontera)
   if (success) {
@@ -677,6 +679,7 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
     }
 
     double dist = (pos - vp.pos_).norm();
+    //Si la frontera está demasiado cerca (< 0.5) o demasiado lejos (> ftr_max_distance), la salto y no la uso
     bool valid_dist = dist <= explorer_params_->ftr_max_distance && dist >= 0.5;
     if (!valid_dist) {
       continue;
@@ -909,6 +912,13 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
       
       double dist_ftr = 0;
 
+      double dist = (pos - vp.pos_).norm();
+      //Si la frontera está demasiado cerca (< 0.5) o demasiado lejos (> ftr_max_distance), la salto y no la uso
+      bool valid_dist = dist <= explorer_params_->ftr_max_distance && dist >= 0.5;
+      if (!valid_dist) {
+        continue;
+      }
+
       if (!isPositionReachable(pos,ftr.average_)){
         continue;
       }
@@ -1003,106 +1013,56 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
       //llenar matriz con infinitos
       mat.setConstant(100000.0);
 
-      /*
+      //ITERAR EN ROBOTS
       for (int i = 0; i < drone_num; ++i) {
 
         int index = 0;
 
-        const auto& drone_state = ed_->swarm_state_[i]; //estado de los demas vants
-
-        //double rho_k = compute_distance_cost(drone_state.pos_,drone_state.goal_pos_);
-
-        for (const auto& ftr : frontier_finder_->getFrontiers()) {
-              
-          //no deberia tomar la primera de la lista
-          //no tienen un orden
-          Viewpoint vj = ftr.viewpoints_.front();
-          
-          double rho_k = compute_distance_cost(drone_state.pos_,drone_state.goal_pos_);
-          //double rho_k = compute_distance_cost(drone_state.pos_,vj.pos_);
-      	  double alpha_ki = compute_distance_cost(drone_state.goal_pos_,vj.pos_);
-                
-      	  double explotacion = rho_k + alpha_ki;
-
-          double direction_cost = compute_direction_cost(drone_state.pos_,drone_state.vel_, vj.pos_);
-          auto [yaw, pitch] = compute_yaw_pitch_to_frontier(drone_state.pos_, vj.pos_);
-          
-          double yaw_cost = compute_yaw_cost(yaw,drone_state.yaw_);
-
-          //enfocarse solamente en distancias
-          //es una heuristica, una idea para inicializarla/guiar la exploracion
-
-          double sum = 0.0;
-          for (int j = 0; j < drone_num; ++j) {
-            if (j == i) continue;  // Excluir el robot evaluador
-
-            //distancia desde el robot j a la frontera candidata
-            //double rho_j = compute_distance_cost(ed_->swarm_state_[j].pos_,vj.pos_);
-            double rho_j = compute_distance_cost(ed_->swarm_state_[j].pos_,ed_->swarm_state_[j].goal_pos_);
-
-
-            //distancia desde el objetivo actual del robot j a la frontera 
-            double alpha_ji = compute_distance_cost(ed_->swarm_state_[j].goal_pos_,vj.pos_); // O donde almacenes la meta
-
-            //inversa suavizada evitando division por cero
-            sum += rho_j + alpha_ji;  
-          }
-
-          double exploracion = sum / (drone_num - 1);
-          
-          //function costo va aqui
-          mat(i,index) = explotacion;// - exploracion;
-          ++index;
-
-        }
-
-      }
-      */
-
-      for (int i = 0; i < drone_num; ++i) {
-
-        int index = 0;
-
-        //const auto& drone_state = ed_->swarm_state_[i]; //estado de los demas vants
-
-        //double rho_k = compute_distance_cost(drone_state.pos_,drone_state.goal_pos_);
-
+        //ITERAR EN FRONTERAS
         for (const auto& ftr : frontier_finder_->getFrontiers()) {
           
+          //*****************************************
+          //* COSTO INDIVIDUAL ROBOT i - FRONTERA j
+          //*****************************************
           const auto& drone_state = ed_->swarm_state_[i];
           Viewpoint vj = ftr.viewpoints_.front();
           
-          Vector3d diff_vec = ftr.average_ - pos;
+          double rho_k = compute_distance_cost(drone_state.pos_,vj.pos_,false);
+          double alpha_ki = compute_distance_cost(drone_state.goal_pos_,vj.pos_,false);
+
+          Vector3d diff_vec = vj.pos_ - drone_state.pos_;
           Vector3d direction = diff_vec.normalized();
           next_yaw = atan2(direction.y(), direction.x());
+          double yaw_cost = compute_yaw_cost(next_yaw, drone_state.yaw_);
+          double direction_cost = compute_direction_cost(drone_state.pos_, drone_state.vel_, ftr.average_);
 
-          double rho_k = compute_distance_cost(drone_state.pos_,vj.pos_);
-          double alpha_ki = compute_distance_cost(drone_state.goal_pos_,vj.pos_);
-          double yaw_cost = compute_yaw_cost(next_yaw,ed_->swarm_state_[ep_->drone_id_].yaw_);
-          double direction_cost = compute_direction_cost(pos,ed_->swarm_state_[ep_->drone_id_].vel_, ftr.average_);
-
-          double explotacion = 0.175 * rho_k + 0.175 * alpha_ki + 0.4 * yaw_cost +  0.25 * direction_cost;
+          double explotacion = rho_k + alpha_ki + yaw_cost + direction_cost;
 
           double sum = 0.0;
-          
+          double eps = 1e-3;
+
           for (int j = 0; j < drone_num; ++j) {
               if (j == i) continue;  // Excluir el robot evaluador
 
               //distancia desde el robot j a la frontera candidata
-              double rho_j = compute_distance_cost(ed_->swarm_state_[j].pos_,vj.pos_);
+              double rho_j = compute_distance_cost(ed_->swarm_state_[j].pos_,vj.pos_,false);
 
               //distancia desde el objetivo actual del robot j a la frontera 
-              double alpha_ji = compute_distance_cost(ed_->swarm_state_[j].goal_pos_,vj.pos_); // O donde almacenes la meta
+              double alpha_ji = compute_distance_cost(ed_->swarm_state_[j].goal_pos_,vj.pos_,false); // O donde almacenes la meta
+              
+              double d = std::min(rho_j, alpha_ji);              // “qué tan cerca está j de esa frontera”
+
+              sum += 1.0 / (d + eps);
 
               //inversa suavizada evitando division por cero
-              sum += rho_j + alpha_ji;
+              //sum += rho_j + alpha_ji;
               
           }
 
           double exploracion = sum / (drone_num - 1);
 
           //function costo va aqui
-          mat(i,index) = explotacion;//- exploracion;
+          mat(i,index) = explotacion + exploracion;
           ++index;
 
         }
@@ -1151,20 +1111,21 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
       // Update flag
       found_ftr = true;  
       
-      int item = assignment[ep_->drone_id_-1];  // We want to get the element at index 1.
-      
+      // We want to get the element at index 1.
+      int item = assignment[ep_->drone_id_-1]; 
+       
       // Use std::next to get an iterator advanced by 'item' positions.
       auto it = std::next(fronteras.begin(), item);
       outfile << "Frontera " << item  << std::endl;
       if (it != fronteras.end()) {
         min_dist = it->costo;
         //next_pos = it->pos_;
-        //next_yaw = it->yaw_;
+        next_yaw = it->yaw_;
 
         // Compute next position
         Vector3d diff_vec = it->pos_ - pos;
         Vector3d direction = diff_vec.normalized();
-        next_yaw = atan2(direction.y(), direction.x());
+        //next_yaw = atan2(direction.y(), direction.x());
 
         if (diff_vec.head(2).norm() < explorer_params_->ftr_max_distance &&
             diff_vec.head(2).norm() >= 0.5) {

@@ -30,11 +30,11 @@ else
     if [ ${model_id} == 1 ]; then
       model="office" # "forest_50x50_01_200"
     elif [ ${model_id} == 2 ]; then
-      model="forest_50x50_01_300" #"office2"
+      model="office2" #"forest_50x50_01_300" #"office2"
     elif [ ${model_id} == 3 ]; then
-      model="forest_4_densities_50_40_20_10"
-    elif [ ${model_id} == 4 ]; then
-      model="forest_50x50_100_denser_3"
+      model="office3" #"forest_4_densities_50_40_20_10"
+    #elif [ ${model_id} == 4 ]; then
+    #  model="forest_50x50_100_denser_3"
     else
       continue
     fi
