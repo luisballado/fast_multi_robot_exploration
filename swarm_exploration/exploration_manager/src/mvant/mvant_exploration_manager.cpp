@@ -231,8 +231,11 @@ int MvantExplorationManager::planExploreMotion(const Vector3d& pos, const Vector
   }
   */
 
-  success = closestGreedyFrontier(pos, yaw, next_pos, next_yaw);//findPathClosestFrontier(pos, vel, yaw, next_pos, next_yaw);explorerPlan(pos, vel, yaw, next_pos, next_yaw); 
-
+  if(drone_num > ftr_num){
+    success = closestGreedyFrontier(pos, yaw, next_pos, next_yaw);//findPathClosestFrontier(pos, vel, yaw, next_pos, next_yaw);explorerPlan(pos, vel, yaw, next_pos, next_yaw); 
+  }else{
+    success = findPathClosestFrontier(pos, vel, yaw, next_pos, next_yaw);
+  }
   /*
   if (!success) {
     ROS_ERROR("explorerPlan- agoto las fronteras");
@@ -295,24 +298,11 @@ int MvantExplorationManager::planExploreMotion(const Vector3d& pos, const Vector
   ROS_INFO("Total time: %lf", total);
   ROS_ERROR_COND(total > 0.1, "Total time too long!!!");
 
-  //aca estoy guardando cosas
-  std::string filename = "/home/catkin_ws/logs/file"+ std::to_string(ep_->drone_id_) +".txt";
-  //std::string filename = "/home/catkin_ws/logs/file_optimized_" + std::to_string(ep_->drone_id_) + ".txt";
-  std::ofstream outfile(filename,std::ios::app);
-  outfile << "Total time:" << total << std::endl;
+  //ros::Duration dt = ros::Time::now() - t2;
+  //double secs = dt.toSec();
+  //double ms = dt.toSec() * 1e3;
+  //double us = dt.toSec() * 1e6;
   
-  ros::Duration dt = ros::Time::now() - t2;
-  double secs = dt.toSec();
-  double ms = dt.toSec() * 1e3;
-  
-  outfile << std::fixed << std::setprecision(3) << ms << " ms" << std::endl;  // ej: 0.004 ms
-  double us = dt.toSec() * 1e6;
-  
-  outfile << std::fixed << std::setprecision(1) << us << " µs" << std::endl;  // ej: 3.8 µs
-  
-  outfile << "tiempo: " << secs << " s\n" << std::endl;
-  outfile.close();
-
   return SUCCEED;
 }
 
@@ -680,10 +670,12 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
 
     double dist = (pos - vp.pos_).norm();
     //Si la frontera está demasiado cerca (< 0.5) o demasiado lejos (> ftr_max_distance), la salto y no la uso
+    /*
     bool valid_dist = dist <= explorer_params_->ftr_max_distance && dist >= 0.5;
     if (!valid_dist) {
       continue;
     }
+    */
 
     vector<Vector3d> path;
     double distance = std::max(1., explorer_params_->w_distance) *
@@ -877,104 +869,20 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
   //Funcion principal de exploración con todos los elementos
   bool MvantExplorationManager::closestGreedyFrontier(const Vector3d& pos, const Vector3d& yaw, Vector3d& next_pos, double& next_yaw, bool force_different)  {
 
-    const int drone_num = ed_->swarm_state_.size() - 1;
+    const int drone_num = ed_->swarm_state_.size()-1;
     const int ftr_num = frontier_finder_->getFrontiers().size();
-
-    //Frontera front1;
-    //list<Frontera> fronteras;
-    //ed_->fronteras = {};
-
     const auto& fronteras_list = frontier_finder_->getFrontiers(); // std::list<Frontier>
 
+    ROS_WARN_STREAM("robots_ " << drone_num);
+    ROS_WARN_STREAM("fronteras_ " << ftr_num);
     // Copia a vector para tener acceso por índice
     std::vector<fast_planner::Frontier> fronteras(fronteras_list.begin(), fronteras_list.end());
-    
+        
     bool found_ftr = false;
         
-    //Inicializar lista de valores de fronteras
-    //que esta viendo el dron que esta ejecutando
-    //esto para usarla cuando es un solo robot
-
-    /**
-    for (const auto& ftr : frontier_finder_->getFrontiers()) {
-      
-      //aqui estoy calculando todas en la iteracion
-      Vector3d diff_vec = ftr.average_ - pos;
-      Vector3d direction = diff_vec.normalized();
-      next_yaw = atan2(direction.y(), direction.x());
-
-      //obtener el view point de la frontera
-      Viewpoint vp = ftr.viewpoints_.front();
-      double min_dist = std::numeric_limits<double>::max();  
-      
-      double dist_ftr = 0;
-
-      //evitar fronteras muy muy cercanas y muy muy lejanas
-      double dist = (pos - vp.pos_).norm();
-      //Si la frontera está demasiado cerca (< 0.5) o demasiado lejos (> ftr_max_distance), la salto y no la uso
-      bool valid_dist = dist <= explorer_params_->ftr_max_distance && dist >= 0.5;
-      if (!valid_dist) {
-        continue;
-      }
-
-      if (!isPositionReachable(pos,ftr.average_)){
-        continue;
-      }
-
-      //calcular distancia entre dos posiciones con la norma
-      dist_ftr = compute_distance_cost(pos,ftr.average_,true);
-
-      //para quedarme con la mas corta
-      if (dist_ftr < min_dist){
-        const double kMinDistGoals = 1.0;
-        if (force_different && (ftr.average_ - ed_->next_pos_).norm() < kMinDistGoals) {
-          continue;
-        }
-        min_dist = dist_ftr;
-      }
-
-      double distance_cost = std::min(min_dist / 20.0, 1.0);
-            
-      double yaw_cost = compute_yaw_cost(next_yaw,ed_->swarm_state_[ep_->drone_id_].yaw_);
-      //outfile << "\ncosto yaw: " << (yaw_cost) << std::endl;
-
-      // Direction
-      double direction_cost = compute_direction_cost(pos,ed_->swarm_state_[ep_->drone_id_].vel_, ftr.average_);
-      
-      double total_cost;// = 0.35 * distance_cost + 0.4 * yaw_cost + 0.25 * direction_cost;
-      
-      if (min_dist < 5.0) {
-          total_cost = 0.6 * distance_cost + 0.25 * yaw_cost + 0.15 * direction_cost;
-      } else {
-          total_cost = 0.35 * distance_cost + 0.4 * yaw_cost + 0.25 * direction_cost;
-      }
-
-      front1.id = ftr.id_;
-      front1.costo = total_cost;
-      front1.pos_ = ftr.average_;
-      front1.yaw_ = next_yaw;
-      //front1.edad = edad_normalizada;  //Insertamos edad
-
-      fronteras.push_back(front1);
-      
-      //no lo estoy usando, pero seria interesante usarlo
-      //ed_->fronteras.push_back(ftr.id_);
-      
+    if(ftr_num < drone_num){
+      return false;
     }
-    **/
-
-    // se actualizan las edades de las fronteras
-    // cada que se un robot calcula una nueva frontera
-    //edades_fronteras = nuevas_edades;
-
-    //ROS_WARN_STREAM("[MANAGER] drone ffr: " << ed_->fronteras.size());
-
-    //copiar los elementos a un nuevo vector?
-    //std::vector<Frontera> fronteras_vector(fronteras.begin(), fronteras.end());
-
-    double min_dist;
-
-        
       
     int _robots_ = drone_num;
     int _fronteras_ = ftr_num;
@@ -1013,60 +921,49 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
 
         double sum = 0.0;
         double eps = 1e-3;
+        double exploracion;
 
-        //PARTE MULTI ROBOT
-        for (int j = 0; j < drone_num; ++j) {
-          if (j == r) continue;  // Excluir el robot evaluador
+        if(drone_num > 1){
+          //PARTE MULTI ROBOT
+          for (int j = 0; j < drone_num; ++j) {
+            if (j == r) continue;  // Excluir el robot evaluador
 
-          //distancia desde el robot j a la frontera candidata
-          double rho_j = compute_distance_cost(ed_->swarm_state_[j].pos_,vj.pos_,false);
+            //distancia desde el robot j a la frontera candidata
+            double rho_j = compute_distance_cost(ed_->swarm_state_[j].pos_,vj.pos_,false);
 
-          //distancia desde el objetivo actual del robot j a la frontera 
-          double alpha_ji = compute_distance_cost(ed_->swarm_state_[j].goal_pos_,vj.pos_,false); // O donde almacenes la meta
-          
-          double d = std::min(rho_j, alpha_ji);              // “qué tan cerca está j de esa frontera”
-
-          sum += 1.0 / (d + eps);
-
-          //inversa suavizada evitando division por cero
-          //sum += rho_j + alpha_ji;
+            //distancia desde el objetivo actual del robot j a la frontera 
+            double alpha_ji = compute_distance_cost(ed_->swarm_state_[j].goal_pos_,vj.pos_,false); // O donde almacenes la meta
             
-        }
+            double d = std::min(rho_j, alpha_ji);              // “qué tan cerca está j de esa frontera”
 
-        double exploracion = sum / (drone_num - 1);
+            sum += 1.0 / (d + eps);
+
+            //inversa suavizada evitando division por cero
+            //sum += rho_j + alpha_ji;
+              
+          }
+
+          exploracion = sum / (drone_num - 1);
+
+        }else{
+
+          exploracion = 0.0;
+
+        }
 
         //function costo va aqui
         // r - robot; index - frontera
         mat(r,_ftr_) = explotacion + exploracion;
         ++_ftr_;
-
       }
 
     }
 
     const int dimension = mat.rows();
-
-    // for(auto item: fronteras){
-    //   outfile << "frt:" << item.id << std::endl;
-    //   outfile << "dist:" << item.distance << "\n" << std::endl;
-    // }
     
     // calcular tiempo asignacion?
     std::vector<int> assignment = HungarianAlgorithm(mat);
 
-    //ver el resultado de aqui
-    /***
-    outfile << "Asignaciones (robot -> frontera):" << std::endl;
-    
-    for (size_t i = 0; i < assignment.size(); i++) {
-        outfile << "Robot " << i+1 << " asignado columna " << assignment[i] << std::endl;
-    }
-
-    outfile << "Robot " << ep_->drone_id_ << " Asignado a " << assignment[ep_->drone_id_-1] << " : " << mat(ep_->drone_id_-1,assignment[ep_->drone_id_-1]) << std::endl;
-    **/ 
-
-    //asignar frontera    
-    // Update flag
     found_ftr = true;  
     
     // We want to get the element at index 1.
@@ -1078,14 +975,7 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
 
     next_yaw = vp.yaw_; 
 
-    // Use std::next to get an iterator advanced by 'item' positions.
-    //auto it = std::next(fronteras.begin(), item);
-    //outfile << "Frontera " << item  << std::endl;
     
-    //min_dist = it->costo;
-    //next_pos = it->pos_;
-    //next_yaw = chosen_frontier.yaw_;
-
     // Compute next position
     Vector3d diff_vec = vp.pos_ - pos;
     Vector3d direction = diff_vec.normalized();
@@ -1102,11 +992,7 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
       }
     }
 
-    
-    //outfile.close();
-    
     return found_ftr;
-  
   }
 
   /*
