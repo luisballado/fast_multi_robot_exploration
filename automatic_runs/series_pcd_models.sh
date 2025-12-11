@@ -39,14 +39,26 @@ else
       continue
     fi
 
-    for (( drone_num=1; drone_num<=5; drone_num++ ))
+    for (( drone_num=1; drone_num<=10; drone_num++ ))
     do
-      if [ ${drone_num} == 5 ]; then
-        continue
+      if [ ${drone_num} == 2 ]; then
+          continue
+      elif [ ${drone_num} == 3 ]; then
+          continue
+      elif [ ${drone_num} == 4 ]; then
+          continue
+      elif [ ${drone_num} == 5 ]; then
+          continue
+      elif [ ${drone_num} == 6 ]; then
+          continue
       elif [ ${drone_num} == 7 ]; then
-        continue
+          continue
+      elif [ ${drone_num} == 8 ]; then
+          continue
       elif [ ${drone_num} == 9 ]; then
-        continue
+          continue
+      elif [ ${drone_num} == 10 ]; then
+          continue
       fi
 
       # Logging folder

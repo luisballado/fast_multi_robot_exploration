@@ -334,11 +334,12 @@ namespace fast_planner {
 
         } else if (res == FAIL) {  // Keep trying to replan
           //puede ser falso si no hay camino hacia frontera
-          /**
-          if (expl_manager_->ed_->frontiers_.size() < 1) {
+          /*
+          if (expl_manager_->ed_->frontiers_.size() <= 1) {
             sendEmergencyMsg(false);
-            transitState(FINISH, "FSM");
+            transitState(IDLE, "FSM");
           }*/
+
           fd_->static_state_ = true; //hover
 
           ROS_WARN_THROTTLE(1.0, "-- Plan fail (drone %d) --", getId());

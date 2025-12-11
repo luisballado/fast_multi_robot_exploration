@@ -145,6 +145,13 @@ private:
   bool closestGreedyFrontier(const Vector3d& pos, const Vector3d& yaw, Vector3d& next_pos,
       double& next_yaw, bool force_different = false) ;
 
+  bool EclosestGreedyFrontier(const Vector3d& pos, const Vector3d& yaw, Vector3d& next_pos,
+      double& next_yaw, bool force_different = false) ;
+
+  //rango de comunicacion
+  double compute_comm_penalty(int robot, 
+    const Eigen::Vector3d& frontier_position) const;
+
   // Optimized versions with performance improvements
   bool closestGreedyFrontierOptimized(const Vector3d& pos, const Vector3d& yaw, Vector3d& next_pos,
       double& next_yaw, bool force_different = false);
