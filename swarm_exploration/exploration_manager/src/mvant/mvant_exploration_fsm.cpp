@@ -334,11 +334,12 @@ namespace fast_planner {
 
         } else if (res == FAIL) {  // Keep trying to replan
           //puede ser falso si no hay camino hacia frontera
-          /*
-          if (expl_manager_->ed_->frontiers_.size() <= 1) {
+          
+          //terminar si ya no hay fronteras
+          if (expl_manager_->ed_->frontiers_.size() == 0) {
             sendEmergencyMsg(false);
-            transitState(IDLE, "FSM");
-          }*/
+            transitState(FINISH, "FSM");
+          }
 
           fd_->static_state_ = true; //hover
 
@@ -424,8 +425,10 @@ namespace fast_planner {
             } else {
               // No frontier detected, finish exploration
               fd_->last_check_frontier_time_ = ros::Time::now();
-              transitState(IDLE, "FSM");
-              ROS_WARN_THROTTLE(1., "Idle since no frontier is detected");
+              //transitState(IDLE, "FSM");
+              //ROS_WARN_THROTTLE(1., "Idle since no frontier is detected");
+              transitState(FINISH, "FSM");
+              ROS_WARN_THROTTLE(1., "Finish since no frontier is detected");
               fd_->static_state_ = true;
               replan_pub_.publish(std_msgs::Empty());
               sendStopMsg(1);
@@ -468,9 +471,9 @@ namespace fast_planner {
 
            //Estado final
       case FINISH: {
-        //sendStopMsg(1); //comentar cuando quiera hacer pruebas
         ROS_WARN_THROTTLE(1.0, "FINISH STATE");
         ROS_WARN_THROTTLE(1.0, "-- exploracion terminada --");
+        sendStopMsg(1); //comentar cuando quiera hacer pruebas
         break;
       }
         
