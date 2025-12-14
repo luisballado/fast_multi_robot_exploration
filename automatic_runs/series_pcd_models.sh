@@ -1,7 +1,8 @@
 #!bash/usr/bin/env
 
 # Corre experimentos dado el numero de experimentos por modelo pcd
-#
+# depende de los argumentos de single_run.sh
+# num_runs,visualize,communication_range
 
 # User input
 YELLOW='\033[1;33m'
@@ -9,13 +10,15 @@ RED='\033[0;31m'
 NC='\033[0m' # No Color
 
 # Input arguments
-if [ "$#" -ne 1 ]; then
+if [ "$#" -ne 3 ]; then
   echo -e "${RED}Wrong number of input arguments${NC}"
   return
 else
 
   num_runs=${1}
-
+  visualize=${2}
+  communication_range=${3}
+  
   # Parameters
   num_planners=3
   output_folder_date=$(date +'%F_%H:%M:%S')
@@ -33,8 +36,8 @@ else
       model="office2" #"forest_50x50_01_300" #"office2"
     elif [ ${model_id} == 3 ]; then
       model="office3" #"forest_4_densities_50_40_20_10"
-    #elif [ ${model_id} == 4 ]; then
-    #  model="forest_50x50_100_denser_3"
+    elif [ ${model_id} == 4 ]; then
+      model="forest_50x50_100_denser_3"
     else
       continue
     fi
@@ -87,17 +90,15 @@ else
           log_folder_run="${log_folder_top}/${planner_type}/run_${j}"
 
           # Run Experiment
-          bash src/fast_multi_robot_exploration/automatic_runs/single_run.sh ${drone_num} ${planner_type} ${log_folder_run} ${model} false
+          bash src/fast_multi_robot_exploration/automatic_runs/single_run.sh ${drone_num} ${planner_type} ${log_folder_run} ${model} false ${visualize} ${communication_range}
           sleep 5s
           
         done
-
       done
 
       # Plotting
       python3 src/fast_multi_robot_exploration/swarm_exploration/exploration_manager/scripts/plot_series.py -f ${log_folder_top} --num-agents ${drone_num} --num-runs ${num_runs}
 
     done
-
   done
 fi

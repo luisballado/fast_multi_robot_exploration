@@ -1216,6 +1216,8 @@ namespace fast_planner {
     for (auto id : state.grid_ids_) msg.grid_ids.push_back(id);
     msg.recent_attempt_time = state.recent_attempt_time_;
     msg.stamp = state.stamp_;
+    
+    //aqui si tengo informacion
     msg.goal_posit = eigenToGeometryMsg(expl_manager_->ed_->next_pos_);
     
     //msg.role = int(expl_manager_->role_); //Quitar, yo no uso este esquema
@@ -1252,7 +1254,11 @@ namespace fast_planner {
 
     drone_state.stamp_ = msg->stamp;
     drone_state.recent_attempt_time_ = msg->recent_attempt_time;
+
     drone_state.goal_pos_ = geometryMsgToEigen(msg->goal_posit);
+
+    ROS_WARN_STREAM("recibo msg = " << drone_state.goal_pos_.transpose());
+    
     //drone_state.role_ = ROLE(msg->role);
     
     //std::cout << "Drone " << getId() << " get drone " << int(msg->drone_id) << "'s state" <<

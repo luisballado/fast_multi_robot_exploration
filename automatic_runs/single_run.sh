@@ -1,8 +1,20 @@
 #!bash/usr/bin/env
 
 # Script para correr un experimento,
-# <num_drones> <planificador> <ruta global a carpeta para guardar los datos> <modelo pcd> <activar vulcan> 
-#bash single_run.sh 10 mvant /home/logg office2 false
+# <num_drones> 
+# <planificador> 
+# <ruta global a carpeta para guardar los datos> 
+# <modelo pcd> 
+# <activar vulcan>
+# <visualizar>
+# <comm_range> 
+# modelos disponibles:
+# office, office2, office3
+# forest_50x50_01_200
+# forest_50x50_01_300
+# forest_50x50_100_denser_3
+# forest_4_densities_50_40_20_10
+# bash single_run.sh 10 mvant /home/logg office2 false
 
 # User input
 YELLOW='\033[1;33m'
@@ -12,7 +24,7 @@ NC='\033[0m' # No Color
 # Input arguments
 # no igual a 5
 # 
-if [ "$#" -ne 5 ]; then
+if [ "$#" -ne 7 ]; then
   echo -e "${RED}Wrong number of input arguments${NC}"
   return
 else
@@ -22,15 +34,15 @@ else
   log_folder=${3}
   model=${4}
   vulkan_renderer=${5}
-    
+  
   if [[ "${planner_type}" != "racer" && "${planner_type}" != "fame" && "${planner_type}" != "mvant" ]]; then
     echo -e "${RED}Unknown planner type: ${planner_type}${NC}"
     return
   fi
 
   # Parameters
-  visualize=true
-  communication_range=1000000.0  # Basically infinite communication
+  visualize=${6}
+  communication_range=${7} #1000000.0  # Basically infinite communication
 
   if [ ${vulkan_renderer} == true ]; then
     waiting_time=60.0

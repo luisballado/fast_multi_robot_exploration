@@ -10,5 +10,5 @@ float32[] vel
 float32 yaw
 
 # FAME
-geometry_msgs/Point goal_posit #siguiente frontera a ir
+geometry_msgs/Point goal_posit
 int8 role
