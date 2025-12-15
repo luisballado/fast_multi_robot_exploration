@@ -145,7 +145,7 @@ private:
   bool closestGreedyFrontier(const Vector3d& pos, const Vector3d& yaw, Vector3d& next_pos,
       double& next_yaw, bool force_different = false) ;
 
-  bool EclosestGreedyFrontier(const Vector3d& pos, const Vector3d& yaw, Vector3d& next_pos,
+  bool multiVantFrontier(const Vector3d& pos, const Vector3d& yaw, Vector3d& next_pos,
       double& next_yaw, bool force_different = false) ;
 
   //rango de comunicacion

@@ -233,7 +233,7 @@ int MvantExplorationManager::planExploreMotion(const Vector3d& pos, const Vector
 
   //findPathClosestFrontier(pos, vel, yaw, next_pos, next_yaw);
   //explorerPlan(pos, vel, yaw, next_pos, next_yaw); 
-  success = closestGreedyFrontier(pos, yaw, next_pos, next_yaw);
+  success = multiVantFrontier(pos, yaw, next_pos, next_yaw);
   
   /**
   if(ftr_num >= drone_num && drone_num > 1){
@@ -244,7 +244,7 @@ int MvantExplorationManager::planExploreMotion(const Vector3d& pos, const Vector
   
   if (!success) {
     ROS_ERROR("explorerPlan- agoto las fronteras");
-    success = EclosestGreedyFrontier(pos, yaw, next_pos, next_yaw);
+    success = closestGreedyFrontier(pos, yaw, next_pos, next_yaw);
   }
   
 
@@ -673,12 +673,13 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
       continue;
     }
 
+    /*
     double dist = (pos - vp.pos_).norm();
     //Si la frontera está demasiado cerca (< 0.5) o demasiado lejos (> ftr_max_distance), la salto y no la uso
     bool valid_dist = dist <= explorer_params_->ftr_max_distance && dist >= 0.5;
     if (!valid_dist) {
       continue;
-    }
+    }*/
     
     vector<Vector3d> path;
     double distance = std::max(1., explorer_params_->w_distance) *
@@ -844,8 +845,9 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
   double compute_direction_cost(const Eigen::Vector3d& robot_position,const Eigen::Vector3d& robot_vel, const Eigen::Vector3d& frontier_position){
 
     auto direction = (frontier_position - robot_position).head(2).normalized();
-    //double dot = drone_state.vel_.head(2).normalized().dot(direction);
-    //double direction_cost = ViewNode::w_dir_ * (1.0 - (drone_state.vel_.head(2).normalized().dot(direction.normalized())));
+    //double dot = robot_vel.head(2).normalized().dot(direction);
+    //double direction_cost = ViewNode::w_dir_ * (1.0 - (robot_vel.head(2).normalized().dot(direction.normalized())));
+    
     double direction_cost = 0.0;
     Eigen::Vector2d vel2d = robot_vel.head(2);
     if (vel2d.norm() < 1e-3) {
@@ -856,6 +858,7 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
 
         direction_cost = (1.0 - dot) / 2.0;
     }
+    
     return direction_cost;
   }
 
@@ -908,7 +911,7 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
   }
 
   //Funcion principal de exploración con todos los elementos
-  bool MvantExplorationManager::closestGreedyFrontier(const Vector3d& pos, const Vector3d& yaw, Vector3d& next_pos, double& next_yaw, bool force_different)  {
+  bool MvantExplorationManager::multiVantFrontier(const Vector3d& pos, const Vector3d& yaw, Vector3d& next_pos, double& next_yaw, bool force_different)  {
 
     const int drone_num = ed_->swarm_state_.size()-1;
     
@@ -920,8 +923,8 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
     // Copia a vector para tener acceso por índice
     std::vector<fast_planner::Frontier> fronteras(fronteras_list.begin(), fronteras_list.end());
     
-    ROS_WARN_STREAM("robots_ " << drone_num);
-    ROS_WARN_STREAM("fronteras_ " << ftr_num);
+    //ROS_WARN_STREAM("robots_ " << drone_num);
+    //ROS_WARN_STREAM("fronteras_ " << ftr_num);
        
     bool found_ftr = false;
           
@@ -934,6 +937,7 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
     
     mat.resize(n,n);
     mat.setConstant(100000.0);
+
 
 
     //ITERAR EN ROBOTS
@@ -953,71 +957,59 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
         Viewpoint vj = ftr.viewpoints_.front();
 	
         //ROS_WARN_STREAM("objetivo al inicio drone_state = " << ed_->next_pos_.transpose());
-	
-	double rho_k = compute_distance_cost(drone_state.pos_,ed_->next_pos_,false);
+
+        double rho_k = compute_distance_cost(drone_state.pos_,ed_->next_pos_,false);
         double alpha_ki = compute_distance_cost(ed_->next_pos_,vj.pos_,false);
 
         Vector3d diff_vec = vj.pos_ - drone_state.pos_;
         Vector3d direction = diff_vec.normalized();
         next_yaw = atan2(direction.y(), direction.x());
-        double yaw_cost = compute_yaw_cost(next_yaw, drone_state.yaw_);
-        double direction_cost = compute_direction_cost(drone_state.pos_, drone_state.vel_, ftr.average_);
-
-        //evitar fronteras lejanas o cercanas
-        double dist = (drone_state.pos_ - vj.pos_).norm();
-
-        double explotacion;
         
-        /*
-        if(drone_num == 1){
-          explotacion = 0.8 * (rho_k + alpha_ki) + 0.2 * direction_cost;  
-        }
-        */
+        double yaw_cost = compute_yaw_cost(next_yaw, drone_state.yaw_);
+        double direction_cost = compute_direction_cost(drone_state.pos_, drone_state.vel_, vj.pos_);
+
+        double explotacion = 0.0;
+        double exploracion = 0.0;
 
         //with yaw cost 1m57s
         //without 2m4s
         
-        explotacion = (rho_k + alpha_ki);// + yaw_cost + direction_cost;
+        explotacion = rho_k + alpha_ki + direction_cost + yaw_cost;
 
+        double sum = 0.0;
+        double eps = 1e-3; //num bajo
 
-        double exploracion = 0.0;
+        //PARTE MULTI ROBOT
+        for (int j = 0; j < drone_num; ++j) {
+          if (j == r) continue;  // todos menos yo
 
-        if(drone_num > 1){
-        
-          double sum = 0.0;
-          double eps = 1e-3; //num bajo
+          //distancia desde el robot j a la frontera candidata
+          //double rho_j = compute_distance_cost(ed_->swarm_state_[j].pos_,vj.pos_,false);
+          double rho_j = compute_distance_cost(ed_->swarm_state_[j].pos_,ed_->swarm_state_[j].goal_pos_,false);
 
-          //PARTE MULTI ROBOT
-          for (int j = 0; j < drone_num; ++j) {
-            if (j == r) continue;  // Excluir el robot evaluador
+          //distancia desde el objetivo actual del robot j a la frontera 
+          double alpha_ji = compute_distance_cost(ed_->swarm_state_[j].goal_pos_,vj.pos_,false); // O donde almacenes la meta
+          
+          //Si las fronteras están lejos de los otros robots,
+          //rho_j + alpha_ji es grande sum grande.
+          sum += rho_j + alpha_ji; 
 
-            //distancia desde el robot j a la frontera candidata
-            //double rho_j = compute_distance_cost(ed_->swarm_state_[j].pos_,vj.pos_,false);
-	    double rho_j = compute_distance_cost(ed_->swarm_state_[j].pos_,ed_->swarm_state_[j].goal_pos_,false);
-
-            //distancia desde el objetivo actual del robot j a la frontera 
-            double alpha_ji = compute_distance_cost(ed_->swarm_state_[j].goal_pos_,vj.pos_,false); // O donde almacenes la meta
-            
-            //Si las fronteras están lejos de los otros robots,
-            //rho_j + alpha_ji es grande sum grande.
-            sum += rho_j + alpha_ji; 
-
-            //Ahora es grande cuando la frontera esta cerca de 
-            //otros robots (o de sus metas)
-            //sum += 1.0 / (rho_j + alpha_ji + eps);
-
-          }
-
-          exploracion = sum / (drone_num - 1);
+          //Ahora es grande cuando la frontera esta cerca de 
+          //otros robots (o de sus metas)
+          //sum += 1.0 / (rho_j + alpha_ji + eps);
 
         }
 
-        double comm_penalty = compute_comm_penalty(r, vj.pos_);  // 0 si el puente se mantiene
+        if(drone_num > 1){
+          exploracion = sum / (drone_num - 1);
+        }
+
+        //double comm_penalty = compute_comm_penalty(r, vj.pos_);  // 0 si el puente se mantiene
 
         //function costo va aqui
         // r - robot; index - frontera
-        //mat(r,_ftr_) = explotacion - exploracion; 
-        mat(r,_ftr_) = explotacion - exploracion; //+ comm_penalty;
+        mat(r,_ftr_) = explotacion - exploracion; 
+        //mat(r,_ftr_) = explotacion - exploracion; //+ comm_penalty;
         ++_ftr_;
       }
 
@@ -1066,7 +1058,7 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
   }
 
   
-  bool MvantExplorationManager::EclosestGreedyFrontier(const Vector3d& pos, const Vector3d& yaw, Vector3d& next_pos, double& next_yaw, bool force_different) {
+  bool MvantExplorationManager::closestGreedyFrontier(const Vector3d& pos, const Vector3d& yaw, Vector3d& next_pos, double& next_yaw, bool force_different) {
     double min_dist = std::numeric_limits<double>::max();
   bool found_ftr = false;
   for (const auto& ftr : frontier_finder_->getFrontiers()) {

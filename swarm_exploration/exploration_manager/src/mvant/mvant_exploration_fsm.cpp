@@ -336,11 +336,12 @@ namespace fast_planner {
           //puede ser falso si no hay camino hacia frontera
           
           //terminar si ya no hay fronteras
+          /**
           if (expl_manager_->ed_->frontiers_.size() == 0) {
             sendEmergencyMsg(false);
             transitState(FINISH, "FSM");
           }
-
+          */
           fd_->static_state_ = true; //hover
 
           ROS_WARN_THROTTLE(1.0, "-- Plan fail (drone %d) --", getId());
@@ -404,15 +405,15 @@ namespace fast_planner {
           bool need_replan = false;
     
           if (t_cur > fp_->replan_thresh2_ || expl_manager_->frontier_finder_->isFrontierCovered()) {
-            //ROS_WARN("Replan: frontera cubierta==================================");
+            ROS_WARN("Replan: frontera cubierta==================================");
             need_replan = true;
           } else if (info->duration_ - t_cur < fp_->replan_thresh1_) {
             // Replan si la trayectoria ya se realizo
-            //ROS_WARN("Replan: trayectoria realizada==============================");
+            ROS_WARN("Replan: trayectoria realizada==============================");
             need_replan = true;
           } else if (t_cur > fp_->replan_thresh3_) {
             // Replan despues de un tiempo
-            //ROS_WARN("Replan: despues de un tiempo===============================");
+            ROS_WARN("Replan: despues de un tiempo===============================");
             need_replan = true;
           }
       
@@ -425,10 +426,10 @@ namespace fast_planner {
             } else {
               // No frontier detected, finish exploration
               fd_->last_check_frontier_time_ = ros::Time::now();
-              //transitState(IDLE, "FSM");
-              //ROS_WARN_THROTTLE(1., "Idle since no frontier is detected");
-              transitState(FINISH, "FSM");
-              ROS_WARN_THROTTLE(1., "Finish since no frontier is detected");
+              transitState(IDLE, "FSM");
+              ROS_WARN_THROTTLE(1., "Idle since no frontier is detected");
+              //transitState(FINISH, "FSM");
+              //ROS_WARN_THROTTLE(1., "Finish since no frontier is detected");
               fd_->static_state_ = true;
               replan_pub_.publish(std_msgs::Empty());
               sendStopMsg(1);
@@ -446,7 +447,7 @@ namespace fast_planner {
           auto dist = (pos - expl_manager_->ed_->next_pos_).norm();
           //ROS_WARN_STREAM("ACA ESTOY CIERTO=========" << dist);
 
-          if ((pos - expl_manager_->ed_->next_pos_).norm() < 1.5) {
+          if ((pos - expl_manager_->ed_->next_pos_).norm() < 1.0) {
             ROS_WARN_STREAM("Llegue al destino:: " << dist);
             replan_pub_.publish(std_msgs::Empty());
             clearVisMarker();
@@ -471,9 +472,9 @@ namespace fast_planner {
 
            //Estado final
       case FINISH: {
+        sendStopMsg(1); //comentar cuando quiera hacer pruebas
         ROS_WARN_THROTTLE(1.0, "FINISH STATE");
         ROS_WARN_THROTTLE(1.0, "-- exploracion terminada --");
-        sendStopMsg(1); //comentar cuando quiera hacer pruebas
         break;
       }
         
@@ -1257,8 +1258,6 @@ namespace fast_planner {
 
     drone_state.goal_pos_ = geometryMsgToEigen(msg->goal_posit);
 
-    ROS_WARN_STREAM("recibo msg = " << drone_state.goal_pos_.transpose());
-    
     //drone_state.role_ = ROLE(msg->role);
     
     //std::cout << "Drone " << getId() << " get drone " << int(msg->drone_id) << "'s state" <<

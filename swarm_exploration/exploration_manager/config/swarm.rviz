@@ -71,7 +71,7 @@ Visualization Manager:
           Marker Topic: /planning/travel_traj_1
           Name: executed_traj1
           Namespaces:
-            {}
+            "": true
           Queue Size: 100
           Value: true
         - Class: rviz/Marker
@@ -79,7 +79,7 @@ Visualization Manager:
           Marker Topic: /planning/position_cmd_vis_1
           Name: position_cmd1
           Namespaces:
-            {}
+            current_pose: true
           Queue Size: 100
           Value: true
         - Class: rviz/Marker
@@ -87,7 +87,7 @@ Visualization Manager:
           Marker Topic: /planning/travel_traj_2
           Name: executed_traj2
           Namespaces:
-            {}
+            "": true
           Queue Size: 100
           Value: true
         - Class: rviz/Marker
@@ -95,7 +95,7 @@ Visualization Manager:
           Marker Topic: /planning/position_cmd_vis_2
           Name: position_cmd2
           Namespaces:
-            {}
+            current_pose: true
           Queue Size: 100
           Value: true
         - Class: rviz/Marker
@@ -148,8 +148,6 @@ Visualization Manager:
           Name: frontier1
           Namespaces:
             frontier: true
-            id: true
-            idf: true
           Queue Size: 10000
           Value: true
         - Class: rviz/Marker
@@ -157,7 +155,7 @@ Visualization Manager:
           Marker Topic: /planning_vis/trajectory_1
           Name: traj1
           Namespaces:
-            {}
+            B-Spline: true
           Queue Size: 100
           Value: true
         - Class: rviz/Marker
@@ -173,7 +171,7 @@ Visualization Manager:
           Marker Topic: /planning_vis/trajectory_2
           Name: traj2
           Namespaces:
-            {}
+            B-Spline: true
           Queue Size: 100
           Value: true
         - Class: rviz/Marker
@@ -576,7 +574,7 @@ Visualization Manager:
           Color: 161; 161; 161
           Color Transformer: FlatColor
           Decay Time: 0
-          Enabled: false
+          Enabled: true
           Invert Rainbow: false
           Max Color: 255; 255; 255
           Min Color: 0; 0; 0
@@ -591,7 +589,7 @@ Visualization Manager:
           Unreliable: false
           Use Fixed Frame: true
           Use rainbow: true
-          Value: false
+          Value: true
         - Class: rviz/Marker
           Enabled: true
           Marker Topic: /odom_visualization_1/robot
@@ -613,7 +611,7 @@ Visualization Manager:
           Marker Topic: /odom_visualization_3/robot
           Name: robot3
           Namespaces:
-            mesh: true
+            {}
           Queue Size: 100
           Value: true
         - Class: rviz/Marker
@@ -837,7 +835,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/ThirdPersonFollower
-      Distance: 41.43227005004883
+      Distance: 56.54500198364258
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -845,17 +843,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: -4.830690383911133
-        Y: -0.5168204307556152
-        Z: 1.9073486328125e-06
+        X: -8.723001480102539
+        Y: 0.395031213760376
+        Z: -1.71661376953125e-05
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.5597963929176331
+      Pitch: 0.5797963738441467
       Target Frame: <Fixed Frame>
-      Yaw: 3.2485687732696533
+      Yaw: 3.1535677909851074
     Saved:
       - Class: rviz/ThirdPersonFollower
         Distance: 17.48538589477539
