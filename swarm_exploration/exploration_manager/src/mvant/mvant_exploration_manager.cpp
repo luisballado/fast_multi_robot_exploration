@@ -938,8 +938,6 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
     mat.resize(n,n);
     mat.setConstant(100000.0);
 
-
-
     //ITERAR EN ROBOTS
     for (int r = 0; r < drone_num; ++r) {
 
@@ -974,7 +972,7 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
         //with yaw cost 1m57s
         //without 2m4s
         
-        explotacion = rho_k + alpha_ki + direction_cost + yaw_cost;
+        explotacion = rho_k + alpha_ki; //+ direction_cost + yaw_cost;
 
         double sum = 0.0;
         double eps = 1e-3; //num bajo
@@ -1044,7 +1042,8 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
     //next_yaw = atan2(direction.y(), direction.x());
 
     if (diff_vec.head(2).norm() < explorer_params_->ftr_max_distance && diff_vec.head(2).norm() >= 0.5) {
-      next_pos = vp.pos_;
+      //next_pos = vp.pos_;
+      next_pos = chosen_frontier.average_;
     } else {
       double range = std::min(explorer_params_->ftr_max_distance, diff_vec.norm());
       next_pos = pos + range * direction;

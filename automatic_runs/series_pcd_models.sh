@@ -44,11 +44,7 @@ else
 
     for (( drone_num=1; drone_num<=10; drone_num++ ))
     do
-      if [ ${drone_num} == 2 ]; then
-          continue
-      elif [ ${drone_num} == 3 ]; then
-          continue
-      elif [ ${drone_num} == 4 ]; then
+      if [ ${drone_num} == 4 ]; then
           continue
       elif [ ${drone_num} == 5 ]; then
           continue
