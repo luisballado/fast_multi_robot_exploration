@@ -972,7 +972,7 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
         //with yaw cost 1m57s
         //without 2m4s
         
-        explotacion = rho_k + alpha_ki; //+ direction_cost + yaw_cost;
+        explotacion = rho_k + alpha_ki + direction_cost + yaw_cost;
 
         double sum = 0.0;
         double eps = 1e-3; //num bajo
