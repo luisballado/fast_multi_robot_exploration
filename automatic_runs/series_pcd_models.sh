@@ -27,13 +27,13 @@ else
   rosclean purge -y
 
   # Iterate over models and number of agents
-  for (( model_id=1; model_id<=4; model_id++ ))
+  for (( model_id=1; model_id<=2; model_id++ ))
   do
 
     if [ ${model_id} == 1 ]; then
-      model="forest_50x50_01_200" #"office" 
+      model="office" #"forest_50x50_01_200"
     elif [ ${model_id} == 2 ]; then
-      model="forest_50x50_01_300" #"office2"
+      model="office2" #"forest_50x50_01_300"
     elif [ ${model_id} == 3 ]; then
       model="forest_4_densities_50_40_20_10" #office3
     elif [ ${model_id} == 4 ]; then
@@ -42,7 +42,7 @@ else
       continue
     fi
 
-    for (( drone_num=1; drone_num<=10; drone_num++ ))
+    for (( drone_num=1; drone_num<=5; drone_num++ ))
     do
       if [ ${drone_num} == 5 ]; then
           continue
