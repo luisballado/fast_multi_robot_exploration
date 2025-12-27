@@ -10,7 +10,7 @@
 #include <exploration_manager/mvant/mvant_exploration_fsm.h>
 #include <exploration_manager/mvant/expl_data.h>
 
-#include <exploration_manager/HGrid.h>
+//#include <exploration_manager/HGrid.h>
 #include <exploration_manager/GridTour.h>
 
 #include <plan_env/edt_environment.h>
@@ -18,6 +18,7 @@
 #include <plan_env/multi_map_manager.h>
 
 #include <active_perception/perception_utils.h>
+
 #include <active_perception/hgrid.h>
 
 #include <ros/console.h>
@@ -163,7 +164,7 @@ namespace fast_planner {
     //cada cierto tiempo se mandan traj
     swarm_traj_timer_ = nh.createTimer(ros::Duration(0.1), &MvantExplorationFSM::swarmTrajTimerCallback, this);
     
-    hgrid_pub_     = nh.advertise<exploration_manager::HGrid>("/swarm_expl/hgrid_send", 10);
+    //hgrid_pub_     = nh.advertise<exploration_manager::HGrid>("/swarm_expl/hgrid_send", 10);
     grid_tour_pub_ = nh.advertise<exploration_manager::GridTour>("/swarm_expl/grid_tour_send", 10);
     
     //-------------------------------------------------------------------------------------------------
@@ -336,12 +337,12 @@ namespace fast_planner {
           //puede ser falso si no hay camino hacia frontera
           
           //terminar si ya no hay fronteras
-          
+          /*
           if (expl_manager_->ed_->frontiers_.size() == 0) {
             sendEmergencyMsg(false);
             transitState(IDLE, "FSM");
           }
-          
+          */
           fd_->static_state_ = true; //hover
 
           ROS_WARN_THROTTLE(1.0, "-- Plan fail (drone %d) --", getId());
@@ -405,15 +406,15 @@ namespace fast_planner {
           bool need_replan = false;
     
           if (t_cur > fp_->replan_thresh2_ || expl_manager_->frontier_finder_->isFrontierCovered()) {
-            ROS_WARN("Replan: frontera cubierta==================================");
+            //ROS_WARN("Replan: frontera cubierta==================================");
             need_replan = true;
           } else if (info->duration_ - t_cur < fp_->replan_thresh1_) {
             // Replan si la trayectoria ya se realizo
-            ROS_WARN("Replan: trayectoria realizada==============================");
+            //ROS_WARN("Replan: trayectoria realizada==============================");
             need_replan = true;
           } else if (t_cur > fp_->replan_thresh3_) {
             // Replan despues de un tiempo
-            ROS_WARN("Replan: despues de un tiempo===============================");
+            //ROS_WARN("Replan: despues de un tiempo===============================");
             need_replan = true;
           }
       

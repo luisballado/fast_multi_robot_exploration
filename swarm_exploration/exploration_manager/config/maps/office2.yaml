@@ -1,9 +1,9 @@
-sdf_map/box_min_x: -12.5
-sdf_map/box_min_y: -12.5
+sdf_map/box_min_x: -10.0
+sdf_map/box_min_y: -10.0
 sdf_map/box_min_z: 0.7
 
-sdf_map/box_max_x: 12.5
-sdf_map/box_max_y: 12.5
+sdf_map/box_max_x: 10.0
+sdf_map/box_max_y: 10.0
 sdf_map/box_max_z: 1.7
 
 sdf_map/map_size_x: 20.0

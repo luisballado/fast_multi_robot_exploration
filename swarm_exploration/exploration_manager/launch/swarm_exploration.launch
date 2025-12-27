@@ -14,6 +14,7 @@
 
   <!-- Coordination Type (MVANT only)-->
   <!-- branchnbound-epsilon-->
+  <!-- deprecated -->
   <arg name="coordination_type" default="branchnbound"/>
   
   <!-- Renderer (Vulkan) -->
