@@ -17,7 +17,7 @@
   <arg name="box_max_x" default="7"/>
   <arg name="box_max_y" default="15"/>
   <arg name="box_max_z" default="1.7"/>
-
+    
   <arg name="odometry_topic"/>
   <arg name="sensor_pose_topic"/>
   <arg name="depth_topic"/>

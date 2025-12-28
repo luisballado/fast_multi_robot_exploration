@@ -35,6 +35,8 @@
   
   <!-- Map generation -->
   <node pkg="map_generator" name="map_pub" type="map_pub" output="screen" args="$(find map_generator)/resource/$(arg model).pcd" unless="$(arg vulkan_renderer)">
+    <!-- tomar los valores de conf del yaml-->
+    <rosparam command="load" file="$(find exploration_manager)/config/maps/$(arg model).yaml" />
   </node>
 
 <include file="$(find exploration_manager)/launch/single_drone_exploration.xml" if="$(eval arg('drone_num') >= 1)">

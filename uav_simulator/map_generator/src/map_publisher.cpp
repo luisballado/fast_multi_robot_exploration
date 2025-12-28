@@ -42,11 +42,29 @@ int main(int argc, char** argv) {
   //   cloud.points[i] = pr;
   // }
 
+  /*
   for (double x = -7; x <= 7; x += 0.1)
     for (double y = -15; y <= 15; y += 0.1) {
       cloud.push_back(pcl::PointXYZ(x, y, 0));
     }
+  */
+  
+  //Dibujar el piso respecto al mapa a explorar  
+  ros::NodeHandle nh("~");
+  double map_size_x, map_size_y;
+  
+  nh.param("sdf_map/map_size_x", map_size_x, 50.0);
+  nh.param("sdf_map/map_size_y", map_size_y, 50.0);
 
+  ROS_WARN_STREAM("map_sizex: " << map_size_x);
+  ROS_WARN_STREAM("map_sizey: " << map_size_y);
+
+  for (double x = -map_size_x / 2.0; x <= map_size_x / 2.0; x += 0.1)
+    for (double y = -map_size_y / 2.0; y <= map_size_y / 2.0; y += 0.1) {
+      cloud.push_back(pcl::PointXYZ(x, y, 0));
+    }
+
+  
   // cout << "Publishing map..." << endl;
 
   sensor_msgs::PointCloud2 msg;
