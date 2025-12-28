@@ -104,7 +104,7 @@
     <param name="sdf_map/map_size_y"   value="$(arg map_size_y)" /> 
     <param name="sdf_map/map_size_z"   value="$(arg map_size_z)" /> 
     -->
-    <param name="sdf_map/obstacles_inflation" value="0.4" />
+    <param name="sdf_map/obstacles_inflation" value="0.2" />
     <!-- <param name="sdf_map/obstacles_inflation"     value="0.0" />  -->
     <param name="sdf_map/local_bound_inflate" value="0.5"/>
     <param name="sdf_map/local_map_margin" value="50"/>

@@ -140,10 +140,12 @@ void FrontierFinder::searchFrontiers() {
         for (int y = min_id(1); y <= max_id(1); ++y) {
           // Scanning the updated region to find seeds of frontiers
           Eigen::Vector3i cur(x, y, z);
-          //condicion de semilla (0- no pertenece a ninguna frontera)
-          if (frontier_flag_[toadr(cur)] == 0 && knownfree(cur) && isNeighborUnknown(cur)) {
+          int adr = toadr(cur);
+          if (adr < 0 || adr >= frontier_flag_.size()) continue;
+	  //evitar crear semillas fuera del mapa
+	  if (!edt_env_->sdf_map_->isInBox(cur)) continue;
+          if (frontier_flag_[adr] == 0 && knownfree(cur) && isNeighborUnknown(cur)) {
             // Expand from the seed cell to find a complete frontier cluster
-            // Semilla de frontera: libre conocida con vecino desconocido y no marcada
             expandFrontier(cur);
           }
         }
@@ -181,8 +183,8 @@ void FrontierFinder::expandFrontier(
       // Qualified cell should be inside bounding box and frontier cell not clustered
       int adr = toadr(nbr);
 
-      if (adr >= frontier_flag_.size()) continue;
-
+      if (adr < 0 || adr >= frontier_flag_.size()) continue;
+      
       //condicion para decir que es frontera
       if (frontier_flag_[adr] == 1 || !edt_env_->sdf_map_->isInBox(nbr) ||
           !(knownfree(nbr) && isNeighborUnknown(nbr)))
