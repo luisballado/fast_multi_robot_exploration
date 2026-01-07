@@ -199,48 +199,10 @@ int MvantExplorationManager::planExploreMotion(const Vector3d& pos, const Vector
   Vector3d next_pos;
   double next_yaw;
   bool success;
-
-  //Elegir optimizador basado en el numero de fronteras
-  const int ftr_num = frontier_finder_->getFrontiers().size();
-  const int drone_num = ed_->swarm_state_.size() - 1; //cero basado
-
-  //TODO
-  //cambiar velocidad aqui respecto a algun criterio
-  /*
-  const ROLE updated_role = role_assigner_->assignRole(
-      pos, ep_->drone_id_, ed_->swarm_state_, frontier_finder_->getFrontiers());
-  updateRoleAndVelocities(updated_role);
-  */
   
-  // Aplicar factor de velocidad
-  //updateVelocities(0.4);
-
-  //Usar diferentes estrategias basado en el tamaño del problema
-  /*
-  if (ftr_num < 10 || drone_num == 1) {
-    //success = explorerPlan(pos, vel, yaw, next_pos, next_yaw);
-    //success = findPathClosestFrontier(pos, vel, yaw, next_pos, next_yaw);
-    //ROS_ERROR("**findPathClosestFrontier**");
-    success = closestGreedyFrontier(pos, yaw, next_pos, next_yaw);
-  } else if (ftr_num < 50){
-    success = closestGreedyFrontierUltraFast(pos, yaw, next_pos, next_yaw);
-    ROS_ERROR("**UltraFast**");
-  } else {
-    success = closestGreedyFrontierUltraFast(pos, yaw, next_pos, next_yaw);
-    ROS_ERROR("**UltraFast2**");
-  }
-  */
-
   //findPathClosestFrontier(pos, vel, yaw, next_pos, next_yaw);
   //explorerPlan(pos, vel, yaw, next_pos, next_yaw); 
   success = multiVantFrontier(pos, yaw, next_pos, next_yaw);
-  
-  /**
-  if(ftr_num >= drone_num && drone_num > 1){
-    success = closestGreedyFrontier(pos, yaw, next_pos, next_yaw);//findPathClosestFrontier(pos, vel, yaw, next_pos, next_yaw);explorerPlan(pos, vel, yaw, next_pos, next_yaw); 
-  }else{
-    success = findPathClosestFrontier(pos, vel, yaw, next_pos, next_yaw);
-  }**/
   
   if (!success) {
     ROS_ERROR("explorerPlan- agoto las fronteras");
@@ -269,15 +231,6 @@ int MvantExplorationManager::planExploreMotion(const Vector3d& pos, const Vector
     if (ed_->num_attempts_ > kMaxAttempts) {
       bool force_different = true;
       success = closestGreedyFrontier(pos, yaw, next_pos, next_yaw);
-      /**
-      if (ftr_num < 10 || drone_num == 1) {
-        success = closestGreedyFrontier(pos, yaw, next_pos, next_yaw);
-      } else if (ftr_num < 50){
-        success = closestGreedyFrontierOptimized(pos, yaw, next_pos, next_yaw);
-      } else {
-        success = closestGreedyFrontierUltraFast(pos, yaw, next_pos, next_yaw);
-      }
-      **/
     }
 
     ed_->next_pos_ = next_pos;
@@ -913,6 +866,24 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
   //Funcion principal de exploración con todos los elementos
   bool MvantExplorationManager::multiVantFrontier(const Vector3d& pos, const Vector3d& yaw, Vector3d& next_pos, double& next_yaw, bool force_different)  {
 
+    // ------------------------------------------------------------
+    // Parámetros (túnelos)
+    // ------------------------------------------------------------
+    const double INF_COST        = 1e9;
+
+    // Histeresis: penaliza cambiar de objetivo (reduce "brincos")
+    const double GOAL_MATCH_TOL  = 0.8;   // [m] si goal_pos_ está "cerca" del viewpoint, lo consideramos mismo objetivo
+    const double SWITCH_PENALTY  = 200.0;  // penalización base por cambiar (suba si brinca mucho)
+
+    // Radio de bloqueo: si una frontera está muy cerca del objetivo de otro robot
+    const double R_BLOCK         = 4.0;     // [m] radio de bloqueo alrededor del goal de otros robots
+    const double BLOCK_PENALTY   = 5e4;     // grande (pero < mat.setConstant(...) si quiere que siga siendo elegible)
+
+    // Helper: ¿esta frontera corresponde al goal actual?
+    auto same_goal = [&](const Eigen::Vector3d& goal, const Eigen::Vector3d& cand) -> bool {
+      return (goal - cand).norm() < GOAL_MATCH_TOL;
+    };
+
     const int drone_num = ed_->swarm_state_.size()-1;
     
     const int ftr_num = frontier_finder_->getFrontiers().size();
@@ -945,18 +916,16 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
 
       const auto& drone_state = ed_->swarm_state_[r];
 
+      ROS_WARN_STREAM("objetivo drone = " << ed_->next_pos_.transpose());
+      
       //ITERAR EN FRONTERAS de lista armada arriba 
       for (const auto& ftr : fronteras_list) {
-        
         //*****************************************
         //* COSTO INDIVIDUAL ROBOT i - FRONTERA j
         //*****************************************
         
         Viewpoint vj = ftr.viewpoints_.front();
-	
-        //ROS_WARN_STREAM("objetivo al inicio drone_state = " << ed_->next_pos_.transpose());
-
-        double rho_k = compute_distance_cost(drone_state.pos_,ed_->next_pos_,false);
+	      double rho_k = compute_distance_cost(drone_state.pos_,ed_->next_pos_,false);
         double alpha_ki = compute_distance_cost(ed_->next_pos_,vj.pos_,false);
 
         Vector3d diff_vec = vj.pos_ - drone_state.pos_;
@@ -973,7 +942,7 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
         //without 2m4s
         
         explotacion = rho_k + alpha_ki + direction_cost + yaw_cost;
-
+        
         double sum = 0.0;
         double eps = 1e-3; //num bajo
 
@@ -1003,10 +972,13 @@ bool MvantExplorationManager::findPathClosestFrontier(const Vector3d& pos, const
         }
 
         //double comm_penalty = compute_comm_penalty(r, vj.pos_);  // 0 si el puente se mantiene
-
+        double cost = explotacion - exploracion;// + hyst_cost + block_cost;
+        ROS_WARN_STREAM("explotacion = " << explotacion);
+        ROS_WARN_STREAM("exploracion = " << exploracion);
+        ROS_WARN_STREAM("cost = " << cost);
         //function costo va aqui
         // r - robot; index - frontera
-        mat(r,_ftr_) = explotacion - exploracion; 
+        mat(r,_ftr_) = cost; 
         //mat(r,_ftr_) = explotacion - exploracion; //+ comm_penalty;
         ++_ftr_;
       }

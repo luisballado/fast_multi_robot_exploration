@@ -103,7 +103,12 @@ namespace fast_planner {
     //FSM principal
     exec_timer_     = nh.createTimer(ros::Duration(0.01), &MvantExplorationFSM::FSMCallback, this);
 
-    //revisar colisiones
+    // revisar colisiones
+    // si existe manda una bandera true de colision y manda a hacer una replanificacion
+    // simula mirar hacia adelante sobre la trayectoria del robot
+    // y pregunta al mapa si algun punto futuro cae dentro de una celda
+    // ocupada (inflada). Si encuentra una ocupada, reporta
+    // a que distancia de la posición actual ocurre y devuelve si hay colision
     safety_timer_   = nh.createTimer(ros::Duration(0.05), &MvantExplorationFSM::safetyCallback, this);
     
     //actualiza la frontera
@@ -323,8 +328,10 @@ namespace fast_planner {
 
         auto colors = visualization_->getColor(5.0 / 6.0, 1); //amarillo
         
+        //pintar el objetivo de amarillo
         visualization_->drawGoal(expl_manager_->ed_->next_pos_,expl_manager_->sdf_map_->getResolution(),colors,5);
 
+        //si hay objetivo cambiar a PUB_TRAJ
         if (res == SUCCEED) {
           //transitar a publicar trayectoria,
           //el siguiente objetivo esta en los apuntadores
@@ -487,7 +494,6 @@ namespace fast_planner {
         if (expl_manager_->updateFrontierStruct(fd_->odom_pos_, fd_->odom_yaw_, fd_->odom_vel_) <= 1) {
     
           ROS_WARN_THROTTLE(1.0, "-- No fronteras para agente %d", getId());
-    
           sendStopMsg(1);
     
           break;

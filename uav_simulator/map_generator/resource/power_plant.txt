@@ -1,0 +1,2 @@
+Aca esta el archivo, pesa mas de 60MB
+https://github.com/luisballado/FALCON/tree/ros1-noetic/falcon_planner/exploration_manager/config/map

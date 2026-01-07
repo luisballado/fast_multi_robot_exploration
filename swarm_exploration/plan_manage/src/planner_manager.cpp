@@ -100,14 +100,27 @@ void FastPlannerManager::setGlobalWaypoints(vector<Eigen::Vector3d>& waypoints) 
   plan_data_.global_waypoints_ = waypoints;
 }
 
+//revisar colision
+//distance por referencia para devolver la distancia desde el punto actual
+//hasta el primer punto donde detecta colision
+//
 bool FastPlannerManager::checkTrajCollision(double& distance) {
+  //tiempo que ha pasado desde que inició esta trayectoria local
   double t_now = (ros::Time::now() - local_data_.start_time_).toSec();
   
+  //evaluar en la trayectoria
   Eigen::Vector3d cur_pt = local_data_.position_traj_.evaluateDeBoorT(t_now);
+  
+  //guardara la distancia entre cur_pt y el punto futuro
   double radius = 0.0;
   Eigen::Vector3d fut_pt;
-  double fut_t = 0.02;
 
+  //el primer muestreo se hace 20ms adelante
+  double fut_t = 0.02; 
+  
+  //muestrea puntos hacia adelante hasta 6m o fin
+  //trayectoria 
+  //solo revisa hasta 6 metros hacia adelante
   while (radius < 6.0 && t_now + fut_t < local_data_.duration_) {
     fut_pt = local_data_.position_traj_.evaluateDeBoorT(t_now + fut_t);
     // double dist = edt_environment_->sdf_map_->getDistance(fut_pt);
